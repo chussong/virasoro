@@ -1,8 +1,9 @@
-#include <cstdlib>	// atoi
-#include <cmath>
-#include <chrono>
-#include <iostream>
-#include <quadmath.h>
+#include <cstdlib>		// atoi
+#include <cmath>		// sqrt
+#include <chrono>		// timers
+#include <iostream>		// cout
+#include <fstream>		// file output
+#include <quadmath.h>	// __float128
 #include "virasoro.h"
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -25,9 +26,10 @@ int main(int argc, char** argv){
 		return EXIT_FAILURE;
 	}
 	unsigned short int maxOrder = std::atoi(argv[5]);
+	maxOrder -= (maxOrder % 2);
 	
-	int mnLocation[maxOrder]; 	/* location in mn vector at which i+1 = m*n starts */
-	int mnMultiplicity[maxOrder] = {0};	/* number of mn combinations giving i+1 */
+	int mnLocation[maxOrder]; 	/* "pos" (location+1) in mn vector at which i+1 = m*n/2 starts */
+	int mnMultiplicity[maxOrder] = {0};	/* number of mn combinations giving i+1 = m*n/2 */
 	int numberOfMN = EnumerateMN(mnLocation, mnMultiplicity, maxOrder);
 	unsigned short int mTable[numberOfMN] = {0};
 	unsigned short int nTable[numberOfMN] = {0};
@@ -57,10 +59,10 @@ int main(int argc, char** argv){
 	// combine Rmn and hpmn into computation of H
 	__float128* Hmn[numberOfMN];
 	for(int mn = 2; mn <= maxOrder; mn+=2){
-		for(int i = 1; i <= mnMultiplicity[mn-1]; ++i){
+		for(int i = 1; i <= mnMultiplicity[mn/2-1]; ++i){
 			//std::cout << "Still alive; trying to create Hmn[" << mnLocation[mn-1]+i-1 << "] of " << numberOfMN-1 << ", which has mn=" << mn << " and needs to go up to order " << maxOrder-mn << "." << std::endl;
-			Hmn[mnLocation[mn-1]+i-1] = new __float128[maxOrder-mn+1]{0};
-			Hmn[mnLocation[mn-1]+i-1][0] = 1;
+			Hmn[mnLocation[mn/2-1]+i-2] = new __float128[maxOrder-mn+1]{0};
+			Hmn[mnLocation[mn/2-1]+i-2][0] = 1;
 			//std::cout << "Just set H[" << mnLocation[mn]+i-1 << "][0] = 1." << std::endl;
 		}
 	}
@@ -81,6 +83,10 @@ int main(int argc, char** argv){
 		if(elapsed > 60){
 			elapsed = std::chrono::duration_cast<std::chrono::minutes>(timeEnd - timeStart).count();
 			unit = "m";
+			if(elapsed > 60){
+				elapsed = std::chrono::duration_cast<std::chrono::hours>(timeEnd - timeStart).count();
+				unit = "hr";
+			}
 		}
 	}
 	DisplayH(H, c, hl, hh, hp, maxOrder, elapsed, unit);
@@ -90,13 +96,17 @@ int main(int argc, char** argv){
 
 int EnumerateMN (int* mnLocation, int* mnMultiplicity, const unsigned short int maxOrder){
 	int numberOfMN = 0;
-	for(int m=1; m <= maxOrder; ++m){
-		for(int n=1; m*n <= maxOrder; ++n){
-			++mnMultiplicity[m*n-1];
+	for(int m=1; m <= maxOrder; m+=2){
+		for(int n=2; m*n <= maxOrder; n+=2){		// odd m, even n
+			++mnMultiplicity[m*n/2-1];
+			++numberOfMN;
+		}
+		for(int n=1; (m+1)*n <= maxOrder; ++n){		// even m
+			++mnMultiplicity[(m+1)/2*n-1];
 			++numberOfMN;
 		}
 	}
-	mnLocation[0] = 0;
+	mnLocation[0] = 1;
 	for(int i = 2; i <= maxOrder; ++i){
 		mnLocation[i-1] = mnLocation[i-2] + mnMultiplicity[i-2];
 	}
@@ -107,7 +117,7 @@ int EnumerateMN (int* mnLocation, int* mnMultiplicity, const unsigned short int 
 __float128 CToB (const __float128 c){
 	__float128 bsq;
 	if(c >= 1.0 && c <= 25.0){
-		bsq = (c - 13.0)/12.0;
+		/* bad complex value */
 	} else {
 		bsq = c - 13.0 - sqrt(c*c - 26.0*c + 25.0);
 		bsq /= 12.0;
@@ -117,13 +127,23 @@ __float128 CToB (const __float128 c){
 
 void FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int *nTable, const int numberOfMN, const int *mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder){
 	int pos;
-	for(int m = 1; m <= maxOrder; ++m){
-		for(int n = 1; m*n <= maxOrder; ++n){
-			for(pos = mnLocation[m*n-1]; pos <= mnLocation[m*n-1]+mnMultiplicity[m*n-1]-1; ++pos){
-				if(mTable[pos]==0){
-					mTable[pos] = m;
-					nTable[pos] = n;
-					mnLookup[(m-1)*maxOrder + n-1] = pos;
+	for(int m = 1; m <= maxOrder; m+=2){
+		for(int n = 2; m*n <= maxOrder; n+=2){		// odd m, even n
+			for(pos = mnLocation[m*n/2-1]; pos <= mnLocation[m*n/2-1]+mnMultiplicity[m*n/2-1]; ++pos){
+				if(mTable[pos-1]==0){
+					mTable[pos-1] = m;
+					nTable[pos-1] = n;
+					mnLookup[(m-1)*maxOrder + n-1] = pos;	
+					break;
+				}
+			}
+		}
+		for(int n = 1; (m+1)*n <= maxOrder; ++n){	// even m
+			for(pos = mnLocation[(m+1)*n/2-1]; pos <= mnLocation[(m+1)*n/2-1]+mnMultiplicity[(m+1)*n/2-1]; ++pos){
+				if(mTable[pos-1]==0){
+					mTable[pos-1] = m+1;
+					nTable[pos-1] = n;
+					mnLookup[m*maxOrder + n-1] = pos;	
 					break;
 				}
 			}
@@ -145,7 +165,7 @@ void FillProdLkl(__float128 *prodLkl, const __float128 bsq, const __float128 inv
 }
 
 __float128 FindProdLkl(const __float128 bsq, const __float128 invBsq, const int m, const int n){
-	__float128 prod = 1.0;
+	__float128 prod = 1;
 	for(int l = 1; l <= n-1; ++l){ 		// pairs of Lml*Lm(-l)
 		prod *= +m*m*invBsq - l*l*bsq;
 	}
@@ -171,35 +191,34 @@ __float128 FindProdLkl(const __float128 bsq, const __float128 invBsq, const int 
 
 void FillRmn(__float128 *Rmn, const __float128 *prodLkl, const __float128 bsq, const __float128 invBsq, const __float128 llsq, const __float128 lhsq, const int numberOfMN, const int* mnLookup, const unsigned short int maxOrder){
 	__float128 Lsq;
-	Rmn[0] = 0;
-	Rmn[1] = (0.0625*bsq*bsq + llsq*bsq)*(0.0625*bsq*bsq + lhsq*bsq);
-	Rmn[2] = (0.0625*invBsq*invBsq + llsq*invBsq)*(0.0625*invBsq*invBsq + lhsq*invBsq);
-	Rmn[6] = (0.0625*(6.0 + invBsq*invBsq + 4.0*invBsq + 4.0*bsq + bsq*bsq) + llsq*(2.0 + invBsq + bsq))*(0.0625*(6.0 + invBsq*invBsq + 4.0*invBsq + 4.0*bsq + bsq*bsq) + lhsq*(2.0 + invBsq + bsq));
-	Rmn[6] *= (0.0625*(6.0 + invBsq*invBsq - 4.0*invBsq - 4.0*bsq + bsq*bsq) + llsq*(-2.0 + invBsq + bsq))*(0.0625*(6.0 + invBsq*invBsq - 4.0*invBsq - 4.0*bsq + bsq*bsq) + lhsq*(-2.0 + invBsq + bsq));
+	Rmn[0] = (0.0625*bsq*bsq + llsq*bsq)*(0.0625*bsq*bsq + lhsq*bsq);							// R12
+	Rmn[1] = (0.0625*invBsq*invBsq + llsq*invBsq)*(0.0625*invBsq*invBsq + lhsq*invBsq);			// R21
+	Rmn[3] = (0.0625*(6.0 + invBsq*invBsq + 4.0*invBsq + 4.0*bsq + bsq*bsq) + llsq*(2.0 + invBsq + bsq))*(0.0625*(6.0 + invBsq*invBsq + 4.0*invBsq + 4.0*bsq + bsq*bsq) + lhsq*(2.0 + invBsq + bsq));	// R22
+	Rmn[3] *= (0.0625*(6.0 + invBsq*invBsq - 4.0*invBsq - 4.0*bsq + bsq*bsq) + llsq*(-2.0 + invBsq + bsq))*(0.0625*(6.0 + invBsq*invBsq - 4.0*invBsq - 4.0*bsq + bsq*bsq) + lhsq*(-2.0 + invBsq + bsq));
 	
 	for(int m = 1; m <= 2; ++m){
-		for(int n = 3+(m%2); m*n <= maxOrder; ++n){
-			Rmn[mnLookup[(m-1)*maxOrder + n-1]] = Rmn[mnLookup[(m-1)*maxOrder + n-3]];
+		for(int n = 3+(m%2); m*n <= maxOrder; n+=(1+m%2)){
+			Rmn[mnLookup[(m-1)*maxOrder + n-1]-1] = Rmn[mnLookup[(m-1)*maxOrder + n-3]-1];
 			for(int p = -m+1; p <= m-1; p+=2){
 				Lsq = (-1.0 + 2.0*n - n*n)*bsq + 2.0*p*(1-n) - p*p*invBsq;
-				Rmn[mnLookup[(m-1)*maxOrder + n-1]] *= (0.0625*Lsq*Lsq - llsq*Lsq)*(0.0625*Lsq*Lsq - lhsq*Lsq);
+				Rmn[mnLookup[(m-1)*maxOrder + n-1]-1] *= (0.0625*Lsq*Lsq - llsq*Lsq)*(0.0625*Lsq*Lsq - lhsq*Lsq);
 			}
 		}
 	}
 	
 	for(int m = 3; m <= maxOrder-(maxOrder%2); m+=2){
 		for(int n = 2; m*n <= maxOrder; n+=2){
-			Rmn[mnLookup[(m-1)*maxOrder + n-1]] = Rmn[mnLookup[(m-3)*maxOrder + n-1]];
+			Rmn[mnLookup[(m-1)*maxOrder + n-1]-1] = Rmn[mnLookup[(m-3)*maxOrder + n-1]-1];
 			for(int q = -n+1; q <= n-1; q+=2){
 				Lsq = (-1.0 + 2.0*m - m*m)*invBsq + 2.0*q*(1-m) - q*q*bsq;
-				Rmn[mnLookup[(m-1)*maxOrder + n-1]] *= (0.0625*Lsq*Lsq - llsq*Lsq)*(0.0625*Lsq*Lsq - lhsq*Lsq);
+				Rmn[mnLookup[(m-1)*maxOrder + n-1]-1] *= (0.0625*Lsq*Lsq - llsq*Lsq)*(0.0625*Lsq*Lsq - lhsq*Lsq);
 			}
 		}
 		for(int n = 1; m*n+n <= maxOrder; ++n){
-			Rmn[mnLookup[m*maxOrder + n-1]] = Rmn[mnLookup[(m-2)*maxOrder + n-1]];
+			Rmn[mnLookup[m*maxOrder + n-1]-1] = Rmn[mnLookup[(m-2)*maxOrder + n-1]-1];
 			for(int q = -n+1; q <= n-1; q+=2){
 				Lsq = -m*m*invBsq - 2.0*q*m - q*q*bsq;
-				Rmn[mnLookup[m*maxOrder + n-1]] *= (0.0625*Lsq*Lsq - llsq*Lsq)*(0.0625*Lsq*Lsq - lhsq*Lsq);
+				Rmn[mnLookup[m*maxOrder + n-1]-1] *= (0.0625*Lsq*Lsq - llsq*Lsq)*(0.0625*Lsq*Lsq - lhsq*Lsq);
 			}
 		}
 	}
@@ -214,8 +233,8 @@ void FillRmn(__float128 *Rmn, const __float128 *prodLkl, const __float128 bsq, c
 void FillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder){
 	for(int order = 2; order <= maxOrder; order+=2){
 		for(int mn = 2; mn <= maxOrder-order; mn+=2){
-			for(int pos = mnLocation[mn-1] + 1; pos <= mnLocation[mn-1] + mnMultiplicity[mn-1]; ++pos){
-				Hmn[pos-1][order] = HmnTerm(Hmn, Rmn, hpmn, hpmn[pos-1]+mn, mnLocation, mnMultiplicity, order);
+			for(int pos = mnLocation[mn/2-1]; pos <= mnLocation[mn/2-1] + mnMultiplicity[mn/2-1] - 1; ++pos){
+				Hmn[pos-1][order/2] = HmnTerm(Hmn, Rmn, hpmn, hpmn[pos-1]+mn, mnLocation, mnMultiplicity, order);
 			}
 		}
 	}
@@ -223,17 +242,24 @@ void FillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, co
 
 void FillH(__float128* H, const __float128* const* Hmn, const __float128* Rmn, const __float128* hpmn, const __float128 hp, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder){
 	for(int order = 2; order <= maxOrder; order+=2){
-		H[order] = HmnTerm(Hmn, Rmn, hpmn, hp, mnLocation, mnMultiplicity, order);
+		H[order/2] = HmnTerm(Hmn, Rmn, hpmn, hp, mnLocation, mnMultiplicity, order);
 	}
 	return;
 }
 
 void DisplayH(const __float128* H, const __float128 c, const __float128 hl, const __float128 hh, const __float128 hp, const unsigned short int maxOrder, const int time, const std::string unit){
+	std::ofstream outputFile;
+	outputFile.open ("virasoro.txt");
 	std::cout << "Given the parameters" << std::endl;
+	outputFile << "Given the parameters" << std::endl;
 	std::cout << "c = " << (long double)c << ", h_L = " << (long double)hl << ", h_H = " << (long double)hh << ", h_p = " << (long double)hp << std::endl;
+	outputFile << "c = " << (long double)c << ", h_L = " << (long double)hl << ", h_H = " << (long double)hh << ", h_p = " << (long double)hp << std::endl;	
 	std::cout << "the Virasoro block coefficients are as follows:" << std::endl;
-	for(int order = 0; order <= maxOrder; order+=2){
-		std::cout << "q^" << order << ": " << (long double)H[order] << std::endl;
+	outputFile << "the Virasoro block coefficients are as follows:" << std::endl;
+	for(int orderBy2 = 0; 2*orderBy2 <= maxOrder; ++orderBy2){
+		std::cout << "q^" << 2*orderBy2 << ": " << (long double)H[orderBy2] << std::endl;
+		outputFile << "q^" << 2*orderBy2 << ": " << (long double)H[orderBy2] << std::endl;
 	}
+	outputFile.close();
 	std::cout << "This computation took " << time << " " << unit << "." << std::endl;
 }

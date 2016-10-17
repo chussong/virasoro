@@ -24,11 +24,10 @@ void FillH(__float128* H, const __float128* const* Hmn, const __float128* Rmn, c
 void DisplayH(const __float128* H, const __float128 c, const __float128 hl, const __float128 hh, const __float128 hp, const unsigned short int maxOrder, const int time, const std::string unit);
 
 inline __float128 HmnTerm(const __float128* const* Hmn, const __float128* Rmn, const __float128* hpmn, const __float128 hp, const int* mnLocation, const int* mnMultiplicity, const int order){
-	//std::cout << "Attempting to find an Hmn term..." << std::endl;
 	__float128 term = 0;
 	for(int power = 2; power <= order; power+=2){
-		for(int pos = mnLocation[power-1] + 1; pos <= mnLocation[power-1] + mnMultiplicity[power-1]; ++pos){
-			term += pow(16.0,power)*Rmn[pos-1]/(hp-hpmn[pos-1])*Hmn[pos-1][order-power];
+		for(int pos = mnLocation[power/2-1]; pos <= mnLocation[power/2-1] + mnMultiplicity[power/2-1] - 1; ++pos){
+			term += pow(16.0,power)*Rmn[pos-1]/(hp-hpmn[pos-1])*Hmn[pos-1][(order-power)/2];
 		}
 	}
 	return term;
