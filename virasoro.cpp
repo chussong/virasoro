@@ -13,14 +13,14 @@ int main(int argc, char** argv){
 		return EXIT_FAILURE;
 	}
 	auto timeStart = Clock::now();
-	__float128 c = std::atof(argv[1]);
+	__float128 c = strtoflt128(argv[1], NULL);
 	if(c > 1.0 && c < 25.0){
 		printf("Error: Currently not able to accommodate central charge between 1 and 25 due to intermediate complex numbers. Please try again later.\n");
 		return EXIT_FAILURE;
 	}
-	__float128 hl = std::atof(argv[2]);
-	__float128 hh = std::atof(argv[3]);
-	__float128 hp = std::atof(argv[4]);
+	__float128 hl = strtoflt128(argv[2], NULL);
+	__float128 hh = strtoflt128(argv[3], NULL);
+	__float128 hp = strtoflt128(argv[4], NULL);
 	if(std::atoi(argv[5]) > 65535){
 		std::cout << "Error: this version of the program can not accommodate orders higher than 65,535. To remove this restriction, delete all instances of \"short\" and the statement which produces this message." << std::endl;
 		return EXIT_FAILURE;
@@ -261,10 +261,18 @@ void DisplayH(const __float128* H, const __float128 c, const __float128 hl, cons
 	outputFile << "c = " << (long double)c << ", h_L = " << (long double)hl << ", h_H = " << (long double)hh << ", h_p = " << (long double)hp << std::endl;	
 	std::cout << "the Virasoro block coefficients are as follows:" << std::endl;
 	outputFile << "the Virasoro block coefficients are as follows:" << std::endl;
+	char coeff[64];
 	for(int orderBy2 = 0; 2*orderBy2 <= maxOrder; ++orderBy2){
-		std::cout << "q^" << 2*orderBy2 << ": " << (long double)H[orderBy2] << std::endl;
-		outputFile << "q^" << 2*orderBy2 << ": " << (long double)H[orderBy2] << std::endl;
+		quadmath_snprintf(coeff, sizeof coeff, "%.20Qe", H[orderBy2]);
+		std::cout << "q^" << 2*orderBy2 << ": " << coeff << std::endl;
+		outputFile << "q^" << 2*orderBy2 << ": " << coeff << std::endl;
 	}
+	outputFile << "{1";
+	for(int orderBy2 = 1; 2*orderBy2 <= maxOrder; orderBy2++){
+		quadmath_snprintf(coeff, sizeof coeff, "%.20Qe", H[orderBy2]);
+		outputFile << "," << coeff;
+	}
+	outputFile << "}" << std::endl;
 	outputFile.close();
 	std::cout << "This computation took " << time << " " << unit << "." << std::endl;
 }
