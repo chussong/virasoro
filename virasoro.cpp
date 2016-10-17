@@ -249,7 +249,8 @@ void FillH(__float128* H, const __float128* const* Hmn, const __float128* Rmn, c
 
 void DisplayH(const __float128* H, const __float128 c, const __float128 hl, const __float128 hh, const __float128 hp, const unsigned short int maxOrder, const int time, const std::string unit){
 	std::ofstream outputFile;
-	outputFile.open ("virasoro.txt");
+	std::string filename = "virasoro_" + std::to_string((int)c) + "_" + std::to_string((int)hl) + "_" + std::to_string((int)hh) + "_" + std::to_string((int)hp) + "_" + std::to_string((int)maxOrder) + ".txt";
+	outputFile.open (filename);
 	std::cout << "Given the parameters" << std::endl;
 	outputFile << "Given the parameters" << std::endl;
 	std::cout << "c = " << (long double)c << ", h_L = " << (long double)hl << ", h_H = " << (long double)hh << ", h_p = " << (long double)hp << std::endl;
