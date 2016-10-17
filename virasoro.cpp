@@ -161,6 +161,7 @@ void FillHpmn (__float128 *hpmn, const unsigned short int *mTable, const unsigne
 void FillProdLkl(__float128 *prodLkl, const __float128 bsq, const __float128 invBsq, const unsigned short int *mTable, const unsigned short int *nTable, const int numberOfMN){
 	for(int pos = 1; pos <= numberOfMN; ++pos){
 		prodLkl[pos-1] = FindProdLkl(bsq, invBsq, mTable[pos-1], nTable[pos-1]);
+//		std::cout << "NaN hunt: prodLkl[" << mTable[pos-1] << "," << nTable[pos-1] << "] = " << (long double)prodLkl[pos-1] << "." << std::endl;
 	}
 }
 
@@ -178,8 +179,7 @@ __float128 FindProdLkl(const __float128 bsq, const __float128 invBsq, const int 
 	for(int l = 1; l < n; ++l){ 		// pairs of L0l*L0(-l)
 		prod *= -l*l*bsq;
 	}
-	prod *= n;							// loose Lm0 and L0n
-	prod *= -m;
+	prod *= -m*n;							// loose Lm0 and L0n
 	for(int k = 1; k <= m-1; ++k){		
 		for(int l = 1; l <= n-1; ++l){
 			prod *= -k*k*invBsq - 2*k*l - l*l*bsq;	// paired Lpq*L(-p)(-q)
@@ -212,6 +212,7 @@ void FillRmn(__float128 *Rmn, const __float128 *prodLkl, const __float128 bsq, c
 			for(int q = -n+1; q <= n-1; q+=2){
 				Lsq = (-1.0 + 2.0*m - m*m)*invBsq + 2.0*q*(1-m) - q*q*bsq;
 				Rmn[mnLookup[(m-1)*maxOrder + n-1]-1] *= (0.0625*Lsq*Lsq - llsq*Lsq)*(0.0625*Lsq*Lsq - lhsq*Lsq);
+//				std::cout << "The great hunt: Rmn[" << m << "," << n << "] = " << (long double)Rmn[mnLookup[(m-1)*maxOrder + n-1]-1] << std::endl;
 			}
 		}
 		for(int n = 1; m*n+n <= maxOrder; ++n){
@@ -219,12 +220,14 @@ void FillRmn(__float128 *Rmn, const __float128 *prodLkl, const __float128 bsq, c
 			for(int q = -n+1; q <= n-1; q+=2){
 				Lsq = -m*m*invBsq - 2.0*q*m - q*q*bsq;
 				Rmn[mnLookup[m*maxOrder + n-1]-1] *= (0.0625*Lsq*Lsq - llsq*Lsq)*(0.0625*Lsq*Lsq - lhsq*Lsq);
+//				std::cout << "The great hunt: Rmn[" << m+1 << "," << n << "] = " << (long double)Rmn[mnLookup[m*maxOrder + n-1]-1] << std::endl;
 			}
 		}
 	}
 
 	for(int pos = 1; pos <= numberOfMN; ++pos){
 		Rmn[pos-1] *= -0.5*prodLkl[pos-1];
+//		std::cout << "The great hunt part 2: Rmn[" << pos-1 << "] = " << (long double)Rmn[pos-1] << std::endl;		
 	}
 	
 	return;
@@ -235,6 +238,7 @@ void FillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, co
 		for(int mn = 2; mn <= maxOrder-order; mn+=2){
 			for(int pos = mnLocation[mn/2-1]; pos <= mnLocation[mn/2-1] + mnMultiplicity[mn/2-1] - 1; ++pos){
 				Hmn[pos-1][order/2] = HmnTerm(Hmn, Rmn, hpmn, hpmn[pos-1]+mn, mnLocation, mnMultiplicity, order);
+//				std::cout << "The great NaN hunt: Hmn[" << pos-1 << "][" << order << "] = " << (long double)Hmn[pos-1][order/2] << std::endl;
 			}
 		}
 	}

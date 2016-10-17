@@ -1,6 +1,6 @@
 CC=g++
-CFLAGS=-Wall -Werror -pthread -libquadmath -I$(IDIR) -std=c++14 -c
-LDFLAGS=
+CFLAGS=-Wall -Werror -I$(IDIR) -std=c++14 -c
+LDFLAGS= -lquadmath
 SOURCES=virasoro.cpp
 ODIR = obj
 _OBJECTS=$(SOURCES:.cpp=.o)
@@ -13,7 +13,7 @@ EXECUTABLE=virasoro
 all: $(SOURCES) $(DEPS) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 
 $(OBJECTS): $(SOURCES) $(DEPS)
 	$(CC) $(CFLAGS) $< -o $@

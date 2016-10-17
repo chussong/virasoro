@@ -1,8 +1,10 @@
-#include <cstdlib>	// atoi
-#include <thread>
-#include <iostream>
-#include <quadmath.h>
-	
+#include <cstdlib>		// atoi
+#include <cmath>		// sqrt
+#include <chrono>		// timers
+#include <iostream>		// cout
+#include <fstream>		// file output
+#include <quadmath.h>	// __float128
+
 int EnumerateMN (int* mnLocation, int* mnMultiplicity,  unsigned short int maxOrder);
 
 __float128 CToB ( __float128 c);
@@ -27,7 +29,7 @@ inline __float128 HmnTerm(const __float128* const* Hmn, const __float128* Rmn, c
 	__float128 term = 0;
 	for(int power = 2; power <= order; power+=2){
 		for(int pos = mnLocation[power/2-1]; pos <= mnLocation[power/2-1] + mnMultiplicity[power/2-1] - 1; ++pos){
-			term += pow(16.0,power)*Rmn[pos-1]/(hp-hpmn[pos-1])*Hmn[pos-1][(order-power)/2];
+			term += powq(16.0,power)*Rmn[pos-1]/(hp-hpmn[pos-1])*Hmn[pos-1][(order-power)/2];
 		}
 	}
 	return term;
