@@ -4,6 +4,9 @@
 #include <iostream>		// cout
 #include <fstream>		// file output
 #include <quadmath.h>	// __float128
+#include <thread>
+
+static __float128* powOverflow;
 
 int EnumerateMN (int* mnLocation, int* mnMultiplicity,  unsigned short int maxOrder);
 
@@ -23,13 +26,13 @@ void FillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, co
 
 void FillH(__float128* H, const __float128* const* Hmn, const __float128* Rmn, const __float128* hpmn, const __float128 hp, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
 
-void DisplayH(const __float128* H, const __float128 c, const __float128 hl, const __float128 hh, const __float128 hp, const unsigned short int maxOrder, const int time, const std::string unit);
+void DisplayH(const __float128* H, const __float128 c, const __float128 hl, const __float128 hh, const __float128 hp, const unsigned short int maxOrder, int time, const std::string unit);
 
 inline __float128 HmnTerm(const __float128* const* Hmn, const __float128* Rmn, const __float128* hpmn, const __float128 hp, const int* mnLocation, const int* mnMultiplicity, const int order){
 	__float128 term = 0;
 	for(int power = 2; power <= order; power+=2){
 		for(int pos = mnLocation[power/2-1]; pos <= mnLocation[power/2-1] + mnMultiplicity[power/2-1] - 1; ++pos){
-			term += powq(16.0,power)*Rmn[pos-1]/(hp-hpmn[pos-1])*Hmn[pos-1][(order-power)/2];
+			term += powOverflow[power/256]*pow(16.0,power%256)*Rmn[pos-1]/(hp-hpmn[pos-1])*Hmn[pos-1][(order-power)/2];
 		}
 	}
 	return term;

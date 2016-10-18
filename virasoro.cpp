@@ -4,11 +4,12 @@
 #include <iostream>		// cout
 #include <fstream>		// file output
 #include <quadmath.h>	// __float128
+#include <thread>
 #include "virasoro.h"
 typedef std::chrono::high_resolution_clock Clock;
 
 int main(int argc, char** argv){
-	if(argc < 6 || !(std::atof(argv[1]) > 0.0) || !(std::atof(argv[2]) > 0) || !(std::atof(argv[3]) > 0) || !(std::atof(argv[4]) > 0.0) || std::atoi(argv[5]) < 1){
+	if(argc < 6 || !(std::atof(argv[1]) > 0.0) || !(std::atof(argv[2]) > 0) || !(std::atof(argv[3]) > 0) || !(std::atof(argv[4]) >= 0.0) || std::atoi(argv[5]) < 1){
 		printf("Error: Central charge c, two dimensions hl and hh, exchange dimension hp, and maximum order N in q^n required as arguments.\n");
 		return EXIT_FAILURE;
 	}
@@ -27,6 +28,11 @@ int main(int argc, char** argv){
 	}
 	unsigned short int maxOrder = std::atoi(argv[5]);
 	maxOrder -= (maxOrder % 2);
+	powOverflow = new __float128[maxOrder/256+1];
+	powOverflow[0] = 1;
+	for(int i = 1; i <= maxOrder/256; ++i){
+		powOverflow[i] = powq(16,256*i);
+	}
 	
 	int mnLocation[maxOrder]; 	/* "pos" (location+1) in mn vector at which i+1 = m*n/2 starts */
 	int mnMultiplicity[maxOrder] = {0};	/* number of mn combinations giving i+1 = m*n/2 */
@@ -60,10 +66,8 @@ int main(int argc, char** argv){
 	__float128* Hmn[numberOfMN];
 	for(int mn = 2; mn <= maxOrder; mn+=2){
 		for(int i = 1; i <= mnMultiplicity[mn/2-1]; ++i){
-			//std::cout << "Still alive; trying to create Hmn[" << mnLocation[mn-1]+i-1 << "] of " << numberOfMN-1 << ", which has mn=" << mn << " and needs to go up to order " << maxOrder-mn << "." << std::endl;
 			Hmn[mnLocation[mn/2-1]+i-2] = new __float128[maxOrder-mn+1]{0};
 			Hmn[mnLocation[mn/2-1]+i-2][0] = 1;
-			//std::cout << "Just set H[" << mnLocation[mn]+i-1 << "][0] = 1." << std::endl;
 		}
 	}
 	time1 = Clock::now();
@@ -77,13 +81,13 @@ int main(int argc, char** argv){
 	auto timeEnd = Clock::now();
 	int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count();
 	std::string unit = "ms";
-	if(elapsed > 1000){
+	if(elapsed > 5000){
 		elapsed = std::chrono::duration_cast<std::chrono::seconds>(timeEnd - timeStart).count();
 		unit = "s";
-		if(elapsed > 60){
+		if(elapsed > 300){
 			elapsed = std::chrono::duration_cast<std::chrono::minutes>(timeEnd - timeStart).count();
 			unit = "m";
-			if(elapsed > 60){
+			if(elapsed > 300){
 				elapsed = std::chrono::duration_cast<std::chrono::hours>(timeEnd - timeStart).count();
 				unit = "hr";
 			}
@@ -115,7 +119,7 @@ int EnumerateMN (int* mnLocation, int* mnMultiplicity, const unsigned short int 
 
 // currently not able to deal with imaginary bsq from 1 < c < 25.
 __float128 CToB (const __float128 c){
-	__float128 bsq;
+	__float128 bsq = 0;
 	if(c >= 1.0 && c <= 25.0){
 		/* bad complex value */
 	} else {
@@ -263,16 +267,16 @@ void DisplayH(const __float128* H, const __float128 c, const __float128 hl, cons
 	outputFile << "the Virasoro block coefficients are as follows:" << std::endl;
 	char coeff[64];
 	for(int orderBy2 = 0; 2*orderBy2 <= maxOrder; ++orderBy2){
-		quadmath_snprintf(coeff, sizeof coeff, "%.20Qe", H[orderBy2]);
+		quadmath_snprintf(coeff, sizeof coeff, "%.10Qe", H[orderBy2]);
 		std::cout << "q^" << 2*orderBy2 << ": " << coeff << std::endl;
 		outputFile << "q^" << 2*orderBy2 << ": " << coeff << std::endl;
 	}
 	outputFile << "{1";
 	for(int orderBy2 = 1; 2*orderBy2 <= maxOrder; orderBy2++){
-		quadmath_snprintf(coeff, sizeof coeff, "%.20Qe", H[orderBy2]);
+		quadmath_snprintf(coeff, sizeof coeff, "%.30Qe", H[orderBy2]);
 		outputFile << "," << coeff;
 	}
 	outputFile << "}" << std::endl;
 	outputFile.close();
-	std::cout << "This computation took " << time << " " << unit << "." << std::endl;
+	std::cout << "This computation took " << time << unit << "." << std::endl;
 }

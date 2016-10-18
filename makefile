@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-Wall -Werror -I$(IDIR) -std=c++14 -c
+CFLAGS=-Wall -Werror -I$(IDIR) -fext-numeric-literals -std=c++14 -c
 LDFLAGS= -lquadmath
 SOURCES=virasoro.cpp
 ODIR = obj
