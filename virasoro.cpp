@@ -1,11 +1,5 @@
-#include <cstdlib>		// atoi
-#include <cmath>		// sqrt
-#include <chrono>		// timers
-#include <iostream>		// cout
-#include <fstream>		// file output
-#include <quadmath.h>	// __float128
-#include <thread>
 #include "virasoro.h"
+
 typedef std::chrono::high_resolution_clock Clock;
 
 int main(int argc, char** argv){
@@ -165,7 +159,6 @@ void FillHpmn (__float128 *hpmn, const unsigned short int *mTable, const unsigne
 void FillProdLkl(__float128 *prodLkl, const __float128 bsq, const __float128 invBsq, const unsigned short int *mTable, const unsigned short int *nTable, const int numberOfMN){
 	for(int pos = 1; pos <= numberOfMN; ++pos){
 		prodLkl[pos-1] = FindProdLkl(bsq, invBsq, mTable[pos-1], nTable[pos-1]);
-//		std::cout << "NaN hunt: prodLkl[" << mTable[pos-1] << "," << nTable[pos-1] << "] = " << (long double)prodLkl[pos-1] << "." << std::endl;
 	}
 }
 
@@ -216,7 +209,6 @@ void FillRmn(__float128 *Rmn, const __float128 *prodLkl, const __float128 bsq, c
 			for(int q = -n+1; q <= n-1; q+=2){
 				Lsq = (-1.0 + 2.0*m - m*m)*invBsq + 2.0*q*(1-m) - q*q*bsq;
 				Rmn[mnLookup[(m-1)*maxOrder + n-1]-1] *= (0.0625*Lsq*Lsq - llsq*Lsq)*(0.0625*Lsq*Lsq - lhsq*Lsq);
-//				std::cout << "The great hunt: Rmn[" << m << "," << n << "] = " << (long double)Rmn[mnLookup[(m-1)*maxOrder + n-1]-1] << std::endl;
 			}
 		}
 		for(int n = 1; m*n+n <= maxOrder; ++n){
@@ -224,26 +216,39 @@ void FillRmn(__float128 *Rmn, const __float128 *prodLkl, const __float128 bsq, c
 			for(int q = -n+1; q <= n-1; q+=2){
 				Lsq = -m*m*invBsq - 2.0*q*m - q*q*bsq;
 				Rmn[mnLookup[m*maxOrder + n-1]-1] *= (0.0625*Lsq*Lsq - llsq*Lsq)*(0.0625*Lsq*Lsq - lhsq*Lsq);
-//				std::cout << "The great hunt: Rmn[" << m+1 << "," << n << "] = " << (long double)Rmn[mnLookup[m*maxOrder + n-1]-1] << std::endl;
 			}
 		}
 	}
 
 	for(int pos = 1; pos <= numberOfMN; ++pos){
 		Rmn[pos-1] *= -0.5*prodLkl[pos-1];
-//		std::cout << "The great hunt part 2: Rmn[" << pos-1 << "] = " << (long double)Rmn[pos-1] << std::endl;		
 	}
 	
 	return;
 }
 
 void FillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder){
+	std::thread thread[maxThreads];
 	for(int order = 2; order <= maxOrder; order+=2){
-		for(int mn = 2; mn <= maxOrder-order; mn+=2){
+		for(int i=1; i<=maxThreads; ++i){
+			thread[i-1] = std::thread(ThreadFillHmn, Hmn, Rmn, hpmn, mnLocation, mnMultiplicity, (i-1)*(maxOrder-order)/maxThreads + 2, i*(maxOrder-order)/maxThreads, order);
+		}
+
+/*		for(int mn = 2; mn <= maxOrder-order; mn+=2){
 			for(int pos = mnLocation[mn/2-1]; pos <= mnLocation[mn/2-1] + mnMultiplicity[mn/2-1] - 1; ++pos){
 				Hmn[pos-1][order/2] = HmnTerm(Hmn, Rmn, hpmn, hpmn[pos-1]+mn, mnLocation, mnMultiplicity, order);
-//				std::cout << "The great NaN hunt: Hmn[" << pos-1 << "][" << order << "] = " << (long double)Hmn[pos-1][order/2] << std::endl;
 			}
+		}*/
+		for(int i=1; i<= maxThreads; ++i){
+			thread[i-1].join();
+		}
+	}
+}
+
+void ThreadFillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, const int* mnLocation, const int* mnMultiplicity, const int startingMN, const int endingMN, const int order){
+	for(int mn = startingMN; mn <= endingMN; mn+=2){
+		for(int pos = mnLocation[mn/2-1]; pos <= mnLocation[mn/2-1] + mnMultiplicity[mn/2-1] - 1; ++pos){
+			Hmn[pos-1][order/2] = HmnTerm(Hmn, Rmn, hpmn, hpmn[pos-1]+mn, mnLocation, mnMultiplicity, order);
 		}
 	}
 }

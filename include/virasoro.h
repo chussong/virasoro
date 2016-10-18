@@ -6,6 +6,7 @@
 #include <quadmath.h>	// __float128
 #include <thread>
 
+const static int maxThreads = 8;
 static __float128* powOverflow;
 
 int EnumerateMN (int* mnLocation, int* mnMultiplicity,  unsigned short int maxOrder);
@@ -23,6 +24,8 @@ __float128 FindProdLkl(__float128 bsq, __float128 invBsq, int m, int n);
 void FillRmn(__float128 *Rmn, const __float128 *prodLkl, const __float128 bsq, const __float128 invBsq, const __float128 llsq, const __float128 lhsq, const int numberOfMN, const int* mnLookup, const unsigned short int maxOrder);
 
 void FillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
+
+void ThreadFillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, const int* mnLocation, const int* mnMultiplicity, const int startingMN, const int endingMN, const int order);
 
 void FillH(__float128* H, const __float128* const* Hmn, const __float128* Rmn, const __float128* hpmn, const __float128 hp, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
 
