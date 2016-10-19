@@ -57,12 +57,16 @@ int main(int argc, char** argv){
 	std::cout << "Rmn filled. This took " << std::chrono::duration_cast<std::chrono::microseconds>(time2 - time1).count() << " us." << std::endl;
 	
 	// combine Rmn and hpmn into computation of H
-	__float128* Hmn[numberOfMN];
-	for(int mn = 2; mn <= maxOrder; mn+=2){
-		for(int i = 1; i <= mnMultiplicity[mn/2-1]; ++i){
-			Hmn[mnLocation[mn/2-1]+i-2] = new __float128[maxOrder-mn+1]{0};
-			Hmn[mnLocation[mn/2-1]+i-2][0] = 1;
+	__float128* Hmn[maxOrder/2];
+	Hmn[0] = new __float128[numberOfMN];
+	for(int pos = 1; pos <= numberOfMN; ++pos) Hmn[0][pos-1] = 1.0q;
+	int mnAtThisOrder;
+	for(int order = 2; order <= maxOrder-2; order+=2){
+		mnAtThisOrder = 0;
+		for(int mn = 2; mn <= maxOrder-order; mn+=2){
+			mnAtThisOrder += mnMultiplicity[mn/2-1];
 		}
+		Hmn[order/2] = new __float128[mnAtThisOrder]{0};
 	}
 	time1 = Clock::now();
 	FillHmn(Hmn, Rmn, hpmn, mnLocation, mnMultiplicity, maxOrder);
@@ -117,8 +121,8 @@ __float128 CToB (const __float128 c){
 	if(c >= 1.0 && c <= 25.0){
 		/* bad complex value */
 	} else {
-		bsq = c - 13.0 - sqrt(c*c - 26.0*c + 25.0);
-		bsq /= 12.0;
+		bsq = c - 13.0q - sqrtq(c*c - 26.0q*c + 25.0q);
+		bsq /= 12.0q;
 	}
 	return bsq;
 }
@@ -229,9 +233,14 @@ void FillRmn(__float128 *Rmn, const __float128 *prodLkl, const __float128 bsq, c
 
 void FillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder){
 	std::thread thread[maxThreads];
-	for(int order = 2; order <= maxOrder; order+=2){
-		for(int i=1; i<=maxThreads; ++i){
-			thread[i-1] = std::thread(ThreadFillHmn, Hmn, Rmn, hpmn, mnLocation, mnMultiplicity, (i-1)*(maxOrder-order)/maxThreads + 2, i*(maxOrder-order)/maxThreads, order);
+	int numThreads;
+	for(int order = 2; order < maxOrder; order+=2){
+		numThreads = std::min(maxThreads,(maxOrder-order)/2);
+		thread[0] = std::thread(ThreadFillHmn, Hmn, Rmn, hpmn, mnLocation, mnMultiplicity, 2, (maxOrder-order)/numThreads + (maxOrder-order)%numThreads, order);
+//		std::cout << "Telling a thread to fill H[" << order << "] at mn = " << 2 << " through " << (maxOrder-order)/numThreads + (maxOrder-order)%numThreads << "." << std::endl;
+		for(int i=2; i<=numThreads; ++i){
+//			std::cout << "Telling a thread to fill H[" << order << "] at mn = " << (i-1)*(maxOrder-order)/numThreads + (maxOrder-order)%numThreads + 1 << " through " << i*(maxOrder-order)/numThreads + (maxOrder-order)%numThreads << "." << std::endl;
+			thread[i-1] = std::thread(ThreadFillHmn, Hmn, Rmn, hpmn, mnLocation, mnMultiplicity, (i-1)*(maxOrder-order)/numThreads + (maxOrder-order)%numThreads + 1, i*(maxOrder-order)/numThreads + (maxOrder-order)%numThreads, order);
 		}
 
 /*		for(int mn = 2; mn <= maxOrder-order; mn+=2){
@@ -239,16 +248,17 @@ void FillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, co
 				Hmn[pos-1][order/2] = HmnTerm(Hmn, Rmn, hpmn, hpmn[pos-1]+mn, mnLocation, mnMultiplicity, order);
 			}
 		}*/
-		for(int i=1; i<= maxThreads; ++i){
+		for(int i=1; i<= std::min(maxThreads,(maxOrder-order)/2); ++i){
 			thread[i-1].join();
 		}
 	}
 }
 
 void ThreadFillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, const int* mnLocation, const int* mnMultiplicity, const int startingMN, const int endingMN, const int order){
-	for(int mn = startingMN; mn <= endingMN; mn+=2){
+	for(int mn = startingMN + startingMN%2; mn <= endingMN; mn+=2){
 		for(int pos = mnLocation[mn/2-1]; pos <= mnLocation[mn/2-1] + mnMultiplicity[mn/2-1] - 1; ++pos){
-			Hmn[pos-1][order/2] = HmnTerm(Hmn, Rmn, hpmn, hpmn[pos-1]+mn, mnLocation, mnMultiplicity, order);
+			Hmn[order/2][pos-1] = HmnTerm(Hmn, Rmn, hpmn, hpmn[pos-1]+mn, mnLocation, mnMultiplicity, order);
+//			std::cout << "Filling Hmn[" << order << "][" << pos-1 << "] with " << (double)Hmn[order/2][pos-1] << "." << std::endl;
 		}
 	}
 }
