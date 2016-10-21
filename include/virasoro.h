@@ -1,42 +1,31 @@
 #include <cstdlib>		// atoi
-#include <cmath>		// sqrt
 #include <chrono>		// timers
 #include <iostream>		// cout
 #include <fstream>		// file output
-#include <quadmath.h>	// __float128
+#include <stdio.h>
+#include <gmp.h>
 #include <thread>
 
 const static int maxThreads = 8;
-static __float128* powOverflow;
+static const int precision = 512;
+static mpf_t* powOverflow;
 
 int EnumerateMN (int* mnLocation, int* mnMultiplicity,  unsigned short int maxOrder);
 
-__float128 CToB ( __float128 c);
-
 void FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int *nTable, const int numberOfMN, const int *mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
 
-void FillHpmn (__float128 *hpmn, const unsigned short int *mTable, const unsigned short int *nTable, const int numberOfMN, const __float128 bsq, const __float128 invBsq);
+void FillHpmn (mpf_t* hpmn, const unsigned short int *mTable, const unsigned short int *nTable, const int numberOfMN, const mpf_t bsq, const mpf_t invBsq);
 
-void FillProdLkl(__float128 *prodLkl, const __float128 bsq, const __float128 invBsq, const unsigned short int *mTable, const unsigned short int *nTable, const int numberOfMN);
+void FillProdLkl(mpf_t *prodLkl, const mpf_t bsq, const mpf_t invBsq, const unsigned short int *mTable, const unsigned short int *nTable, const int numberOfMN);
 
-__float128 FindProdLkl(__float128 bsq, __float128 invBsq, int m, int n);
+void FindProdLkl(const mpf_t bsq, const mpf_t invBsq, const unsigned int m, const unsigned int n, mpf_t& temp1, mpf_t& temp2, mpf_t& prod);
 
-void FillRmn(__float128 *Rmn, const __float128 *prodLkl, const __float128 bsq, const __float128 invBsq, const __float128 llsq, const __float128 lhsq, const int numberOfMN, const int* mnLookup, const unsigned short int maxOrder);
+void FillRmn(mpf_t* Rmn, const mpf_t* prodLkl, const mpf_t bsq, const mpf_t invBsq, const mpf_t llsq, const mpf_t lhsq, const int numberOfMN, const int* mnLookup, const unsigned short int maxOrder);
 
-void FillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
+void FillHmn(mpf_t** Hmn, const mpf_t* Rmn, const mpf_t* hpmn, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
 
-void ThreadFillHmn(__float128** Hmn, const __float128* Rmn, const __float128* hpmn, const int* mnLocation, const int* mnMultiplicity, const int startingMN, const int endingMN, const int order);
+void ThreadFillHmn(mpf_t** Hmn, const mpf_t* Rmn, const mpf_t* hpmn, const int* mnLocation, const int* mnMultiplicity, const int startingMN, const int endingMN, const int order, mpf_t& temp1, mpf_t& temp2, mpf_t& hpTemp);
 
-void FillH(__float128* H, const __float128* const* Hmn, const __float128* Rmn, const __float128* hpmn, const __float128 hp, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
+void FillH(mpf_t* H, const mpf_t* const* Hmn, const mpf_t* Rmn, const mpf_t* hpmn, const mpf_t hp, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
 
-void DisplayH(const __float128* H, const __float128 c, const __float128 hl, const __float128 hh, const __float128 hp, const unsigned short int maxOrder, int time, const std::string unit);
-
-inline __float128 HmnTerm(const __float128* const* Hmn, const __float128* Rmn, const __float128* hpmn, const __float128 hp, const int* mnLocation, const int* mnMultiplicity, const int order){
-	__float128 term = 0;
-	for(int power = 2; power <= order; power+=2){
-		for(int pos = mnLocation[power/2-1]; pos <= mnLocation[power/2-1] + mnMultiplicity[power/2-1] - 1; ++pos){
-			term += powOverflow[power/256]*pow(16.0,power%256)*Rmn[pos-1]/(hp-hpmn[pos-1])*Hmn[pos-1][(order-power)/2];
-		}
-	}
-	return term;
-}
+void DisplayH(const mpf_t* H, const mpf_t c, const mpf_t hl, const mpf_t hh, const mpf_t hp, const unsigned short int maxOrder, int time, const std::string unit);
