@@ -1,6 +1,6 @@
 CC=g++
-CFLAGS=-Wall -Werror -I$(IDIR) -fext-numeric-literals -O3 -std=c++14 -c
-LDFLAGS= -lquadmath -lpthread -lgmp
+CFLAGS=-Wall -Werror -I$(IDIR) -O3 -std=c++14 -c
+LDFLAGS= -lpthread -lgmp
 SOURCES=virasoro.cpp
 ODIR = obj
 _OBJECTS=$(SOURCES:.cpp=.o)

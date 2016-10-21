@@ -407,7 +407,7 @@ void FillRmn(mpf_t* Rmn, const mpf_t* prodLkl, const mpf_t bsq, const mpf_t invB
 		mpf_mul(Rmn[pos-1], Rmn[pos-1], prodLkl[pos-1]);
 		std::cout << "Rmn[" << pos-1 << "] = ";
 		mpf_out_str(NULL, 10, 10, Rmn[pos-1]);
-		std::cout << "." << std::endl;		
+		std::cout << "." << std::endl;				// it segfaults without this cout call. I have no idea why.
 	}
 	
 	mpf_clears(temp1, temp2, Lsq);
@@ -483,14 +483,26 @@ void FillH(mpf_t* H, const mpf_t* const* Hmn, const mpf_t* Rmn, const mpf_t* hpm
 	return;
 }
 
-inline std::string to_string(const mpf_t N, const int digits){
+inline std::string to_string(const mpf_t N, int digits){
+	if(digits < 0) digits = -digits;	
 	char* buffer = new char;
 	mp_exp_t* dotPos = new long;
 	buffer = mpf_get_str(NULL, dotPos, 10, digits, N);
 	std::string output = std::string(buffer);
 	if(output.empty()) output.append("0");
 	while((long)*dotPos > (int)output.size()) output.append("0");
-	if((long)*dotPos > 0 && (long)*dotPos < (int)output.size()) output.insert((long)*dotPos, ".");
+	if(digits == 0 && (long)*dotPos > 0 && (long)*dotPos < (int)output.size()){
+		if(mpf_sgn(N) == -1) *dotPos += 1;
+		output.insert((long)*dotPos, ".");
+	}
+	if(digits > 0 && (long)*dotPos > digits){
+		while((int)output.size() < digits) output.append("0");
+		if(mpf_sgn(N) == 1) output.insert(1, ".");		
+		if(mpf_sgn(N) == -1) output.insert(2, ".");
+		output.append("*10^");
+		sprintf(buffer, "%ld", (long)*dotPos);
+		output.append(buffer);
+	}
 	delete buffer;
 	delete dotPos;
 	return output;
@@ -498,7 +510,7 @@ inline std::string to_string(const mpf_t N, const int digits){
 
 void DisplayH(const mpf_t* H, const mpf_t c, const mpf_t hl, const mpf_t hh, const mpf_t hp, const unsigned short int maxOrder, const int time, const std::string unit){
 	std::ofstream outputFile;
-	std::string filename = "virasoro_" + to_string(c, 1) + "_" + to_string(hl, 1) + "_" + to_string(hh, 1) + "_" + to_string(hp, 1) + "_" + std::to_string(maxOrder) + ".txt";
+	std::string filename = "virasoro_" + to_string(c, 3) + "_" + to_string(hl, 3) + "_" + to_string(hh, 3) + "_" + to_string(hp, 1) + "_" + std::to_string(maxOrder) + ".txt";
 	outputFile.open (filename);
 	std::cout << "Given the parameters" << std::endl;
 	outputFile << "Given the parameters" << std::endl;
@@ -508,7 +520,7 @@ void DisplayH(const mpf_t* H, const mpf_t c, const mpf_t hl, const mpf_t hh, con
 	outputFile << "the Virasoro block coefficients are as follows:" << std::endl;
 	for(int orderBy2 = 0; 2*orderBy2 <= maxOrder; ++orderBy2){
 		std::cout << "q^" << 2*orderBy2 << ": " << to_string(H[orderBy2], 10) << std::endl;
-		outputFile << "q^" << 2*orderBy2 << ": " << to_string(H[orderBy2], 0) << std::endl;
+		outputFile << "q^" << 2*orderBy2 << ": " << to_string(H[orderBy2], 10) << std::endl;
 	}
 	outputFile << "{1";
 	for(int orderBy2 = 1; 2*orderBy2 <= maxOrder; orderBy2++){
