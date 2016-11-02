@@ -1,12 +1,12 @@
 CC=g++
-CFLAGS=-Wall -Werror -I$(IDIR) -O3 -std=c++14 -c
-LDFLAGS= -lpthread -lgmp
-SOURCES=virasoro.cpp
+IDIR =./include
+CFLAGS=-Wall -Werror -I$(IDIR) -O3 -pg -std=c++14 -c
+LDFLAGS= -lpthread -lgmpxx -lgmp
+SOURCES=virasoro.cpp cpqmn.cpp hmn.cpp
 ODIR = obj
 _OBJECTS=$(SOURCES:.cpp=.o)
 OBJECTS=$(patsubst %,$(ODIR)/%,$(_OBJECTS))
-IDIR =./include
-_DEPS = virasoro.h
+_DEPS = virasoro.h cpqmn.h hmn.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 EXECUTABLE=virasoro
 
@@ -15,9 +15,21 @@ all: $(SOURCES) $(DEPS) $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 
-$(OBJECTS): $(SOURCES) $(DEPS)
+obj/virasoro.o: $(SOURCES) $(DEPS)
 	$(CC) $(CFLAGS) $< -o $@
 
-.PHONY: clean
+obj/cpqmn.o: cpqmn.cpp $(IDIR)/cpqmn.h
+	$(CC) $(CFLAGS) $< -o $@
+
+obj/hmn.o: hmn.cpp $(IDIR)/hmn.h cpqmn.cpp $(IDIR)/cpqmn.h
+	$(CC) $(CFLAGS) $< -o $@
+
+.PHONY: clean, virasoro.o, cpqmn.o, hmn.o
 clean :
-	rm $(OBJECTS)
+	rm $(EXECUTABLE) $(OBJECTS)
+virasoro.o :
+	make obj/virasoro.o
+cpqmn.o :
+	make obj/cpqmn.o
+hmn.o :
+	make obj/hmn.o
