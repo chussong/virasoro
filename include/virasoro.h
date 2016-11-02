@@ -1,31 +1,57 @@
+#ifndef VIRASORO_H_
+#define VIRASORO_H_
+//#define _CRT_DISABLE_PERFCRIT_LOCKS			requires removing iostream and possibly extra static linking
+
 #include <cstdlib>		// atoi
 #include <chrono>		// timers
 #include <iostream>		// cout
+#include <string>
 #include <fstream>		// file output
-#include <stdio.h>
-#include <gmp.h>
-#include <thread>
+#include <stdio.h>		// no idea why I needed this
+#include <gmpxx.h>		// mpf_class
+#include <thread>		// std::thread
 
-const static int maxThreads = 8;
-static const int precision = 512;
-static mpf_t* powOverflow;
+#include "cpqmn.h"
+#include "hmn.h"
+
+extern const int maxThreads;
+extern const int precision;
+extern mpf_class* powOverflow;
+
+inline void ClearStructureChars(FILE* file){
+	char c = fgetc(file);
+	while(c == ' ' || c == ',' || c == ';') c = fgetc(file);
+	ungetc(c, file);
+}
+
+int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders);
+
+int ReadMPF(mpf_class& output, FILE* runfile);
+
+int ReadMaxOrder(FILE* runfile);
+
+void SetPowOverflow(unsigned short int maxOrder);
+
+void DebugPrintRunVector(const mpf_class* runVector, const unsigned short int maxOrder);
+
+void FindCoefficients(const mpf_class* runVector, const unsigned short int maxOrder, const std::string runfileName);
 
 int EnumerateMN (int* mnLocation, int* mnMultiplicity,  unsigned short int maxOrder);
 
 void FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int *nTable, const int numberOfMN, const int *mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
 
-void FillHpmn (mpf_t* hpmn, const unsigned short int *mTable, const unsigned short int *nTable, const int numberOfMN, const mpf_t bsq, const mpf_t invBsq);
+void ConvertInputs(mpf_class& bsq, mpf_class& invBsq, mpf_class& llsq, mpf_class& lhsq, const mpf_class& c, const mpf_class& hl, const mpf_class& hh, mpf_class& temp1, mpf_class& temp2);
 
-void FillProdLkl(mpf_t *prodLkl, const mpf_t bsq, const mpf_t invBsq, const unsigned short int *mTable, const unsigned short int *nTable, const int numberOfMN);
+void FillH(mpf_class* H, const Hmn_t* Hmn, const Cpqmn_t* Cpqmn, const mpf_class hp, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
 
-void FindProdLkl(const mpf_t bsq, const mpf_t invBsq, const unsigned int m, const unsigned int n, mpf_t& temp1, mpf_t& temp2, mpf_t& prod);
+void ShowTime(std::string computationName, std::chrono::time_point<std::chrono::high_resolution_clock> timeStart);
 
-void FillRmn(mpf_t* Rmn, const mpf_t* prodLkl, const mpf_t bsq, const mpf_t invBsq, const mpf_t llsq, const mpf_t lhsq, const int numberOfMN, const int* mnLookup, const unsigned short int maxOrder);
+std::string to_string(const mpf_class N, int digits);
 
-void FillHmn(mpf_t** Hmn, const mpf_t* Rmn, const mpf_t* hpmn, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
+std::string NameOutputFile(const char* runfileName);
 
-void ThreadFillHmn(mpf_t** Hmn, const mpf_t* Rmn, const mpf_t* hpmn, const int* mnLocation, const int* mnMultiplicity, const int startingMN, const int endingMN, const int order, mpf_t& temp1, mpf_t& temp2, mpf_t& hpTemp);
+void DisplayH(const mpf_class* H, const mpf_class c, const mpf_class hl, const mpf_class hh, const mpf_class hp, const unsigned short int maxOrder);
 
-void FillH(mpf_t* H, const mpf_t* const* Hmn, const mpf_t* Rmn, const mpf_t* hpmn, const mpf_t hp, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
+void WriteH(const mpf_class* H, const mpf_class c, const mpf_class hl, const mpf_class hh, const mpf_class hp, const unsigned short int maxOrder, const std::string runfileName);
 
-void DisplayH(const mpf_t* H, const mpf_t c, const mpf_t hl, const mpf_t hh, const mpf_t hp, const unsigned short int maxOrder, int time, const std::string unit);
+#endif
