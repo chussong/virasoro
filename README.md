@@ -12,7 +12,7 @@ will tell the program to read 1to30.txt and perform all the runs shown in it. A 
 35 1 3 0 1000
 would run the program twice, once with c=30 and once with c=35. Parameters can be separated by single spaces, commas, or semicolons. Multiple runs can be described in a batch using Mathematica-like syntax: for instance, the following line:
 {26,34,2} 1 3 {0,5,1} 1000
-would expand to running with hp=0,1,2,3,4,5 for each of c=26,28,30,32,34, a total of 30 order-1000 runs. This would most likely finish in several hours. Note that the program is not yet smart enough to reuse Hmn with varying hp, which would greatly speed up the process.
+would expand to running with hp=0,1,2,3,4,5 for each of c=26,28,30,32,34, a total of 30 order-1000 runs. This would most likely finish in several hours. The program automatically combines runs which differ only in hp and/or qmax in order to save time.
 
 There are two known input restrictions which will cause the program to fail despite there being an answer. First, c between 1 and 25 will result in a complex b^2, which it currently can not handle. Second, if b^2 or 1/b^2 is an integer, then a 0/0 appears which is currently unhandled; this occurs for example when c=25, 28, 33, 38.5, 44.2, 50, etc.
 

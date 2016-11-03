@@ -5,9 +5,10 @@
 #include <cstdlib>		// atoi
 #include <chrono>		// timers
 #include <iostream>		// cout
-#include <string>
+#include <string>		// std::string
+#include <vector>		// std::vector
 #include <fstream>		// file output
-#include <stdio.h>		// no idea why I needed this
+#include <stdio.h>		// fgetc
 #include <gmpxx.h>		// mpf_class
 #include <thread>		// std::thread
 
@@ -30,11 +31,13 @@ int ReadMPF(mpf_class& output, FILE* runfile);
 
 int ReadMaxOrder(FILE* runfile);
 
+int RunCompare(mpf_class* run1, mpf_class* run2);
+
 void SetPowOverflow(unsigned short int maxOrder);
 
-void DebugPrintRunVector(const mpf_class* runVector, const unsigned short int maxOrder);
+void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder);
 
-void FindCoefficients(const mpf_class* runVector, const unsigned short int maxOrder, const std::string runfileName);
+void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder, const std::string runfileName);
 
 int EnumerateMN (int* mnLocation, int* mnMultiplicity,  unsigned short int maxOrder);
 

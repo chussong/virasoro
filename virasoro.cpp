@@ -13,10 +13,10 @@ int main(int argc, char** argv){
 	switch(argc){
 		default:	printf("Error: input either the name of a runfile or the five parameters c, hl, hh, hp, maxOrder\n");
 					return EXIT_FAILURE;
-		case 2:		{mpf_class** runs = (mpf_class**)malloc(sizeof(*runs));
-					int* maxOrders = (int*)malloc(sizeof(*maxOrders));
-					int numberOfRuns = ReadRunfile(argv[1], runs, maxOrders);
-					switch(numberOfRuns){
+		case 2:		{mpf_class** rawRuns = (mpf_class**)malloc(sizeof(*rawRuns));
+					int* rawMaxOrders = (int*)malloc(sizeof(*rawMaxOrders));
+					int rawNumberOfRuns = ReadRunfile(argv[1], rawRuns, rawMaxOrders);
+					switch(rawNumberOfRuns){
 						case 0:		perror("Error: zero valid runs detected in given runfile.\n");
 									return EXIT_FAILURE;
 						case -1:	perror("Error: if you give one argument it must be the name of a runfile.\n");
@@ -26,10 +26,61 @@ int main(int argc, char** argv){
 						case -3:	perror("Error: expected a number in the runfile but failed to read one.\n");
 									return EXIT_FAILURE;
 					}
+					// Check runs for duplicates, compress runs differing only by hp
+					int numberOfRuns = rawNumberOfRuns;
+					bool crunched[rawNumberOfRuns]{0};
+					std::vector<mpf_class> rawHp[rawNumberOfRuns];
+					for(int i = 1; i <= rawNumberOfRuns; ++i){
+						rawHp[i-1].push_back(rawRuns[i-1][3]);
+						for(int j = i+1; j <= rawNumberOfRuns; ++j){
+							if(crunched[j-1]) continue;
+							switch(RunCompare(rawRuns[i-1], rawRuns[j-1])){
+								case 0:		crunched[j-1] = false;	// runs different, do nothing
+											break;				
+								case -1:	if(rawMaxOrders[j-1] > rawMaxOrders[i-1]) rawMaxOrders[i-1] = rawMaxOrders[j-1];
+											crunched[j-1] = true;	// runs identical, crunch them together
+											--numberOfRuns;
+											break;
+								case -2:	rawHp[i-1].push_back(rawRuns[j-1][3]);	// runs differ by hp
+											if(rawMaxOrders[j-1] > rawMaxOrders[i-1]) rawMaxOrders[i-1] = rawMaxOrders[j-1];
+											crunched[j-1] = true;
+											--numberOfRuns;
+											break;
+							}
+						}
+					}
+					int runID = 1;
+					mpf_class* runs[numberOfRuns];
+					std::vector<mpf_class> hp[numberOfRuns];
+					int maxOrders[numberOfRuns];
+					for(int i = 1; i <= rawNumberOfRuns; ++i){
+						if(!crunched[i-1]){
+							runs[runID-1] = new mpf_class[3];
+							runs[runID-1][0] = rawRuns[i-1][0];
+							runs[runID-1][1] = rawRuns[i-1][1];
+							runs[runID-1][2] = rawRuns[i-1][2];
+							hp[runID-1] = rawHp[i-1];
+							maxOrders[runID-1] = rawMaxOrders[i-1];
+							delete[] rawRuns[i-1];
+							rawHp[i-1].clear();
+							++runID;
+						}
+					}
+					std::free(rawRuns);
+					std::free(rawMaxOrders);
 					for(int i = 1; i <= numberOfRuns; ++i){
 						std::cout << "Run " << i << ": ";
-						for(int j = 1; j <= 4; ++j){
+						for(int j = 1; j <= 3; ++j){
 							std::cout << to_string(runs[i-1][j-1], 0) << " ";
+						}
+						if(hp[i-1].size() > 1) std::cout << "{";
+						for(unsigned int j = 1; j <= hp[i-1].size(); ++j){
+							std::cout << to_string(hp[i-1][j-1], 0) << ",";
+						}
+						if(hp[i-1].size() > 1){
+							std::cout << "\b} ";
+						} else {
+							std::cout << "\b ";
 						}
 						std::cout << maxOrders[i-1];
 						std::cout << std::endl;
@@ -44,22 +95,24 @@ int main(int argc, char** argv){
 					std::remove(outputName.c_str());
 					for(int run = 1; run <= numberOfRuns; ++run){
 						runStart = Clock::now();
-//						DebugPrintRunVector(runs[run-1], maxOrders[run-1]);
+//						DebugPrintRunVector(runs[run-1], hp[run-1], maxOrders[run-1]);
 						printf("Beginning run %i of %i.\n", run, numberOfRuns);
-						FindCoefficients(runs[run-1], maxOrders[run-1], outputName);
+						FindCoefficients(runs[run-1], hp[run-1], maxOrders[run-1], outputName);
 						ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);						
 					}
 					}break;
-		case 6:		{mpf_class runVector[4];
+		case 6:		{mpf_class runVector[3];
 					for(int i = 1; i <= 4; ++i){
 						runVector[i-1] = argv[i];
 					}
+					std::vector<mpf_class> hp;
+					hp.push_back(runVector[3]);
 					unsigned short int maxOrder = std::atoi(argv[5]);
 					maxOrder -= (maxOrder % 2);
 					SetPowOverflow(maxOrder);
-//					DebugPrintRunVector(runVector, maxOrder);
+//					DebugPrintRunVector(runVector, hp, maxOrder);
 					outputName = NameOutputFile(nullptr);
-					FindCoefficients(runVector, maxOrder, outputName);
+					FindCoefficients(runVector, hp, maxOrder, outputName);
 					}break;
 	}
 
@@ -140,7 +193,7 @@ int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders){
 	runs = new mpf_class*[numberOfLines];
 	maxOrders = new int[numberOfLines];
 	for(int currentLine = 1; currentLine <= numberOfLines; ++currentLine){
-		runs[currentLine-1] = new mpf_class[5];
+		runs[currentLine-1] = new mpf_class[4];
 		for(int i = 1; i <= 4; ++i){
 			readStatus = ReadMPF(runs[currentLine-1][i-1], runfile);
 			if(readStatus != 0) return -3;
@@ -199,6 +252,14 @@ int ReadMaxOrder(FILE* runfile){
 	return maxOrder;
 }
 
+int RunCompare(mpf_class* run1, mpf_class* run2){
+	if(run1[0] != run2[0]) return 0;	// runs are different
+	if(run1[1] != run2[1]) return 0;
+	if(run1[2] != run2[2]) return 0;
+	if(run1[3] != run2[3]) return -2;	// runs differ only by hp
+	return -1;							// runs are identical
+}
+
 void SetPowOverflow(unsigned short int maxOrder){
 	powOverflow = new mpf_class[maxOrder/256+1];
 	powOverflow[0] = 1;
@@ -208,12 +269,13 @@ void SetPowOverflow(unsigned short int maxOrder){
 	}
 }
 
-void DebugPrintRunVector(const mpf_class* runVector, const unsigned short int maxOrder){
-	std::cout << "If the code were running right now, it would be initiating a run with c = " << to_string(runVector[0], 0) << ", hl = " << to_string(runVector[1], 0) << ", hh = " << to_string(runVector[2], 0) << ", hp = " << to_string(runVector[3], 0) << ", maxOrder = " << maxOrder << "." << std::endl;
+void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder){
+	for(unsigned int i = 1; i <= hp.size(); ++i){
+		std::cout << "Pretend this is a run with c = " << to_string(runVector[0], 0) << ", hl = " << to_string(runVector[1], 0) << ", hh = " << to_string(runVector[2], 0) << ", hp = " << to_string(hp[i-1], 0) << ", maxOrder = " << maxOrder << "." << std::endl;
+	}
 }
 
-void FindCoefficients(const mpf_class* runVector, const unsigned short int maxOrder, const std::string outputName){
-//	auto timeStart = Clock::now();
+void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder, const std::string outputName){
 	int mnLocation[maxOrder]; 	/* "pos" (location+1) in mn vector at which i+1 = m*n starts */
 	int mnMultiplicity[maxOrder] = {0};	/* number of mn combinations giving i+1 = m*n */
 	int numberOfMN = EnumerateMN(mnLocation, mnMultiplicity, maxOrder);
@@ -232,28 +294,26 @@ void FindCoefficients(const mpf_class* runVector, const unsigned short int maxOr
 	auto time1 = Clock::now();
 	Cpqmn.FillAmn();
 	auto time2 = Clock::now();
-//	std::cout << "Amn filled. This took " << std::chrono::duration_cast<std::chrono::microseconds>(time2 - time1).count() << " us." << std::endl;
 	
 	// combine Amn into Rmn
 	time1 = Clock::now();
 	Cpqmn.FillRmn(&llsq, &lhsq);
 	time2 = Clock::now();
-//	std::cout << "Rmn filled. This took " << std::chrono::duration_cast<std::chrono::microseconds>(time2 - time1).count() << " us." << std::endl;
 	
 	// combine Rmn and hpmn into computation of H
 	Hmn_t Hmn(&Cpqmn, numberOfMN, maxOrder, mnLocation, mnMultiplicity, mnLookup);
 	time1 = Clock::now();
 	Hmn.FillHmn();
 	time2 = Clock::now();
-//	std::cout << "Hmn filled. This took " << std::chrono::duration_cast<std::chrono::microseconds>(time2 - time1).count() << " us." << std::endl;
 	
 	// corral H by q order and display coefficients
 	mpf_class H[maxOrder/2+1];
-	H[0] = 1;
-	FillH(H, &Hmn, &Cpqmn, runVector[3], mnLocation, mnMultiplicity, maxOrder);
-	if(outputName.empty()) DisplayH(H, runVector[0], runVector[1], runVector[2], runVector[3], maxOrder);
-	WriteH(H, runVector[0], runVector[1], runVector[2], runVector[3], maxOrder, outputName);
-//	ShowTime(std::string("Computing maxOrder = ").append(std::to_string(maxOrder)), timeStart);
+	for(unsigned int i = 1; i <= hp.size(); ++i){
+		H[0] = 1;
+		FillH(H, &Hmn, &Cpqmn, hp[i-1], mnLocation, mnMultiplicity, maxOrder);
+		if(outputName.empty()) DisplayH(H, runVector[0], runVector[1], runVector[2], hp[i-1], maxOrder);
+		WriteH(H, runVector[0], runVector[1], runVector[2], hp[i-1], maxOrder, outputName);
+	}
 	return;
 }
 
@@ -376,6 +436,7 @@ std::string to_string(const mpf_class N, int digits){
 		output.append("*10^");
 		output.append(std::to_string(dotPos));
 	}
+	if(N > 0 && N < 1) output.insert(0, "0.");
 	return output;
 }
 
