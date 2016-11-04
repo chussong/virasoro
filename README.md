@@ -14,7 +14,7 @@ would run the program twice, once with c=30 and once with c=35. Parameters can b
 {26,34,2} 1 3 {0,5,1} 1000  
 would expand to running with hp=0,1,2,3,4,5 for each of c=26,28,30,32,34, a total of 30 order-1000 runs. This would most likely finish in under an hour. The program automatically combines runs which differ only in hp and/or qmax in order to save time.
 
-There are two known input restrictions which will cause the program to fail despite there being an answer. First, c between 1 and 25 will result in a complex b^2, which it currently can not handle. Second, if b^2 or 1/b^2 is an integer, then a 0/0 appears which is currently unhandled; this occurs for example when c=25, 28, 33, 38.5, 44.2, 50, etc.
+There are two known seemingly-plausible input categories which will cause the program to fail. First, c between 1 and 25 will result in a complex b^2, which it currently can not handle. Second, if b^2 or 1/b^2 is an integer, then divisions by 0 appear; this occurs for example when c=25, 28, 33, 38.5, 44.2, 50, etc., and runs with these values of c are skipped automatically.
 
 Some interior parameters are included in static variables initialized at the top of virasoro.cpp: the number of threads used in the slow part of the computation (default 8, appropriate for 4-core processors) and the floating-point precision of the numbers used (default 512, which allows low-error calculations at least up to order 1000). It should still compile and run fine with any reasonable values of these numbers.
 

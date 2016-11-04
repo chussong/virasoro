@@ -2,7 +2,7 @@
 
 typedef std::chrono::high_resolution_clock Clock;
 
-const int maxThreads = 8;
+const int maxThreads = 1;
 const int precision = 512;
 mpf_class* powOverflow;
 
@@ -287,6 +287,12 @@ void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> h
 	// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
 	mpf_class bsq, invBsq, llsq, lhsq, temp1, temp2;
 	ConvertInputs(bsq, invBsq, llsq, lhsq, runVector[0], runVector[1], runVector[2], temp1, temp2);
+	for(int i = 1; i <= 20; ++i){
+		if(cmp(bsq, i) == 0 || cmp(invBsq, i) == 0){
+			printf("Skipping this run because b^2 is an integer so the coefficients diverge.\n");
+			return;
+		}
+	}
 	
 	Cpqmn_t Cpqmn(&bsq, &invBsq, numberOfMN, maxOrder, mTable, nTable, mnLookup);
 	Cpqmn.FillHpmn();
@@ -424,8 +430,9 @@ std::string to_string(const mpf_class N, int digits){
 	mp_exp_t dotPos;
 	std::string output = N.get_str(dotPos, 10, digits);
 	if(output.empty()) output.append("0");
-	while(dotPos > (int)output.size()) output.append("0");
+	if(digits > 0 && dotPos < digits) while(dotPos > (int)output.size()) output.append("0");
 	if(digits == 0 && dotPos > 0 && dotPos < (int)output.size()){
+		while(dotPos > (int)output.size()) output.append("0");
 		if(sgn(N) == -1) dotPos += 1;
 		output.insert(dotPos, ".");
 	}
