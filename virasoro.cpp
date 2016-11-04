@@ -101,7 +101,7 @@ int main(int argc, char** argv){
 						ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);						
 					}
 					}break;
-		case 6:		{mpf_class runVector[3];
+		case 6:		{mpf_class runVector[4];
 					for(int i = 1; i <= 4; ++i){
 						runVector[i-1] = argv[i];
 					}
