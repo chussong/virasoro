@@ -25,6 +25,12 @@ inline void ClearStructureChars(FILE* file){
 	ungetc(c, file);
 }
 
+std::string ParseOptions(int &argc, char** &argv);
+
+int RunFromFile(char* filename, const std::string options);
+
+int RunFromTerminal(char** argv, const std::string options);
+
 int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders);
 
 int ReadMPF(mpf_class& output, FILE* runfile);
@@ -41,7 +47,7 @@ void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> h
 
 int EnumerateMN (int* mnLocation, int* mnMultiplicity,  unsigned short int maxOrder);
 
-void FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int *nTable, const int numberOfMN, const int *mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
+void FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int *nTable, const int *mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
 
 void ConvertInputs(mpf_class& bsq, mpf_class& invBsq, mpf_class& llsq, mpf_class& lhsq, const mpf_class& c, const mpf_class& hl, const mpf_class& hh, mpf_class& temp1, mpf_class& temp2);
 

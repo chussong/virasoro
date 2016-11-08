@@ -1,6 +1,6 @@
 #include "hmn.h"
 
-Hmn_t::Hmn_t(Cpqmn_t* Cpqmn, const int numberOfMN, const unsigned short int maxOrder, const int* mnLocation, const int* mnMultiplicity, const int* mnLookup): numberOfMN(numberOfMN), maxOrder(maxOrder), mnLocation(mnLocation), mnMultiplicity(mnMultiplicity), Cpqmn(Cpqmn)
+Hmn_t::Hmn_t(Cpqmn_t* Cpqmn, const int numberOfMN, const unsigned short int maxOrder, const int* mnLocation, const int* mnMultiplicity, const int* mnLookup): numberOfMN(numberOfMN), maxOrder(maxOrder), mnLocation(mnLocation), mnMultiplicity(mnMultiplicity), mnLookup(mnLookup), Cpqmn(Cpqmn)
 {
 	Hmn = new mpf_class*[maxOrder/2];
 	Hmn[0] = new mpf_class[numberOfMN];
@@ -49,6 +49,10 @@ void Hmn_t::ThreadFillHmn(const int startingMN, const int endingMN, const int or
 			for(int power = 2; power <= order; power+=2){
 				for(int scanPos = mnLocation[power-1]; scanPos <= mnLocation[power-1] + mnMultiplicity[power-1] - 1; ++scanPos){
 					temp1 = hpTemp - Cpqmn->hpmn[scanPos-1];
+/*					if(temp1 == 0){
+						std::cout << "At order " << order << ", mn = " << mn <<", dividing Rmn = " << Cpqmn->hpmn[scanPos-1] << " by " << temp1 << "." << std::endl;
+						continue;
+					}*/
 					temp1 = Cpqmn->Rmn[scanPos-1]/temp1;
 					temp1 *= Hmn[(order-power)/2][scanPos-1];
 					temp1 *= powOverflow[power/256];

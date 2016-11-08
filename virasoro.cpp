@@ -2,122 +2,209 @@
 
 typedef std::chrono::high_resolution_clock Clock;
 
-const int maxThreads = 1;
+const int maxThreads = 8;
 const int precision = 512;
 mpf_class* powOverflow;
 
 int main(int argc, char** argv){
 	mpf_set_default_prec(precision);
 	auto programStart = Clock::now();
-	std::string outputName;
+	std::string options = ParseOptions(argc, argv);
 	switch(argc){
 		default:	printf("Error: input either the name of a runfile or the five parameters c, hl, hh, hp, maxOrder\n");
 					return EXIT_FAILURE;
-		case 2:		{mpf_class** rawRuns = (mpf_class**)malloc(sizeof(*rawRuns));
-					int* rawMaxOrders = (int*)malloc(sizeof(*rawMaxOrders));
-					int rawNumberOfRuns = ReadRunfile(argv[1], rawRuns, rawMaxOrders);
-					switch(rawNumberOfRuns){
-						case 0:		perror("Error: zero valid runs detected in given runfile.\n");
-									return EXIT_FAILURE;
-						case -1:	perror("Error: if you give one argument it must be the name of a runfile.\n");
-									return EXIT_FAILURE;
-						case -2:	perror("Error: a curly brace '{' was found indicating a batch run, but it was not followed by a valid macro.\n");
-									return EXIT_FAILURE;
-						case -3:	perror("Error: expected a number in the runfile but failed to read one.\n");
-									return EXIT_FAILURE;
+		case 2:		if(options.find("m", 0) != std::string::npos){
+						RunFromFile(argv[1], options);
+					} else {
+						RunFromFile(argv[1], options);
+						ShowTime("Entire computation", programStart);
 					}
-					// Check runs for duplicates, compress runs differing only by hp
-					int numberOfRuns = rawNumberOfRuns;
-					bool crunched[rawNumberOfRuns]{0};
-					std::vector<mpf_class> rawHp[rawNumberOfRuns];
-					for(int i = 1; i <= rawNumberOfRuns; ++i){
-						rawHp[i-1].push_back(rawRuns[i-1][3]);
-						for(int j = i+1; j <= rawNumberOfRuns; ++j){
-							if(crunched[j-1]) continue;
-							switch(RunCompare(rawRuns[i-1], rawRuns[j-1])){
-								case 0:		crunched[j-1] = false;	// runs different, do nothing
-											break;				
-								case -1:	if(rawMaxOrders[j-1] > rawMaxOrders[i-1]) rawMaxOrders[i-1] = rawMaxOrders[j-1];
-											crunched[j-1] = true;	// runs identical, crunch them together
-											--numberOfRuns;
-											break;
-								case -2:	rawHp[i-1].push_back(rawRuns[j-1][3]);	// runs differ by hp
-											if(rawMaxOrders[j-1] > rawMaxOrders[i-1]) rawMaxOrders[i-1] = rawMaxOrders[j-1];
-											crunched[j-1] = true;
-											--numberOfRuns;
-											break;
-							}
-						}
+					break;
+		case 6:		if(options.find("m", 0) != std::string::npos){
+						RunFromTerminal(argv, options);
+					} else {
+						RunFromTerminal(argv, options);
+						ShowTime("Entire computation", programStart);
 					}
-					int runID = 1;
-					mpf_class* runs[numberOfRuns];
-					std::vector<mpf_class> hp[numberOfRuns];
-					int maxOrders[numberOfRuns];
-					for(int i = 1; i <= rawNumberOfRuns; ++i){
-						if(!crunched[i-1]){
-							runs[runID-1] = new mpf_class[3];
-							runs[runID-1][0] = rawRuns[i-1][0];
-							runs[runID-1][1] = rawRuns[i-1][1];
-							runs[runID-1][2] = rawRuns[i-1][2];
-							hp[runID-1] = rawHp[i-1];
-							maxOrders[runID-1] = rawMaxOrders[i-1];
-							delete[] rawRuns[i-1];
-							rawHp[i-1].clear();
-							++runID;
-						}
-					}
-					std::free(rawRuns);
-					std::free(rawMaxOrders);
-					for(int i = 1; i <= numberOfRuns; ++i){
-						std::cout << "Run " << i << ": ";
-						for(int j = 1; j <= 3; ++j){
-							std::cout << to_string(runs[i-1][j-1], 0) << " ";
-						}
-						if(hp[i-1].size() > 1) std::cout << "{";
-						for(unsigned int j = 1; j <= hp[i-1].size(); ++j){
-							std::cout << to_string(hp[i-1][j-1], 0) << ",";
-						}
-						if(hp[i-1].size() > 1){
-							std::cout << "\b} ";
-						} else {
-							std::cout << "\b ";
-						}
-						std::cout << maxOrders[i-1];
-						std::cout << std::endl;
-					}
-					int highestMax = 0;
-					for(int i = 1; i <= numberOfRuns; ++i){
-						if(maxOrders[i-1] > highestMax) highestMax = maxOrders[i-1];
-					}
-					SetPowOverflow(highestMax);
-					auto runStart = Clock::now();
-					outputName = NameOutputFile(argv[1]);
-					std::remove(outputName.c_str());
-					for(int run = 1; run <= numberOfRuns; ++run){
-						runStart = Clock::now();
-//						DebugPrintRunVector(runs[run-1], hp[run-1], maxOrders[run-1]);
-						printf("Beginning run %i of %i.\n", run, numberOfRuns);
-						FindCoefficients(runs[run-1], hp[run-1], maxOrders[run-1], outputName);
-						ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);						
-					}
-					}break;
-		case 6:		{mpf_class runVector[4];
-					for(int i = 1; i <= 4; ++i){
-						runVector[i-1] = argv[i];
-					}
-					std::vector<mpf_class> hp;
-					hp.push_back(runVector[3]);
-					unsigned short int maxOrder = std::atoi(argv[5]);
-					maxOrder -= (maxOrder % 2);
-					SetPowOverflow(maxOrder);
-//					DebugPrintRunVector(runVector, hp, maxOrder);
-					outputName = NameOutputFile(nullptr);
-					FindCoefficients(runVector, hp, maxOrder, outputName);
-					}break;
+					break;
 	}
 
-	ShowTime("Entire computation", programStart);
+
 	return EXIT_SUCCESS;
+}
+
+std::string ParseOptions(int &argc, char** &argv){
+	std::string options = "";
+	char** newArgv;
+	int newArgc = argc;
+	bool realArg[argc]{false};
+	for(int i = 1; i < argc; ++i){
+		if(argv[i][0] != '-'){
+			realArg[i] = true;
+			continue;
+		}
+		if(strcmp(argv[i], "-m") == 0){
+			options.append("m");
+			--newArgc;
+			realArg[i] = false;
+		}
+		if(strcmp(argv[i], "-c") == 0){
+			options.append("c");
+			--newArgc;
+			realArg[i] = false;
+		}
+	}
+	newArgv = new char*[newArgc];
+	newArgv[0] = argv[0];
+	int pos = 1;
+	for(int i = 1; i < argc; ++i){
+		if(realArg[i]){
+			newArgv[pos] = argv[i];
+			++pos;
+		}
+	}
+	argc = newArgc;
+	argv = newArgv;
+	return options;
+}
+
+int RunFromFile(char* filename, const std::string options){
+	const bool wolframOutput = options.find("m", 0) != std::string::npos;
+	const bool consoleOutput = options.find("c", 0) != std::string::npos;	
+	mpf_class** rawRuns = (mpf_class**)malloc(sizeof(*rawRuns));
+	int* rawMaxOrders = (int*)malloc(sizeof(*rawMaxOrders));
+	int rawNumberOfRuns = ReadRunfile(filename, rawRuns, rawMaxOrders);
+	switch(rawNumberOfRuns){
+		case 0:		perror("Error: zero valid runs detected in given runfile.\n");
+					return EXIT_FAILURE;
+		case -1:	perror("Error: if you give one argument it must be the name of a runfile.\n");
+					return EXIT_FAILURE;
+		case -2:	perror("Error: a curly brace '{' was found indicating a batch run, but it was not followed by a valid macro.\n");
+					return EXIT_FAILURE;
+		case -3:	perror("Error: expected a number in the runfile but failed to read one.\n");
+					return EXIT_FAILURE;
+	}
+	// Check runs for duplicates, compress runs differing only by hp
+	int numberOfRuns = rawNumberOfRuns;
+	bool crunched[rawNumberOfRuns]{0};
+	std::vector<mpf_class> rawHp[rawNumberOfRuns];
+	for(int i = 1; i <= rawNumberOfRuns; ++i){
+		rawHp[i-1].push_back(rawRuns[i-1][3]);
+		for(int j = i+1; j <= rawNumberOfRuns; ++j){
+			if(crunched[j-1]) continue;
+			switch(RunCompare(rawRuns[i-1], rawRuns[j-1])){
+				case 0:		crunched[j-1] = false;	// runs different, do nothing
+							break;				
+				case -1:	if(rawMaxOrders[j-1] > rawMaxOrders[i-1]) rawMaxOrders[i-1] = rawMaxOrders[j-1];
+							crunched[j-1] = true;	// runs identical, crunch them together
+							--numberOfRuns;
+							break;
+				case -2:	rawHp[i-1].push_back(rawRuns[j-1][3]);	// runs differ by hp
+							if(rawMaxOrders[j-1] > rawMaxOrders[i-1]) rawMaxOrders[i-1] = rawMaxOrders[j-1];
+							crunched[j-1] = true;
+							--numberOfRuns;
+							break;
+			}
+		}
+	}
+	int runID = 1;
+	mpf_class* runs[numberOfRuns];
+	std::vector<mpf_class> hp[numberOfRuns];
+	int maxOrders[numberOfRuns];
+	for(int i = 1; i <= rawNumberOfRuns; ++i){
+		if(!crunched[i-1]){
+			runs[runID-1] = new mpf_class[3];
+			runs[runID-1][0] = rawRuns[i-1][0];
+			runs[runID-1][1] = rawRuns[i-1][1];
+			runs[runID-1][2] = rawRuns[i-1][2];
+			hp[runID-1] = rawHp[i-1];
+			maxOrders[runID-1] = rawMaxOrders[i-1];
+			delete[] rawRuns[i-1];
+			rawHp[i-1].clear();
+			++runID;
+		}
+	}
+	std::free(rawRuns);
+	std::free(rawMaxOrders);
+	if(!wolframOutput){
+		for(int i = 1; i <= numberOfRuns; ++i){
+			std::cout << "Run " << i << ": ";
+			for(int j = 1; j <= 3; ++j){
+				std::cout << to_string(runs[i-1][j-1], 0) << " ";
+			}
+			if(hp[i-1].size() > 1) std::cout << "{";
+			for(unsigned int j = 1; j <= hp[i-1].size(); ++j){
+				std::cout << to_string(hp[i-1][j-1], 0) << ",";
+			}
+			if(hp[i-1].size() > 1){
+				std::cout << "\b} ";
+			} else {
+				std::cout << "\b ";
+			}
+			std::cout << maxOrders[i-1];
+			std::cout << std::endl;
+		}
+	}
+	int highestMax = 0;
+	for(int i = 1; i <= numberOfRuns; ++i){
+		if(maxOrders[i-1] > highestMax) highestMax = maxOrders[i-1];
+	}
+	SetPowOverflow(highestMax);
+	auto runStart = Clock::now();
+	std::string outputName;
+	if(wolframOutput){
+		outputName = "__MATHEMATICA";
+		std::cout << "{";
+		for(int run = 1; run < numberOfRuns; ++run){
+			FindCoefficients(runs[run-1], hp[run-1], maxOrders[run-1], outputName);
+			std::cout << ",";
+		}
+		FindCoefficients(runs[numberOfRuns-1], hp[numberOfRuns-1], maxOrders[numberOfRuns-1], outputName);
+		std::cout << "}";
+	} else {
+		if(consoleOutput){
+			outputName = "__CONSOLE";
+		} else {
+			outputName = NameOutputFile(filename);
+			std::remove(outputName.c_str());
+		}
+		for(int run = 1; run <= numberOfRuns; ++run){
+			runStart = Clock::now();
+//			DebugPrintRunVector(runs[run-1], hp[run-1], maxOrders[run-1]);
+			printf("Beginning run %i of %i.\n", run, numberOfRuns);
+			FindCoefficients(runs[run-1], hp[run-1], maxOrders[run-1], outputName);
+			ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
+		}
+	}
+	return 0;
+}
+
+int RunFromTerminal(char** argv, const std::string options){
+	const bool wolframOutput = options.find("m", 0) != std::string::npos;
+	const bool consoleOutput = options.find("c", 0) != std::string::npos;
+	mpf_class runVector[4];
+	for(int i = 1; i <= 4; ++i){
+		runVector[i-1] = argv[i];
+	}
+	std::vector<mpf_class> hp;
+	hp.push_back(runVector[3]);
+	unsigned short int maxOrder = std::atoi(argv[5]);
+	maxOrder -= (maxOrder % 2);
+	SetPowOverflow(maxOrder);
+//	DebugPrintRunVector(runVector, hp, maxOrder);
+	std::string outputName;
+	if(wolframOutput){
+		outputName = "__MATHEMATICA";
+		std::cout << "{";
+	} else if(consoleOutput) {
+		outputName = "__CONSOLE";
+	} else {
+		outputName = NameOutputFile(nullptr);
+		std::remove(outputName.c_str());
+	}
+	FindCoefficients(runVector, hp, maxOrder, outputName);
+	if(wolframOutput) std::cout << "}";
+	return 0;
 }
 
 int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders){
@@ -144,13 +231,13 @@ int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders){
 			} else {
 				secondHalf = currentLine.substr(rbPos+1, currentLine.length()-rbPos-1);
 				insideBraces = currentLine.substr(lbPos+1, rbPos-lbPos-1);
-				numStart = insideBraces.find_first_of("0123456789");
+				numStart = insideBraces.find_first_of("0123456789-.");
 				numEnd = insideBraces.find_first_of(" ,;", numStart+1);
 				lowerBound = insideBraces.substr(numStart, numEnd-numStart);
-				numStart = insideBraces.find_first_of("0123456789", numEnd+1);
+				numStart = insideBraces.find_first_of("0123456789-.", numEnd+1);
 				numEnd = insideBraces.find_first_of(" ,;", numStart+1);
 				upperBound = insideBraces.substr(numStart, numEnd-numStart);
-				numStart = insideBraces.find_first_of("0123456789", numEnd+1);
+				numStart = insideBraces.find_first_of("0123456789-.", numEnd+1);
 				numEnd = insideBraces.find_first_of(" ,;", numStart+1);
 				increment = insideBraces.substr(numStart, numEnd-numStart);
 				if(lowerBound > upperBound || increment <= 0) return -2;
@@ -213,7 +300,7 @@ int ReadMPF(mpf_class& output, FILE* runfile){
 	char inputBuffer[256]{0};
 	int c = fgetc(runfile);
 	int place = 0;
-	while((c >= '0' && c <= '9') || c == '.'){
+	while((c >= '0' && c <= '9') || c == '.' || c == '-'){
 		inputBuffer[place] = (char)c;
 		c = fgetc(runfile);
 		++place;
@@ -282,7 +369,7 @@ void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> h
 	unsigned short int mTable[numberOfMN] = {0};
 	unsigned short int nTable[numberOfMN] = {0};
 	int mnLookup[maxOrder*maxOrder];
-	FillMNTable(mnLookup, mTable, nTable, numberOfMN, mnLocation, mnMultiplicity, maxOrder);
+	FillMNTable(mnLookup, mTable, nTable, mnLocation, mnMultiplicity, maxOrder);
 	
 	// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
 	mpf_class bsq, invBsq, llsq, lhsq, temp1, temp2;
@@ -298,13 +385,8 @@ void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> h
 	Cpqmn.FillHpmn();
 	
 	auto time1 = Clock::now();
-	Cpqmn.FillAmn();
-	auto time2 = Clock::now();
-	
-	// combine Amn into Rmn
-	time1 = Clock::now();
 	Cpqmn.FillRmn(&llsq, &lhsq);
-	time2 = Clock::now();
+	auto time2 = Clock::now();
 	
 	// combine Rmn and hpmn into computation of H
 	Hmn_t Hmn(&Cpqmn, numberOfMN, maxOrder, mnLocation, mnMultiplicity, mnLookup);
@@ -317,8 +399,8 @@ void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> h
 	for(unsigned int i = 1; i <= hp.size(); ++i){
 		H[0] = 1;
 		FillH(H, &Hmn, &Cpqmn, hp[i-1], mnLocation, mnMultiplicity, maxOrder);
-		if(outputName.empty()) DisplayH(H, runVector[0], runVector[1], runVector[2], hp[i-1], maxOrder);
-		WriteH(H, runVector[0], runVector[1], runVector[2], hp[i-1], maxOrder, outputName);
+		if(outputName.empty() || outputName == "__CONSOLE") DisplayH(H, runVector[0], runVector[1], runVector[2], hp[i-1], maxOrder);
+		if(outputName != "__CONSOLE") WriteH(H, runVector[0], runVector[1], runVector[2], hp[i-1], maxOrder, outputName);
 	}
 	return;
 }
@@ -342,7 +424,7 @@ int EnumerateMN (int* mnLocation, int* mnMultiplicity, const unsigned short int 
 	return numberOfMN;
 }
 
-void FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int *nTable, const int numberOfMN, const int *mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder){
+void FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int *nTable, const int *mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder){
 	int pos;
 	for(int m = 1; m <= maxOrder; m+=2){
 		for(int n = 2; m*n <= maxOrder; n+=2){		// odd m, even n
@@ -430,7 +512,10 @@ std::string to_string(const mpf_class N, int digits){
 	mp_exp_t dotPos;
 	std::string output = N.get_str(dotPos, 10, digits);
 	if(output.empty()) output.append("0");
-	if(digits > 0 && dotPos < digits) while(dotPos > (int)output.size()) output.append("0");
+	if(digits > 0 && dotPos < digits){
+		while(dotPos > (int)output.size()) output.append("0");
+		if((N > 1 || N < 0) && dotPos < (int)output.size()) output.insert(abs(dotPos), ".");
+	}
 	if(digits == 0 && dotPos > 0 && dotPos < (int)output.size()){
 		while(dotPos > (int)output.size()) output.append("0");
 		if(sgn(N) == -1) dotPos += 1;
@@ -473,6 +558,14 @@ void DisplayH(const mpf_class* H, const mpf_class c, const mpf_class hl, const m
 void WriteH(const mpf_class* H, const mpf_class c, const mpf_class hl, const mpf_class hh, const mpf_class hp, const unsigned short int maxOrder, const std::string outputName){
 	std::ofstream outputFile;
 	std::string filename = outputName;
+	if(outputName == "__MATHEMATICA"){
+		std::cout << "{" << to_string(c, 0) << "," << to_string(hl, 0) << "," << to_string(hh, 0) << "," << to_string(hp, 0) << "," << maxOrder << "},{1";
+		for(int orderBy2 = 1; 2*orderBy2 <= maxOrder; orderBy2++){
+			std::cout << "," << to_string(H[orderBy2], 0);
+		}
+		std::cout << "}";
+		return;
+	}
 	if(outputName.empty()){
 		filename = "virasoro_" + to_string(c, 3) + "_" + to_string(hl, 3) + "_" + to_string(hh, 3) + "_" + to_string(hp, 1) + "_" + std::to_string(maxOrder) + ".txt";
 	}

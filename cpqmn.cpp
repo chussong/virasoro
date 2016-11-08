@@ -90,6 +90,10 @@ void Cpqmn_t::FindAmn(const unsigned int m, const unsigned int n, mpf_class& tem
 			prod *= temp2;
 		}
 	}
+/*	if(prod == 0){
+		std::cout << "A[" << m << "," << n << "] = 1/0. This would be multiplied by P[" << m << "," << n << "] = " << this->Rmn[mnLookup[(m-1)*maxOrder + n-1]-1] << std::endl;
+		return;
+	}*/
 	prod = 1/prod;
 	return;
 }
@@ -221,8 +225,12 @@ void Cpqmn_t::FillRmn(const mpf_class* llsq, const mpf_class* lhsq){
 		}
 	}
 	
+	this->FillAmn();
 	for(int pos = 1; pos <= numberOfMN; ++pos){
+//		std::cout << "Pmn[" << mTable[pos-1] << "," << nTable[pos-1] << "] = " << Rmn[pos-1] << std::endl;
+//		std::cout << "Amn[" << mTable[pos-1] << "," << nTable[pos-1] << "] = " << Amn[pos-1] << std::endl;
 		Rmn[pos-1] *= Amn[pos-1];
+//		std::cout << "Rmn[" << mTable[pos-1] << "," << nTable[pos-1] << "] = " << Rmn[pos-1] << std::endl;
 	}
 	
 	return;
