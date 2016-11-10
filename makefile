@@ -15,14 +15,17 @@ all: $(SOURCES) $(DEPS) $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 
-obj/virasoro.o: $(SOURCES) $(DEPS)
+obj/virasoro.o: $(SOURCES) $(DEPS) | $(ODIR)
 	$(CC) $(CFLAGS) $< -o $@
 
-obj/cpqmn.o: cpqmn.cpp $(IDIR)/cpqmn.h
+obj/cpqmn.o: cpqmn.cpp $(IDIR)/cpqmn.h | $(ODIR)
 	$(CC) $(CFLAGS) $< -o $@
 
-obj/hmn.o: hmn.cpp $(IDIR)/hmn.h cpqmn.cpp $(IDIR)/cpqmn.h
+obj/hmn.o: hmn.cpp $(IDIR)/hmn.h cpqmn.cpp $(IDIR)/cpqmn.h | $(ODIR)
 	$(CC) $(CFLAGS) $< -o $@
+
+$(ODIR):
+	mkdir $(ODIR)
 
 .PHONY: clean, virasoro.o, cpqmn.o, hmn.o
 clean :
