@@ -12,7 +12,6 @@ Hmn_t::Hmn_t(Cpqmn_t* Cpqmn, const int numberOfMN, const unsigned short int maxO
 			mnAtThisOrder[order/2-1] += mnMultiplicity[mn-1];
 		}
 		Hmn[order/2] = new mpf_class[mnAtThisOrder[order/2-1]];
-//		for(int pos = 1; pos <= mnAtThisOrder[order/2-1]; ++pos) mpf_init(Hmn[order/2][pos-1]);
 	}
 }
 
@@ -25,11 +24,11 @@ Hmn_t::~Hmn_t(){
 	delete[] mnAtThisOrder;
 }
 
-void Hmn_t::FillHmn(){
+void Hmn_t::FillHmn(){	
 	std::thread thread[maxThreads];
 	mpf_class temp1[maxThreads], temp2[maxThreads], hpTemp[maxThreads];
 	int numThreads;
-	for(int order = 2; order < maxOrder; order+=2){
+	for(int order = 2; order < maxOrder; order+=2){	
 		numThreads = std::min(maxThreads,(maxOrder-order)/2);
 		thread[0] = std::thread(Hmn_t::StartThread, this, 2, (maxOrder-order)/numThreads + (maxOrder-order)%numThreads, order, std::ref(temp1[0]), std::ref(temp2[0]), std::ref(hpTemp[0]));
 		for(int i=2; i<=numThreads; ++i){	
@@ -48,17 +47,18 @@ void Hmn_t::ThreadFillHmn(const int startingMN, const int endingMN, const int or
 			hpTemp = Cpqmn->hpmn[pos-1] + mn;
 			for(int power = 2; power <= order; power+=2){
 				for(int scanPos = mnLocation[power-1]; scanPos <= mnLocation[power-1] + mnMultiplicity[power-1] - 1; ++scanPos){
-					temp1 = hpTemp - Cpqmn->hpmn[scanPos-1];
-/*					if(temp1 == 0){
-						std::cout << "At order " << order << ", mn = " << mn <<", dividing Rmn = " << Cpqmn->hpmn[scanPos-1] << " by " << temp1 << "." << std::endl;
-						continue;
-					}*/
-					temp1 = Cpqmn->Rmn[scanPos-1]/temp1;
+					temp1 = Cpqmn->Rmn[scanPos-1];
 					temp1 *= Hmn[(order-power)/2][scanPos-1];
 					temp1 *= powOverflow[power/256];
 					temp2 = 16;
 					mpf_pow_ui(temp2.get_mpf_t(), temp2.get_mpf_t(), power%256);
 					temp1 *= temp2;
+					temp2 = hpTemp - Cpqmn->hpmn[scanPos-1];
+/*					if(temp2 == 0){
+						std::cout << "At order " << order << ", mn = " << mn <<", dividing numerator " << temp1 << " by " << temp2 << "." << std::endl;
+						continue;
+					}*/
+					temp1 /= temp2;
 					Hmn[order/2][pos-1] += temp1;
 				}
 			}

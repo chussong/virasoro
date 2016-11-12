@@ -17,6 +17,7 @@
 
 extern const int maxThreads;
 extern const int precision;
+extern const mpf_class tolerance;
 extern mpf_class* powOverflow;
 
 inline void ClearStructureChars(FILE* file){
@@ -44,6 +45,8 @@ void SetPowOverflow(unsigned short int maxOrder);
 void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder);
 
 void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder, const std::string runfileName);
+
+void CheckForDivergences(const mpf_class* bsq, unsigned short int &maxOrder);
 
 int EnumerateMN (int* mnLocation, int* mnMultiplicity,  unsigned short int maxOrder);
 

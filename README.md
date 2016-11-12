@@ -14,11 +14,12 @@ would run the program twice, once with c=30 and once with c=35. Parameters can b
 {26,34,2} 1 3 {0,5,1} 1000  
 would expand to running with hp=0,1,2,3,4,5 for each of c=26,28,30,32,34, a total of 30 order-1000 runs. This would most likely finish in under an hour. The program automatically combines runs which differ only in hp and/or qmax in order to save time.
 
-There are two known seemingly-plausible input categories which will cause the program to fail. First, c between 1 and 25 will result in a complex b^2, which it currently can not handle. Second, if b^2 or 1/b^2 is an integer, then divisions by 0 appear; this occurs for example when c=25, 28, 33, 38.5, 44.2, 50, etc., and runs with these values of c are skipped automatically up to b^2 = 20.
+There are two known seemingly-plausible input categories which will cause the program to fail. First, c between 1 and 25 will result in a complex b^2, which it currently can not handle. Second, if b^2 or 1/b^2 is a rational number with relatively small numerator or denominator, it will cause the internal Hmn to diverge. If such a c is detected, the maxOrder will automatically be adjusted down to the highest safe value (actually, it's often adjusted lower than this because I'm overcounting something, but it should be safe at any rate).
 
 There are two options available, which can be placed either before or after the arguments. They are:  
--m		|		give output as a single Mathematica vector suitable for return from RunThrough  
--c		|		print output to the console but do not write a file
+-m		|		give output as a single \[M\]athematica vector suitable for return from RunThrough  
+-c		|		print output to the \[c\]onsole but do not write a file
+-a		|		automatically \[a\]djust divergent c values to slightly different ones instead of skipping the run (not yet implemented)
 
 To call this function from Mathematica, do the following:  
 SetDirectory["\<directory where virasoro is\>"];  

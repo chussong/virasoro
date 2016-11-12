@@ -2,8 +2,9 @@
 
 typedef std::chrono::high_resolution_clock Clock;
 
-const int maxThreads = 8;
-const int precision = 512;
+const int maxThreads = 8;			// Maximum number of simultaneous threads
+const int precision = 512;			// Precision of mpf_class in bits
+const mpf_class tolerance(1e-20);	// Smaller than this is taken to be 0 for comparisons
 mpf_class* powOverflow;
 
 int main(int argc, char** argv){
@@ -362,7 +363,13 @@ void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class
 	}
 }
 
-void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder, const std::string outputName){
+void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> hp, unsigned short int maxOrder, const std::string outputName){
+	// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
+	mpf_class bsq, invBsq, llsq, lhsq, temp1, temp2;
+	ConvertInputs(bsq, invBsq, llsq, lhsq, runVector[0], runVector[1], runVector[2], temp1, temp2);
+	CheckForDivergences(&invBsq, maxOrder);
+	if(maxOrder <= 2) return;
+
 	int mnLocation[maxOrder]; 	/* "pos" (location+1) in mn vector at which i+1 = m*n starts */
 	int mnMultiplicity[maxOrder] = {0};	/* number of mn combinations giving i+1 = m*n */
 	int numberOfMN = EnumerateMN(mnLocation, mnMultiplicity, maxOrder);
@@ -370,16 +377,6 @@ void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> h
 	unsigned short int nTable[numberOfMN] = {0};
 	int mnLookup[maxOrder*maxOrder];
 	FillMNTable(mnLookup, mTable, nTable, mnLocation, mnMultiplicity, maxOrder);
-	
-	// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
-	mpf_class bsq, invBsq, llsq, lhsq, temp1, temp2;
-	ConvertInputs(bsq, invBsq, llsq, lhsq, runVector[0], runVector[1], runVector[2], temp1, temp2);
-	for(int i = 1; i <= 20; ++i){
-		if(cmp(bsq, i) == 0 || cmp(invBsq, i) == 0){
-			printf("Skipping this run because b^2 is an integer so the coefficients diverge.\n");
-			return;
-		}
-	}
 	
 	Cpqmn_t Cpqmn(&bsq, &invBsq, numberOfMN, maxOrder, mTable, nTable, mnLookup);
 	Cpqmn.FillHpmn();
@@ -401,6 +398,39 @@ void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> h
 		FillH(H, &Hmn, &Cpqmn, hp[i-1], mnLocation, mnMultiplicity, maxOrder);
 		if(outputName.empty() || outputName == "__CONSOLE") DisplayH(H, runVector[0], runVector[1], runVector[2], hp[i-1], maxOrder);
 		if(outputName != "__CONSOLE") WriteH(H, runVector[0], runVector[1], runVector[2], hp[i-1], maxOrder, outputName);
+	}
+	return;
+}
+
+void CheckForDivergences(const mpf_class* bsq, unsigned short int &maxOrder){
+	mpf_class temp;
+	int lowest = maxOrder;
+	for(int m = 1; m <= maxOrder-2; ++m){
+		for(int n = 1+(m%2); m*n <= maxOrder-2; n+=1+(m%2)){
+			for(int p = 1; p <= maxOrder-m*n; ++p){
+				for(int q = 1+(p%2); p*q <= maxOrder-m*n; q+=1+(p%2)){
+					temp = (*bsq)*(n-q) - (m+p);
+					if(abs(temp) < tolerance){
+						if(m*n < lowest) lowest = m*n;
+//						if(p*q < lowest) lowest = p*q;
+						continue;
+					}
+					temp = (*bsq)*(n+q) - (m-p);
+					if(abs(temp) < tolerance){
+						if(m*n < lowest) lowest = m*n;
+//						if(p*q < lowest) lowest = p*q;
+						continue;
+					}
+				}
+			}
+		}
+	}
+	if(*bsq == 2) lowest = 2; // this is a shitty workaround until I can fix the 1/0 in Amn
+	lowest = lowest - (lowest%2);
+	if(lowest < maxOrder){
+		maxOrder = lowest;
+		if(lowest > 2) printf("Stopping this run at order %i because the coefficients diverge above this.\n",lowest);
+		if(lowest <= 2) printf("Skipping this run because the coefficients diverge immediately.\n");
 	}
 	return;
 }
