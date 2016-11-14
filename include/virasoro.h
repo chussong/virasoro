@@ -11,6 +11,7 @@
 #include <stdio.h>		// fgetc
 #include <gmpxx.h>		// mpf_class
 #include <thread>		// std::thread
+#include <tuple>		// std::tuple
 
 #include "cpqmn.h"
 #include "hmn.h"
@@ -33,6 +34,12 @@ int RunFromFile(char* filename, const std::string options);
 int RunFromTerminal(char** argv, const std::string options);
 
 int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders);
+
+std::tuple<mpf_class, mpf_class, mpf_class> ParseBraces(std::string firstHalf, std::string insideBraces);
+
+std::tuple<mpf_class, int> ParseRelativeEqn(std::string equation, std::string relTo);
+
+mpf_class RelativeMPF(std::string firstHalf, std::string equation);
 
 int ReadMPF(mpf_class& output, FILE* runfile);
 

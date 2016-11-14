@@ -11,27 +11,27 @@ int main(int argc, char** argv){
 	mpf_set_default_prec(precision);
 	auto programStart = Clock::now();
 	std::string options = ParseOptions(argc, argv);
+	int exitCode;
 	switch(argc){
 		default:	printf("Error: input either the name of a runfile or the five parameters c, hl, hh, hp, maxOrder\n");
 					return EXIT_FAILURE;
 		case 2:		if(options.find("m", 0) != std::string::npos){
-						RunFromFile(argv[1], options);
+						exitCode = RunFromFile(argv[1], options);
 					} else {
-						RunFromFile(argv[1], options);
+						exitCode = RunFromFile(argv[1], options);
 						ShowTime("Entire computation", programStart);
 					}
 					break;
 		case 6:		if(options.find("m", 0) != std::string::npos){
-						RunFromTerminal(argv, options);
+						exitCode = RunFromTerminal(argv, options);
 					} else {
-						RunFromTerminal(argv, options);
+						exitCode = RunFromTerminal(argv, options);
 						ShowTime("Entire computation", programStart);
 					}
 					break;
 	}
 
-
-	return EXIT_SUCCESS;
+	return exitCode;
 }
 
 std::string ParseOptions(int &argc, char** &argv){
@@ -208,10 +208,230 @@ int RunFromTerminal(char** argv, const std::string options){
 	return 0;
 }
 
+std::tuple<mpf_class, mpf_class, mpf_class> ParseBraces(std::string firstHalf, std::string insideBraces){
+	mpf_class lowerBound, upperBound, increment;
+	std::size_t numStart, numEnd;
+	numStart = insideBraces.find_first_of("0123456789-.ch");
+	numEnd = insideBraces.find_first_of(" ,;", numStart+1);
+	if(insideBraces.find_first_of("ch") >= numEnd){
+		lowerBound = insideBraces.substr(numStart, numEnd-numStart);
+	} else {
+		lowerBound = RelativeMPF(firstHalf, insideBraces.substr(numStart, numEnd-numStart));
+	}
+	numStart = insideBraces.find_first_of("0123456789-.ch", numEnd+1);
+	numEnd = insideBraces.find_first_of(" ,;", numStart+1);
+	if(insideBraces.find_first_of("ch") >= numEnd){
+		upperBound = insideBraces.substr(numStart, numEnd-numStart);
+	} else {
+		upperBound = RelativeMPF(firstHalf, insideBraces.substr(numStart, numEnd-numStart));
+	}
+	numStart = insideBraces.find_first_of("0123456789-.ch", numEnd+1);
+	numEnd = insideBraces.find_first_of(" ,;", numStart+1);
+	if(insideBraces.find_first_of("ch") >= numEnd){
+		increment = insideBraces.substr(numStart, numEnd-numStart);
+	} else {
+		increment = RelativeMPF(firstHalf, insideBraces.substr(numStart, numEnd-numStart));
+	}
+	return std::make_tuple(lowerBound, upperBound, increment);
+}
+
+std::tuple<mpf_class, int> ParseRelativeEqn(std::string equation, std::string relTo){
+	mpf_class modifier = 0;
+	int type = -100;
+	std::size_t hit;
+	if((hit = equation.find(relTo)) != std::string::npos){
+		if(hit == 0){
+			if(equation[relTo.length()] == '+'){
+				type = 0;
+				modifier = equation.substr(relTo.size()+1);
+			} else if(equation[relTo.length()] == '-'){
+				type = 1;
+				modifier = equation.substr(relTo.size()+1);
+			} else if(equation[relTo.length()] == '*'){
+				type = 3;
+				modifier = equation.substr(relTo.size()+1);
+			} else if(equation[relTo.length()] == '/'){
+				type = 4;
+				modifier = equation.substr(relTo.size()+1);
+			} else {				// assume it's just equality with no arithmetic
+				type = 0;
+				modifier = 0;
+			}
+		} else if(hit >= 2){
+			if(equation[hit-1] == '+'){
+				type = 0;
+				modifier = equation.substr(0,hit-1);
+			} else if(equation[hit-1] == '-'){
+				type = 2;
+				modifier = equation.substr(0,hit-1);
+			} else if(equation[hit-1] == '*'){
+				type = 3;
+				modifier = equation.substr(0,hit-1);
+			} else if(equation[hit-1] == '/'){
+				type = 5;
+				modifier = equation.substr(0,hit-1);
+			} else {				// assume it's just equality with no arithmetic
+				type = 0;
+				modifier = 0;
+			}
+		}
+	}
+	if(relTo == "c") type += 10;
+	if(relTo == "hl") type += 20;
+	if(relTo == "hh") type += 30;
+	return std::make_tuple(modifier, type);
+}
+
+mpf_class RelativeMPF(std::string firstHalf, std::string equation){
+	mpf_class output = 0;
+	std::size_t baseStart, baseEnd;
+	mpf_class baseMPF;
+	std::tuple<mpf_class, int> parsedEqn;
+	if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "c")) < 0){
+		if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "hl")) < 0){
+			if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "hh")) < 0){
+				return 0;
+			}
+		}
+	}
+	mpf_class modifier = std::get<0>(parsedEqn);
+	int type = std::get<1>(parsedEqn);
+	switch(type){
+		case 10:	// c + n
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(baseMPF + modifier, 0);
+					break;
+		case 11:	// c - n
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(baseMPF - modifier, 0);
+					break;
+		case 12:	// n - c
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(modifier - baseMPF, 0);
+					break;
+		case 13:	// n*c
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(baseMPF*modifier, 0);
+					break;
+		case 14:	// c/n
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(baseMPF/modifier, 0);
+					break;
+		case 15:	// n/c
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(modifier/baseMPF, 0);
+					break;
+		case 20:	// hl + n
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(baseMPF + modifier, 0);
+					break;
+		case 21:	// hl - n
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(baseMPF - modifier, 0);
+					break;
+		case 22:	// n - hl
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(modifier - baseMPF, 0);
+					break;
+		case 23:	// n*hl
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(baseMPF * modifier, 0);
+					break;
+		case 24:	// hl/n
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(baseMPF / modifier, 0);
+					break;
+		case 25:	// n/hl
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(modifier / baseMPF, 0);
+					break;
+		case 30:	// hh + n
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(modifier + baseMPF, 0);
+					break;
+		case 31:	// hh - n
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(baseMPF - modifier, 0);
+					break;
+		case 32:	// n - hh
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(modifier - baseMPF, 0);
+					break;
+		case 33:	// n*hh
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(modifier * baseMPF, 0);
+					break;
+		case 34:	// hh/n
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(baseMPF/modifier, 0);
+					break;
+		case 35:	// n/hh
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
+					baseStart = 0;
+					baseEnd = firstHalf.find_first_of(" ,;");
+					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					output = to_string(modifier/baseMPF, 0);
+					break;
+	}
+	return output;
+}
+
 int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders){
 	int numberOfLines = 0;
 	int readStatus = 0;
 	int c;
+	// between here and the next comment should be a separate function
 	std::ifstream inStream;
 	std::ofstream tempStream, outStream;
 	inStream.open(filename, std::ifstream::in);
@@ -220,33 +440,33 @@ int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders){
 		return -1;
 	}
 	std::string currentLine, firstHalf, secondHalf, insideBraces;
-	std::size_t lbPos, rbPos, numStart, numEnd;
-	mpf_class lowerBound, upperBound, increment;	
+	std::size_t leftPos, rightPos, splitPos;
+	mpf_class lowerBound, upperBound, increment;
+	std::tuple<mpf_class, mpf_class, mpf_class> parsedBraces;
 	std::getline(inStream, currentLine);
 	bool needRerun = false;
 	while(true){
-		if((lbPos = currentLine.find("{")) != std::string::npos){
-			firstHalf = currentLine.substr(0, lbPos);
-			if((rbPos = currentLine.find("}")) == std::string::npos){
+		if((leftPos = currentLine.find("{")) != std::string::npos){
+			firstHalf = currentLine.substr(0, leftPos);
+			if((rightPos = currentLine.find("}")) == std::string::npos){
 				return -2;
 			} else {
-				secondHalf = currentLine.substr(rbPos+1, currentLine.length()-rbPos-1);
-				insideBraces = currentLine.substr(lbPos+1, rbPos-lbPos-1);
-				numStart = insideBraces.find_first_of("0123456789-.");
-				numEnd = insideBraces.find_first_of(" ,;", numStart+1);
-				lowerBound = insideBraces.substr(numStart, numEnd-numStart);
-				numStart = insideBraces.find_first_of("0123456789-.", numEnd+1);
-				numEnd = insideBraces.find_first_of(" ,;", numStart+1);
-				upperBound = insideBraces.substr(numStart, numEnd-numStart);
-				numStart = insideBraces.find_first_of("0123456789-.", numEnd+1);
-				numEnd = insideBraces.find_first_of(" ,;", numStart+1);
-				increment = insideBraces.substr(numStart, numEnd-numStart);
-				if(lowerBound > upperBound || increment <= 0) return -2;
-				for(mpf_class currentValue = lowerBound; currentValue <= upperBound; currentValue += increment){
+				secondHalf = currentLine.substr(rightPos+1, currentLine.length()-rightPos-1);
+				insideBraces = currentLine.substr(leftPos+1, rightPos-leftPos-1);
+				parsedBraces = ParseBraces(firstHalf, insideBraces);
+				if(std::get<0>(parsedBraces) > std::get<1>(parsedBraces) || std::get<2>(parsedBraces) <= 0) return -2;
+				for(mpf_class currentValue = std::get<0>(parsedBraces); currentValue <= std::get<1>(parsedBraces); currentValue += std::get<2>(parsedBraces)){
 					outStream << firstHalf << currentValue << secondHalf << std::endl;
 				}
 				needRerun = true;
 			}
+		} else if((splitPos = currentLine.find_first_of("ch")) != std::string::npos){
+			leftPos = currentLine.find_last_of(" ,;", splitPos-1);
+			rightPos = currentLine.find_first_of(" ,;", splitPos+1);
+			firstHalf = currentLine.substr(0, leftPos+1);
+			secondHalf = currentLine.substr(rightPos, currentLine.length() - rightPos);
+			increment = RelativeMPF(firstHalf, currentLine.substr(leftPos+1, rightPos-leftPos-1));
+			outStream << firstHalf << increment << secondHalf << std::endl;
 		} else {
 			outStream << currentLine << std::endl;
 		}
@@ -271,6 +491,7 @@ int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders){
 			}
 		}
 	}
+	// Above this should be a separate function
 	FILE* runfile = fopen("__expfile.txt", "r");
 	c = fgetc(runfile);
 	while(c != EOF){
@@ -341,8 +562,8 @@ int ReadMaxOrder(FILE* runfile){
 }
 
 int RunCompare(mpf_class* run1, mpf_class* run2){
-	if(run1[0] != run2[0]) return 0;	// runs are different
-	if(run1[1] != run2[1]) return 0;
+	if(run1[0] != run2[0]) return 0;
+	if(run1[1] != run2[1]) return 0;	// runs are different
 	if(run1[2] != run2[2]) return 0;
 	if(run1[3] != run2[3]) return -2;	// runs differ only by hp
 	return -1;							// runs are identical
@@ -546,10 +767,12 @@ std::string to_string(const mpf_class N, int digits){
 		while(dotPos > (int)output.size()) output.append("0");
 		if((N > 1 || N < 0) && dotPos < (int)output.size()) output.insert(abs(dotPos), ".");
 	}
-	if(digits == 0 && dotPos > 0 && dotPos < (int)output.size()){
+	if(digits == 0 && dotPos > 0){
 		while(dotPos > (int)output.size()) output.append("0");
-		if(sgn(N) == -1) dotPos += 1;
-		output.insert(dotPos, ".");
+		if(dotPos < (int)output.size()){
+			if(sgn(N) == -1) dotPos += 1;
+			output.insert(dotPos, ".");
+		}
 	}
 	if(digits > 0 && dotPos > digits){
 		while((int)output.size() < digits) output.append("0");
