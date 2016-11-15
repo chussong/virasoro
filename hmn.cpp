@@ -25,8 +25,11 @@ Hmn_t::~Hmn_t(){
 }
 
 void Hmn_t::FillHmn(){	
-	std::thread thread[maxThreads];
-	mpf_class temp1[maxThreads], temp2[maxThreads], hpTemp[maxThreads];
+	std::thread* thread = new std::thread[maxThreads];
+//	mpf_class temp1[maxThreads], temp2[maxThreads], hpTemp[maxThreads];
+	mpf_class* temp1 = new mpf_class[maxThreads];
+	mpf_class* temp2 = new mpf_class[maxThreads];
+	mpf_class* hpTemp = new mpf_class[maxThreads];
 	int numThreads;
 	for(int order = 2; order < maxOrder; order+=2){	
 		numThreads = std::min(maxThreads,(maxOrder-order)/2);
@@ -38,6 +41,10 @@ void Hmn_t::FillHmn(){
 			thread[i-1].join();
 		}
 	}
+	delete[] temp1;
+	delete[] temp2;
+	delete[] hpTemp;
+	delete[] thread;
 	return;
 }
 

@@ -1,6 +1,6 @@
 CC=g++
 IDIR =./include
-CFLAGS=-Wall -Werror -Wextra -I$(IDIR) -O3 -pg -std=c++14 -c
+CFLAGS=-Wall -Werror -Wextra -pedantic -I$(IDIR) -O3 -pg -std=c++14 -c
 LDFLAGS= -lpthread -lgmpxx -lgmp
 SOURCES=virasoro.cpp cpqmn.cpp hmn.cpp
 ODIR = obj

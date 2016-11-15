@@ -38,7 +38,8 @@ std::string ParseOptions(int &argc, char** &argv){
 	std::string options = "";
 	char** newArgv;
 	int newArgc = argc;
-	bool realArg[argc]{false};
+//	bool realArg[argc]{false};
+	bool* realArg = new bool[argc]();
 	for(int i = 1; i < argc; ++i){
 		if(argv[i][0] != '-'){
 			realArg[i] = true;
@@ -54,6 +55,12 @@ std::string ParseOptions(int &argc, char** &argv){
 			--newArgc;
 			realArg[i] = false;
 		}
+/*		if(strncmp(argv[i], "-p", 2) == 0){
+			std::string precString = argv[i];
+			precision = stoi(precString.substr(2), nullptr, 10);
+			--newArgc;
+			realArg[i] = false;
+		}*/
 	}
 	newArgv = new char*[newArgc];
 	newArgv[0] = argv[0];
@@ -66,6 +73,8 @@ std::string ParseOptions(int &argc, char** &argv){
 	}
 	argc = newArgc;
 	argv = newArgv;
+	delete[] newArgv;
+	delete[] realArg;
 	return options;
 }
 
@@ -87,8 +96,10 @@ int RunFromFile(char* filename, const std::string options){
 	}
 	// Check runs for duplicates, compress runs differing only by hp
 	int numberOfRuns = rawNumberOfRuns;
-	bool crunched[rawNumberOfRuns]{0};
-	std::vector<mpf_class> rawHp[rawNumberOfRuns];
+//	bool crunched[rawNumberOfRuns]{0};
+	bool* crunched = new bool[rawNumberOfRuns]();
+//	std::vector<mpf_class> rawHp[rawNumberOfRuns];
+	std::vector<mpf_class>* rawHp = new std::vector<mpf_class>[rawNumberOfRuns]();
 	for(int i = 1; i <= rawNumberOfRuns; ++i){
 		rawHp[i-1].push_back(rawRuns[i-1][3]);
 		for(int j = i+1; j <= rawNumberOfRuns; ++j){
@@ -109,9 +120,12 @@ int RunFromFile(char* filename, const std::string options){
 		}
 	}
 	int runID = 1;
-	mpf_class* runs[numberOfRuns];
-	std::vector<mpf_class> hp[numberOfRuns];
-	int maxOrders[numberOfRuns];
+//	mpf_class* runs[numberOfRuns];
+	mpf_class** runs = new mpf_class*[numberOfRuns];
+//	std::vector<mpf_class> hp[numberOfRuns];
+	std::vector<mpf_class>* hp = new std::vector<mpf_class>[numberOfRuns];
+//	int maxOrders[numberOfRuns];
+	int* maxOrders = new int[numberOfRuns];
 	for(int i = 1; i <= rawNumberOfRuns; ++i){
 		if(!crunched[i-1]){
 			runs[runID-1] = new mpf_class[3];
@@ -125,6 +139,8 @@ int RunFromFile(char* filename, const std::string options){
 			++runID;
 		}
 	}
+	delete[] crunched;
+	delete[] rawHp;
 	std::free(rawRuns);
 	std::free(rawMaxOrders);
 	if(!wolframOutput){
@@ -177,6 +193,9 @@ int RunFromFile(char* filename, const std::string options){
 			ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
 		}
 	}
+	delete[] runs;
+	delete[] hp;
+	delete[] maxOrders;
 	return 0;
 }
 
@@ -591,12 +610,12 @@ void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> h
 	CheckForDivergences(&invBsq, maxOrder);
 	if(maxOrder <= 2) return;
 
-	int mnLocation[maxOrder]; 	/* "pos" (location+1) in mn vector at which i+1 = m*n starts */
-	int mnMultiplicity[maxOrder] = {0};	/* number of mn combinations giving i+1 = m*n */
+	int* mnLocation = new int[maxOrder]; /* "pos" (location+1) in mn vector at which i+1 = m*n starts */
+	int* mnMultiplicity = new int[maxOrder]();	/* number of mn combinations giving i+1 = m*n */
 	int numberOfMN = EnumerateMN(mnLocation, mnMultiplicity, maxOrder);
-	unsigned short int mTable[numberOfMN] = {0};
-	unsigned short int nTable[numberOfMN] = {0};
-	int mnLookup[maxOrder*maxOrder];
+	unsigned short int* mTable = new unsigned short int[numberOfMN]();
+	unsigned short int* nTable = new unsigned short int[numberOfMN]();
+	int* mnLookup = new int[maxOrder*maxOrder];
 	FillMNTable(mnLookup, mTable, nTable, mnLocation, mnMultiplicity, maxOrder);
 	
 	Cpqmn_t Cpqmn(&bsq, &invBsq, numberOfMN, maxOrder, mTable, nTable, mnLookup);
@@ -613,13 +632,19 @@ void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> h
 	time2 = Clock::now();
 	
 	// corral H by q order and display coefficients
-	mpf_class H[maxOrder/2+1];
+	mpf_class* H = new mpf_class[maxOrder/2+1];
 	for(unsigned int i = 1; i <= hp.size(); ++i){
 		H[0] = 1;
 		FillH(H, &Hmn, &Cpqmn, hp[i-1], mnLocation, mnMultiplicity, maxOrder);
 		if(outputName.empty() || outputName == "__CONSOLE") DisplayH(H, runVector[0], runVector[1], runVector[2], hp[i-1], maxOrder);
 		if(outputName != "__CONSOLE") WriteH(H, runVector[0], runVector[1], runVector[2], hp[i-1], maxOrder, outputName);
 	}
+	delete[] mnLocation;
+	delete[] mnMultiplicity;
+	delete[] mTable;
+	delete[] nTable;
+	delete[] mnLookup;
+	delete[] H;
 	return;
 }
 
