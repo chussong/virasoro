@@ -35,8 +35,14 @@ int RunFromTerminal(char** argv, const std::string options);
 
 int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders);
 
+std::string ExpandRunFile(char* filename);
+
+int ExpandBraces(std::string filename);
+
 std::tuple<mpf_class, mpf_class, mpf_class> ParseBraces(std::string firstHalf, std::string insideBraces);
 
+void ExpandRelativeEqns(std::string filename);
+	
 std::tuple<mpf_class, int> ParseRelativeEqn(std::string equation, std::string relTo);
 
 mpf_class RelativeMPF(std::string firstHalf, std::string equation);

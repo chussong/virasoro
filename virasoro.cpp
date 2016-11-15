@@ -38,7 +38,6 @@ std::string ParseOptions(int &argc, char** &argv){
 	std::string options = "";
 	char** newArgv;
 	int newArgc = argc;
-//	bool realArg[argc]{false};
 	bool* realArg = new bool[argc]();
 	for(int i = 1; i < argc; ++i){
 		if(argv[i][0] != '-'){
@@ -96,9 +95,7 @@ int RunFromFile(char* filename, const std::string options){
 	}
 	// Check runs for duplicates, compress runs differing only by hp
 	int numberOfRuns = rawNumberOfRuns;
-//	bool crunched[rawNumberOfRuns]{0};
 	bool* crunched = new bool[rawNumberOfRuns]();
-//	std::vector<mpf_class> rawHp[rawNumberOfRuns];
 	std::vector<mpf_class>* rawHp = new std::vector<mpf_class>[rawNumberOfRuns]();
 	for(int i = 1; i <= rawNumberOfRuns; ++i){
 		rawHp[i-1].push_back(rawRuns[i-1][3]);
@@ -120,11 +117,8 @@ int RunFromFile(char* filename, const std::string options){
 		}
 	}
 	int runID = 1;
-//	mpf_class* runs[numberOfRuns];
 	mpf_class** runs = new mpf_class*[numberOfRuns];
-//	std::vector<mpf_class> hp[numberOfRuns];
 	std::vector<mpf_class>* hp = new std::vector<mpf_class>[numberOfRuns];
-//	int maxOrders[numberOfRuns];
 	int* maxOrders = new int[numberOfRuns];
 	for(int i = 1; i <= rawNumberOfRuns; ++i){
 		if(!crunched[i-1]){
@@ -227,6 +221,111 @@ int RunFromTerminal(char** argv, const std::string options){
 	return 0;
 }
 
+int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders){
+	int numberOfLines = 0;
+	int readStatus = 0;
+	int c;
+	std::string workingString = ExpandRunFile(filename);
+	const char* workingFilename = workingString.c_str();
+	std::cout << "Expansion successful. Now working with filename " << workingFilename << "." << std::endl;
+	if(strcmp(workingFilename, "__READFAIL") == 0) return -1;
+	if(strcmp(workingFilename, "__NOBRACE") == 0) return -2;
+	FILE* runfile = fopen(workingFilename,"r");
+	c = fgetc(runfile);
+	while(c != EOF){
+		if(c == '\n') ++numberOfLines;
+		c = fgetc(runfile);
+	}
+	rewind(runfile);
+	std::cout << "There are " << numberOfLines << " lines." << std::endl;
+	runs = new mpf_class*[numberOfLines];
+	maxOrders = new int[numberOfLines];
+	for(int currentLine = 1; currentLine <= numberOfLines; ++currentLine){
+		runs[currentLine-1] = new mpf_class[4];
+		for(int i = 1; i <= 4; ++i){
+			readStatus = ReadMPF(runs[currentLine-1][i-1], runfile);
+			if(readStatus != 0) return -3;
+		}
+		maxOrders[currentLine-1] = ReadMaxOrder(runfile);
+		if(maxOrders[currentLine-1] <= 0) return -3;
+		fgetc(runfile);
+	}
+	std::cout << "Lines processed successfully." << std::endl;
+	std::remove(workingFilename);
+	return numberOfLines;
+}
+
+std::string ExpandRunFile(char* filename){
+	std::string expandedName, tempName;
+	expandedName = filename;
+	expandedName.append("__EXPANDED");
+	ExpandBraces(filename);
+	ExpandRelativeEqns(expandedName);
+	ExpandBraces(expandedName);
+	tempName = expandedName + "__EXPANDED";
+	std::rename(tempName.c_str(), expandedName.c_str());
+	return expandedName;
+}
+
+int ExpandBraces(std::string filename){
+	std::string expandedName = filename+"__EXPANDED";
+	std::string tempName = filename+"__TEMP";
+	std::ifstream inStream;
+	std::ofstream tempStream, outStream;
+	inStream.open(filename, std::ifstream::in);
+	outStream.open(expandedName, std::ofstream::out);
+	if((inStream.rdstate() & std::ifstream::failbit) != 0 || (outStream.rdstate() & std::ofstream::failbit) != 0){
+		return -1;
+	}
+	std::string currentLine, firstHalf, secondHalf, insideBraces;
+	std::size_t leftPos, rightPos;
+	mpf_class lowerBound, upperBound, increment;
+	std::tuple<mpf_class, mpf_class, mpf_class> parsedBraces;
+	std::getline(inStream, currentLine);
+	bool needRerun = false;
+	while(true){
+		if((leftPos = currentLine.find("{")) != std::string::npos){
+			firstHalf = currentLine.substr(0, leftPos);
+			if((rightPos = currentLine.find("}", leftPos+1)) == std::string::npos){
+				return -2;
+			} else if(currentLine.find_first_not_of("0123456789-. ,;", leftPos+1) == rightPos) {
+				secondHalf = currentLine.substr(rightPos+1, currentLine.length()-rightPos-1);
+				insideBraces = currentLine.substr(leftPos+1, rightPos-leftPos-1);
+				parsedBraces = ParseBraces(firstHalf, insideBraces);
+				if(std::get<0>(parsedBraces) > std::get<1>(parsedBraces) || std::get<2>(parsedBraces) <= 0) return -2;
+				for(mpf_class currentValue = std::get<0>(parsedBraces); currentValue <= std::get<1>(parsedBraces); currentValue += std::get<2>(parsedBraces)){
+					outStream << firstHalf << currentValue << secondHalf << std::endl;
+				}
+				needRerun = true;
+			}
+		} else {
+			outStream << currentLine << std::endl;
+		}
+		std::getline(inStream, currentLine);
+		if(currentLine.empty()){
+			if(needRerun){
+				inStream.close();
+				outStream.close();
+				inStream.open(expandedName, std::ifstream::in);
+				outStream.open(tempName, std::ofstream::out);
+				outStream << inStream.rdbuf();
+				inStream.close();
+				outStream.close();
+				inStream.open(tempName, std::ifstream::in);
+				outStream.open(expandedName, std::ofstream::out);
+				needRerun = false;
+				std::getline(inStream, currentLine);
+			} else {
+				inStream.close();
+				outStream.close();
+				break;
+			}
+		}
+	}
+	std::remove(tempName.c_str());
+	return 0;
+}
+
 std::tuple<mpf_class, mpf_class, mpf_class> ParseBraces(std::string firstHalf, std::string insideBraces){
 	mpf_class lowerBound, upperBound, increment;
 	std::size_t numStart, numEnd;
@@ -252,6 +351,51 @@ std::tuple<mpf_class, mpf_class, mpf_class> ParseBraces(std::string firstHalf, s
 		increment = RelativeMPF(firstHalf, insideBraces.substr(numStart, numEnd-numStart));
 	}
 	return std::make_tuple(lowerBound, upperBound, increment);
+}
+
+void ExpandRelativeEqns(std::string filename){
+	std::ifstream inStream;
+	std::ofstream outStream;
+	std::string currentLine, firstHalf, secondHalf;
+	size_t leftPos, rightPos, splitPos;
+	mpf_class value;
+	std::string tempName = filename+"__TEMP";
+	bool madeChange = false;
+	inStream.open(filename);
+	outStream.open(tempName);
+	std::getline(inStream, currentLine);
+	while(true){
+		while(true){
+			if((splitPos = currentLine.find_first_of("ch")) != std::string::npos){
+				leftPos = currentLine.find_last_of(" ,;", splitPos-1);
+				rightPos = currentLine.find_first_of(" ,;", splitPos+1);
+				firstHalf = currentLine.substr(0, leftPos+1);
+				secondHalf = currentLine.substr(rightPos, currentLine.length() - rightPos);
+				value = RelativeMPF(firstHalf, currentLine.substr(leftPos+1, rightPos-leftPos-1));
+				madeChange = true;
+				outStream << firstHalf << value << secondHalf << std::endl;
+			} else {
+				outStream << currentLine << std::endl;
+			}
+			std::getline(inStream, currentLine);
+			if(currentLine.empty()){
+				inStream.close();
+				outStream.close();
+				break;
+			}
+		}
+		if(madeChange){
+			std::rename(tempName.c_str(), filename.c_str());
+			inStream.open(filename);
+			outStream.open(tempName);
+			madeChange = false;
+			std::getline(inStream, currentLine);
+		} else {
+			break;
+		}
+	}
+	std::rename(tempName.c_str(), filename.c_str());
+	return;
 }
 
 std::tuple<mpf_class, int> ParseRelativeEqn(std::string equation, std::string relTo){
@@ -446,93 +590,12 @@ mpf_class RelativeMPF(std::string firstHalf, std::string equation){
 	return output;
 }
 
-int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders){
-	int numberOfLines = 0;
-	int readStatus = 0;
-	int c;
-	// between here and the next comment should be a separate function
-	std::ifstream inStream;
-	std::ofstream tempStream, outStream;
-	inStream.open(filename, std::ifstream::in);
-	outStream.open("__expfile.txt", std::ofstream::out);
-	if((inStream.rdstate() & std::ifstream::failbit) != 0 || (outStream.rdstate() & std::ofstream::failbit) != 0){
-		return -1;
-	}
-	std::string currentLine, firstHalf, secondHalf, insideBraces;
-	std::size_t leftPos, rightPos, splitPos;
-	mpf_class lowerBound, upperBound, increment;
-	std::tuple<mpf_class, mpf_class, mpf_class> parsedBraces;
-	std::getline(inStream, currentLine);
-	bool needRerun = false;
-	while(true){
-		if((leftPos = currentLine.find("{")) != std::string::npos){
-			firstHalf = currentLine.substr(0, leftPos);
-			if((rightPos = currentLine.find("}")) == std::string::npos){
-				return -2;
-			} else {
-				secondHalf = currentLine.substr(rightPos+1, currentLine.length()-rightPos-1);
-				insideBraces = currentLine.substr(leftPos+1, rightPos-leftPos-1);
-				parsedBraces = ParseBraces(firstHalf, insideBraces);
-				if(std::get<0>(parsedBraces) > std::get<1>(parsedBraces) || std::get<2>(parsedBraces) <= 0) return -2;
-				for(mpf_class currentValue = std::get<0>(parsedBraces); currentValue <= std::get<1>(parsedBraces); currentValue += std::get<2>(parsedBraces)){
-					outStream << firstHalf << currentValue << secondHalf << std::endl;
-				}
-				needRerun = true;
-			}
-		} else if((splitPos = currentLine.find_first_of("ch")) != std::string::npos){
-			leftPos = currentLine.find_last_of(" ,;", splitPos-1);
-			rightPos = currentLine.find_first_of(" ,;", splitPos+1);
-			firstHalf = currentLine.substr(0, leftPos+1);
-			secondHalf = currentLine.substr(rightPos, currentLine.length() - rightPos);
-			increment = RelativeMPF(firstHalf, currentLine.substr(leftPos+1, rightPos-leftPos-1));
-			outStream << firstHalf << increment << secondHalf << std::endl;
-		} else {
-			outStream << currentLine << std::endl;
-		}
-		std::getline(inStream, currentLine);
-		if(currentLine.empty()){
-			if(needRerun){
-				inStream.close();
-				outStream.close();
-				inStream.open("__expfile.txt", std::ifstream::in);
-				outStream.open("__tempfile.txt", std::ofstream::out);
-				outStream << inStream.rdbuf();
-				inStream.close();
-				outStream.close();
-				inStream.open("__tempfile.txt", std::ifstream::in);
-				outStream.open("__expfile.txt", std::ofstream::out);
-				needRerun = false;
-				std::getline(inStream, currentLine);
-			} else {
-				inStream.close();
-				outStream.close();
-				break;
-			}
-		}
-	}
-	// Above this should be a separate function
-	FILE* runfile = fopen("__expfile.txt", "r");
-	c = fgetc(runfile);
-	while(c != EOF){
-		if(c == '\n') ++numberOfLines;
-		c = fgetc(runfile);
-	}
-	rewind(runfile);
-	runs = new mpf_class*[numberOfLines];
-	maxOrders = new int[numberOfLines];
-	for(int currentLine = 1; currentLine <= numberOfLines; ++currentLine){
-		runs[currentLine-1] = new mpf_class[4];
-		for(int i = 1; i <= 4; ++i){
-			readStatus = ReadMPF(runs[currentLine-1][i-1], runfile);
-			if(readStatus != 0) return -3;
-		}
-		maxOrders[currentLine-1] = ReadMaxOrder(runfile);
-		if(maxOrders[currentLine-1] <= 0) return -3;
-		fgetc(runfile);
-	}
-	std::remove("__tempfile.txt");
-	std::remove("__expfile.txt");
-	return numberOfLines;
+int RunCompare(mpf_class* run1, mpf_class* run2){
+	if(run1[0] != run2[0]) return 0;
+	if(run1[1] != run2[1]) return 0;	// runs are different
+	if(run1[2] != run2[2]) return 0;
+	if(run1[3] != run2[3]) return -2;	// runs differ only by hp
+	return -1;							// runs are identical
 }
 
 int ReadMPF(mpf_class& output, FILE* runfile){
@@ -578,14 +641,6 @@ int ReadMaxOrder(FILE* runfile){
 	maxOrder -= maxOrder%2;
 	ungetc(c, runfile);
 	return maxOrder;
-}
-
-int RunCompare(mpf_class* run1, mpf_class* run2){
-	if(run1[0] != run2[0]) return 0;
-	if(run1[1] != run2[1]) return 0;	// runs are different
-	if(run1[2] != run2[2]) return 0;
-	if(run1[3] != run2[3]) return -2;	// runs differ only by hp
-	return -1;							// runs are identical
 }
 
 void SetPowOverflow(unsigned short int maxOrder){
