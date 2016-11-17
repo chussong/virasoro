@@ -236,7 +236,6 @@ int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders){
 		c = fgetc(runfile);
 	}
 	rewind(runfile);
-	std::cout << "There are " << numberOfLines << " lines." << std::endl;
 	runs = new mpf_class*[numberOfLines];
 	maxOrders = new int[numberOfLines];
 	for(int currentLine = 1; currentLine <= numberOfLines; ++currentLine){
@@ -249,7 +248,6 @@ int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders){
 		if(maxOrders[currentLine-1] <= 0) return -3;
 		fgetc(runfile);
 	}
-	std::cout << "Lines processed successfully." << std::endl;
 	std::remove(workingFilename);
 	return numberOfLines;
 }
@@ -296,6 +294,8 @@ int ExpandBraces(std::string filename){
 					outStream << firstHalf << currentValue << secondHalf << std::endl;
 				}
 				needRerun = true;
+			} else {
+				outStream << currentLine << std::endl;
 			}
 		} else {
 			outStream << currentLine << std::endl;
@@ -366,8 +366,8 @@ void ExpandRelativeEqns(std::string filename){
 	while(true){
 		while(true){
 			if((splitPos = currentLine.find_first_of("ch")) != std::string::npos){
-				leftPos = currentLine.find_last_of(" ,;", splitPos-1);
-				rightPos = currentLine.find_first_of(" ,;", splitPos+1);
+				leftPos = currentLine.find_last_of(" ,;{", splitPos-1);
+				rightPos = currentLine.find_first_of(" ,;}", splitPos+1);
 				firstHalf = currentLine.substr(0, leftPos+1);
 				secondHalf = currentLine.substr(rightPos, currentLine.length() - rightPos);
 				value = RelativeMPF(firstHalf, currentLine.substr(leftPos+1, rightPos-leftPos-1));
