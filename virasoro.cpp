@@ -43,23 +43,23 @@ std::string ParseOptions(int &argc, char** &argv){
 		if(argv[i][0] != '-'){
 			realArg[i] = true;
 			continue;
-		}
-		if(strcmp(argv[i], "-m") == 0){
+		} else if(strcmp(argv[i], "-m") == 0){
 			options.append("m");
 			--newArgc;
 			realArg[i] = false;
-		}
-		if(strcmp(argv[i], "-c") == 0){
+		} else if(strcmp(argv[i], "-c") == 0){
 			options.append("c");
 			--newArgc;
 			realArg[i] = false;
-		}
-/*		if(strncmp(argv[i], "-p", 2) == 0){
+/*		} else if(strncmp(argv[i], "-p", 2) == 0){
 			std::string precString = argv[i];
 			precision = stoi(precString.substr(2), nullptr, 10);
 			--newArgc;
 			realArg[i] = false;
 		}*/
+		} else {
+			realArg[i] = true;
+		}
 	}
 	newArgv = new char*[newArgc];
 	newArgv[0] = argv[0];
@@ -227,7 +227,6 @@ int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders){
 	int c;
 	std::string workingString = ExpandRunFile(filename);
 	const char* workingFilename = workingString.c_str();
-	std::cout << "Expansion successful. Now working with filename " << workingFilename << "." << std::endl;
 	if(strcmp(workingFilename, "__READFAIL") == 0) return -1;
 	if(strcmp(workingFilename, "__NOBRACE") == 0) return -2;
 	FILE* runfile = fopen(workingFilename,"r");
