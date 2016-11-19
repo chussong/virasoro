@@ -20,6 +20,7 @@ This is still not very robust, so you have to be careful: the parameters must be
 There are two known seemingly-plausible input categories which will cause the program to fail. First, c between 1 and 25 will result in a complex b^2, which it currently can not handle. Second, if b^2 or 1/b^2 is a rational number with relatively small numerator or denominator, it will cause the internal Hmn to diverge. If such a c is detected, the maxOrder will automatically be adjusted down to the highest safe value (actually, it's often adjusted lower than this because I'm overcounting something, but it should be safe at any rate).
 
 There are five options available, which can be placed either before or after the arguments. They are:  
+
 | Option | Description |
 | ------ | ----------- |
 | -m | give output as a single \[M\]athematica vector suitable for return from RunThrough |
