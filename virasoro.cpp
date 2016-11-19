@@ -8,9 +8,9 @@ const mpf_class tolerance(1e-20);	// Smaller than this is taken to be 0 for comp
 mpf_class* powOverflow;
 
 int main(int argc, char** argv){
-	mpf_set_default_prec(precision);
 	auto programStart = Clock::now();
 	std::string options = ParseOptions(argc, argv);
+	mpf_set_default_prec(precision);
 	int exitCode;
 	switch(argc){
 		default:	printf("Error: input either the name of a runfile or the five parameters c, hl, hh, hp, maxOrder\n");
@@ -196,12 +196,24 @@ void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class
 	}
 }
 
-void FindCoefficients(const std::vector<mpf_class> runVector, unsigned short int maxOrder, const std::string outputName, const int bGiven){
+void FindCoefficients(std::vector<mpf_class> runVector, unsigned short int maxOrder, const std::string outputName, const int bGiven){
+	if(runVector[0] > 1 && runVector[0] < 25 && bGiven == 0){
+		std::cout << "This run appears to have a c value of " << runVector[0] << ", which is between 1 and 25. This will result in a complex b^2 and currently can not be handled. If this is supposed to be a value of b or b^2 instead of c, run again with -b or -bb." << std::endl;
+		return;
+	}
 	// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
 	mpf_class bsq, invBsq, llsq, lhsq, temp1, temp2;
 	ConvertInputs(bsq, invBsq, llsq, lhsq, runVector[0], runVector[1], runVector[2], temp1, temp2);
-	if(bGiven == 1) bsq = runVector[0]*runVector[0];
-	if(bGiven == 2) bsq = runVector[0];
+	if(bGiven == 1){
+		bsq = runVector[0]*runVector[0];
+		invBsq = 1/bsq;
+		runVector[0] = 13 + 6*(bsq + invBsq);
+	}
+	if(bGiven == 2){
+		bsq = runVector[0];
+		invBsq = 1/bsq;
+		runVector[0] = 13 + 6*(bsq + invBsq);
+	}
 	CheckForDivergences(&invBsq, maxOrder);
 	if(maxOrder <= 2) return;
 
@@ -322,15 +334,17 @@ void FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int 
 }
 
 void ConvertInputs(mpf_class& bsq, mpf_class& invBsq, mpf_class& llsq, mpf_class& lhsq, const mpf_class& c, const mpf_class& hl, const mpf_class& hh, mpf_class& temp1, mpf_class& temp2){
-	temp1 = c*c;
-	temp2 = c*26;
-	temp1 -= temp2;
-	temp1 += 25;
-	temp1 = sqrt(temp1);
-	temp1 = c - temp1;
-	temp1 -= 13;
-	bsq = temp1/12;
-	invBsq = 1/bsq;
+	if(c <= 1 || c >= 25){
+		temp1 = c*c;
+		temp2 = c*26;
+		temp1 -= temp2;
+		temp1 += 25;
+		temp1 = sqrt(temp1);
+		temp1 = c - temp1;
+		temp1 -= 13;
+		bsq = temp1/12;
+		invBsq = 1/bsq;
+	}
 
 	temp1 = c - 1;
 	temp1 /= 24;

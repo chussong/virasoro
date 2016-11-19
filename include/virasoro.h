@@ -38,7 +38,7 @@ void SetPowOverflow(unsigned short int maxOrder);
 
 void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder);
 
-void FindCoefficients(const std::vector<mpf_class> runVector, const unsigned short int maxOrder, const std::string runfileName, const int bGiven);
+void FindCoefficients(std::vector<mpf_class> runVector, const unsigned short int maxOrder, const std::string runfileName, const int bGiven);
 
 void CheckForDivergences(const mpf_class* bsq, unsigned short int &maxOrder);
 
