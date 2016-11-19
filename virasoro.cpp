@@ -52,12 +52,12 @@ std::string ParseOptions(int &argc, char** &argv){
 			options.append("c");
 			--newArgc;
 			realArg[i] = false;
-		} else if(strcmp(argv[i], "-b") == 0){
-			options.append("b");
-			--newArgc;
-			realArg[i] = false;
 		} else if(strcmp(argv[i], "-bb") == 0){
 			options.append("bb");
+			--newArgc;
+			realArg[i] = false;
+		} else if(strcmp(argv[i], "-b") == 0){
+			options.append("b");
 			--newArgc;
 			realArg[i] = false;
 		} else if(strncmp(argv[i], "-p", 2) == 0){
@@ -203,7 +203,6 @@ void FindCoefficients(std::vector<mpf_class> runVector, unsigned short int maxOr
 	}
 	// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
 	mpf_class bsq, invBsq, llsq, lhsq, temp1, temp2;
-	ConvertInputs(bsq, invBsq, llsq, lhsq, runVector[0], runVector[1], runVector[2], temp1, temp2);
 	if(bGiven == 1){
 		bsq = runVector[0]*runVector[0];
 		invBsq = 1/bsq;
@@ -214,6 +213,7 @@ void FindCoefficients(std::vector<mpf_class> runVector, unsigned short int maxOr
 		invBsq = 1/bsq;
 		runVector[0] = 13 + 6*(bsq + invBsq);
 	}
+	ConvertInputs(bsq, invBsq, llsq, lhsq, runVector[0], runVector[1], runVector[2], temp1, temp2);
 	CheckForDivergences(&invBsq, maxOrder);
 	if(maxOrder <= 2) return;
 
