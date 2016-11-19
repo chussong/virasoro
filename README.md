@@ -25,8 +25,8 @@ There are five options available, which can be placed either before or after the
 | ------ | ----------- |
 | -m | give output as a single \[M\]athematica vector suitable for return from RunThrough |
 | -c | print output to the \[c\]onsole but do not write a file |
-| -p# | set numerical precision to # (any number, default would be -p512) |
-| -t# | set number of threads to # (any number, default would be -t8) |
+| -p# | set numerical \[p\]recision to # (any number, default would be -p512) |
+| -t# | set number of \[t\]hreads to # (any number, default would be -t8) |
 | -b | first provided value is b instead of c |
 | -bb | first provided value is b^2 instead of c |
 
@@ -36,5 +36,3 @@ vec = RunThrough["./virasoro -m \<c\> \<hl\> \<hh\> \<hp\> \<maxOrder\>",""]; or
 Either one of these calls will fill vec with a Mathematica vector containing parameters used (in odd entries) and coefficients (in even entries).
 
 Some interior parameters are included in static variables initialized at the top of virasoro.cpp: the number of threads used in the slow part of the computation (default 8, appropriate for 4-core processors) and the floating-point precision of the numbers used (default 512, which allows low-error calculations at least up to order 1000). It should still compile and run fine with any reasonable values of these numbers.
-
-If you want to read the source code, it's almost certainly better to start with the deprecated 128-bit version in the backup folder. The algorithm is the same, and the __float128s use standard mathematical syntax, unlike the GMP numbers in the current version.
