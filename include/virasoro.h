@@ -15,9 +15,10 @@
 
 #include "cpqmn.h"
 #include "hmn.h"
+#include "runfile.h"
 
-extern const int maxThreads;
-extern const int precision;
+extern int maxThreads;
+extern int precision;
 extern const mpf_class tolerance;
 extern mpf_class* powOverflow;
 
@@ -33,31 +34,11 @@ int RunFromFile(char* filename, const std::string options);
 
 int RunFromTerminal(char** argv, const std::string options);
 
-int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders);
-
-std::string ExpandRunFile(char* filename);
-
-int ExpandBraces(std::string filename);
-
-std::tuple<mpf_class, mpf_class, mpf_class> ParseBraces(std::string firstHalf, std::string insideBraces);
-
-void ExpandRelativeEqns(std::string filename);
-	
-std::tuple<mpf_class, int> ParseRelativeEqn(std::string equation, std::string relTo);
-
-mpf_class RelativeMPF(std::string firstHalf, std::string equation);
-
-int ReadMPF(mpf_class& output, FILE* runfile);
-
-int ReadMaxOrder(FILE* runfile);
-
-int RunCompare(mpf_class* run1, mpf_class* run2);
-
 void SetPowOverflow(unsigned short int maxOrder);
 
 void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder);
 
-void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder, const std::string runfileName);
+void FindCoefficients(const std::vector<mpf_class> runVector, const unsigned short int maxOrder, const std::string runfileName, const int bGiven);
 
 void CheckForDivergences(const mpf_class* bsq, unsigned short int &maxOrder);
 

@@ -19,10 +19,13 @@ This is still not very robust, so you have to be careful: the parameters must be
 
 There are two known seemingly-plausible input categories which will cause the program to fail. First, c between 1 and 25 will result in a complex b^2, which it currently can not handle. Second, if b^2 or 1/b^2 is a rational number with relatively small numerator or denominator, it will cause the internal Hmn to diverge. If such a c is detected, the maxOrder will automatically be adjusted down to the highest safe value (actually, it's often adjusted lower than this because I'm overcounting something, but it should be safe at any rate).
 
-There are two options available, which can be placed either before or after the arguments. They are:  
+There are five options available, which can be placed either before or after the arguments. They are:  
 -m		|		give output as a single \[M\]athematica vector suitable for return from RunThrough  
--c		|		print output to the \[c\]onsole but do not write a file
--a		|		automatically \[a\]djust divergent c values to slightly different ones instead of skipping the run (not yet implemented)
+-c		|		print output to the \[c\]onsole but do not write a file  
+-p#		|		set numerical precision to # (any number, default would be -p512)  
+-t#		|		set number of threads to # (any number, default would be -t8)  
+-b		|		first provided value is b instead of c  
+-bb		|		first provided value is b^2 instead of c  
 
 To call this function from Mathematica, do the following:  
 SetDirectory["\<directory where virasoro is\>"];  

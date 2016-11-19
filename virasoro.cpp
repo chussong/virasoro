@@ -2,8 +2,8 @@
 
 typedef std::chrono::high_resolution_clock Clock;
 
-const int maxThreads = 8;			// Maximum number of simultaneous threads
-const int precision = 512;			// Precision of mpf_class in bits
+int maxThreads = 8;			// Maximum number of simultaneous threads
+int precision = 512;				// Precision of mpf_class in bits
 const mpf_class tolerance(1e-20);	// Smaller than this is taken to be 0 for comparisons
 mpf_class* powOverflow;
 
@@ -34,6 +34,7 @@ int main(int argc, char** argv){
 	return exitCode;
 }
 
+// some day I'll get around to turning argv into a std::vector<std::string> to begin with
 std::string ParseOptions(int &argc, char** &argv){
 	std::string options = "";
 	char** newArgv;
@@ -51,12 +52,24 @@ std::string ParseOptions(int &argc, char** &argv){
 			options.append("c");
 			--newArgc;
 			realArg[i] = false;
-/*		} else if(strncmp(argv[i], "-p", 2) == 0){
-			std::string precString = argv[i];
-			precision = stoi(precString.substr(2), nullptr, 10);
+		} else if(strcmp(argv[i], "-b") == 0){
+			options.append("b");
 			--newArgc;
 			realArg[i] = false;
-		}*/
+		} else if(strcmp(argv[i], "-bb") == 0){
+			options.append("bb");
+			--newArgc;
+			realArg[i] = false;
+		} else if(strncmp(argv[i], "-p", 2) == 0){
+			std::string precString = argv[i];
+			precision = std::stoi(precString.substr(2), nullptr, 10);
+			--newArgc;
+			realArg[i] = false;
+		} else if(strncmp(argv[i], "-t", 2) == 0){
+			std::string threadString = argv[i];
+			maxThreads = std::stoi(threadString.substr(2), nullptr, 10);
+			--newArgc;
+			realArg[i] = false;
 		} else {
 			realArg[i] = true;
 		}
@@ -80,85 +93,33 @@ std::string ParseOptions(int &argc, char** &argv){
 int RunFromFile(char* filename, const std::string options){
 	const bool wolframOutput = options.find("m", 0) != std::string::npos;
 	const bool consoleOutput = options.find("c", 0) != std::string::npos;	
-	mpf_class** rawRuns = (mpf_class**)malloc(sizeof(*rawRuns));
-	int* rawMaxOrders = (int*)malloc(sizeof(*rawMaxOrders));
-	int rawNumberOfRuns = ReadRunfile(filename, rawRuns, rawMaxOrders);
-	switch(rawNumberOfRuns){
-		case 0:		perror("Error: zero valid runs detected in given runfile.\n");
-					return EXIT_FAILURE;
-		case -1:	perror("Error: if you give one argument it must be the name of a runfile.\n");
-					return EXIT_FAILURE;
-		case -2:	perror("Error: a curly brace '{' was found indicating a batch run, but it was not followed by a valid macro.\n");
-					return EXIT_FAILURE;
-		case -3:	perror("Error: expected a number in the runfile but failed to read one.\n");
-					return EXIT_FAILURE;
-	}
-	// Check runs for duplicates, compress runs differing only by hp
-	int numberOfRuns = rawNumberOfRuns;
-	bool* crunched = new bool[rawNumberOfRuns]();
-	std::vector<mpf_class>* rawHp = new std::vector<mpf_class>[rawNumberOfRuns]();
-	for(int i = 1; i <= rawNumberOfRuns; ++i){
-		rawHp[i-1].push_back(rawRuns[i-1][3]);
-		for(int j = i+1; j <= rawNumberOfRuns; ++j){
-			if(crunched[j-1]) continue;
-			switch(RunCompare(rawRuns[i-1], rawRuns[j-1])){
-				case 0:		crunched[j-1] = false;	// runs different, do nothing
-							break;				
-				case -1:	if(rawMaxOrders[j-1] > rawMaxOrders[i-1]) rawMaxOrders[i-1] = rawMaxOrders[j-1];
-							crunched[j-1] = true;	// runs identical, crunch them together
-							--numberOfRuns;
-							break;
-				case -2:	rawHp[i-1].push_back(rawRuns[j-1][3]);	// runs differ by hp
-							if(rawMaxOrders[j-1] > rawMaxOrders[i-1]) rawMaxOrders[i-1] = rawMaxOrders[j-1];
-							crunched[j-1] = true;
-							--numberOfRuns;
-							break;
-			}
-		}
-	}
-	int runID = 1;
-	mpf_class** runs = new mpf_class*[numberOfRuns];
-	std::vector<mpf_class>* hp = new std::vector<mpf_class>[numberOfRuns];
-	int* maxOrders = new int[numberOfRuns];
-	for(int i = 1; i <= rawNumberOfRuns; ++i){
-		if(!crunched[i-1]){
-			runs[runID-1] = new mpf_class[3];
-			runs[runID-1][0] = rawRuns[i-1][0];
-			runs[runID-1][1] = rawRuns[i-1][1];
-			runs[runID-1][2] = rawRuns[i-1][2];
-			hp[runID-1] = rawHp[i-1];
-			maxOrders[runID-1] = rawMaxOrders[i-1];
-			delete[] rawRuns[i-1];
-			rawHp[i-1].clear();
-			++runID;
-		}
-	}
-	delete[] crunched;
-	delete[] rawHp;
-	std::free(rawRuns);
-	std::free(rawMaxOrders);
+	int bGiven = 0;
+	if(options.find("b", 0) != std::string::npos) bGiven = 1;
+	if(options.find("bb", 0) != std::string::npos) bGiven = 2;
+	Runfile_c runfile(filename);
+	if(runfile.ReadRunfile() <= 0) return -1;
 	if(!wolframOutput){
-		for(int i = 1; i <= numberOfRuns; ++i){
+		for(unsigned int i = 1; i <= runfile.runs.size(); ++i){
 			std::cout << "Run " << i << ": ";
 			for(int j = 1; j <= 3; ++j){
-				std::cout << to_string(runs[i-1][j-1], 0) << " ";
+				std::cout << to_string(runfile.runs[i-1][j-1], 0) << " ";
 			}
-			if(hp[i-1].size() > 1) std::cout << "{";
-			for(unsigned int j = 1; j <= hp[i-1].size(); ++j){
-				std::cout << to_string(hp[i-1][j-1], 0) << ",";
+			if(runfile.runs[i-1].size() > 4) std::cout << "{";
+			for(unsigned int j = 4; j <= runfile.runs[i-1].size(); ++j){
+				std::cout << to_string(runfile.runs[i-1][j-1], 0) << ",";
 			}
-			if(hp[i-1].size() > 1){
+			if(runfile.runs[i-1].size() > 4){
 				std::cout << "\b} ";
 			} else {
 				std::cout << "\b ";
 			}
-			std::cout << maxOrders[i-1];
+			std::cout << runfile.maxOrders[i-1];
 			std::cout << std::endl;
 		}
 	}
 	int highestMax = 0;
-	for(int i = 1; i <= numberOfRuns; ++i){
-		if(maxOrders[i-1] > highestMax) highestMax = maxOrders[i-1];
+	for(unsigned int i = 1; i <= runfile.runs.size(); ++i){
+		if(runfile.maxOrders[i-1] > highestMax) highestMax = runfile.maxOrders[i-1];
 	}
 	SetPowOverflow(highestMax);
 	auto runStart = Clock::now();
@@ -166,11 +127,11 @@ int RunFromFile(char* filename, const std::string options){
 	if(wolframOutput){
 		outputName = "__MATHEMATICA";
 		std::cout << "{";
-		for(int run = 1; run < numberOfRuns; ++run){
-			FindCoefficients(runs[run-1], hp[run-1], maxOrders[run-1], outputName);
+		for(unsigned int run = 1; run < runfile.runs.size(); ++run){
+			FindCoefficients(runfile.runs[run-1], runfile.maxOrders[run-1], outputName, bGiven);
 			std::cout << ",";
 		}
-		FindCoefficients(runs[numberOfRuns-1], hp[numberOfRuns-1], maxOrders[numberOfRuns-1], outputName);
+		FindCoefficients(runfile.runs[runfile.runs.size()-1], runfile.maxOrders[runfile.runs.size()-1], outputName, bGiven);
 		std::cout << "}";
 	} else {
 		if(consoleOutput){
@@ -179,29 +140,28 @@ int RunFromFile(char* filename, const std::string options){
 			outputName = NameOutputFile(filename);
 			std::remove(outputName.c_str());
 		}
-		for(int run = 1; run <= numberOfRuns; ++run){
+		for(unsigned int run = 1; run <= runfile.runs.size(); ++run){
 			runStart = Clock::now();
 //			DebugPrintRunVector(runs[run-1], hp[run-1], maxOrders[run-1]);
-			printf("Beginning run %i of %i.\n", run, numberOfRuns);
-			FindCoefficients(runs[run-1], hp[run-1], maxOrders[run-1], outputName);
+			std::cout << "Beginning run " << run << " of " << runfile.runs.size() << "." << std::endl;
+			FindCoefficients(runfile.runs[run-1], runfile.maxOrders[run-1], outputName, bGiven);
 			ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
 		}
 	}
-	delete[] runs;
-	delete[] hp;
-	delete[] maxOrders;
 	return 0;
 }
 
 int RunFromTerminal(char** argv, const std::string options){
 	const bool wolframOutput = options.find("m", 0) != std::string::npos;
 	const bool consoleOutput = options.find("c", 0) != std::string::npos;
-	mpf_class runVector[4];
+	int bGiven = 0;
+	if(options.find("b", 0) != std::string::npos) bGiven = 1;
+	if(options.find("bb", 0) != std::string::npos) bGiven = 2;
+	std::vector<mpf_class> runVector;
 	for(int i = 1; i <= 4; ++i){
-		runVector[i-1] = argv[i];
+		std::cout << " \b";				// mystifyingly it segfaults without this
+		runVector.emplace_back(argv[i]);
 	}
-	std::vector<mpf_class> hp;
-	hp.push_back(runVector[3]);
 	unsigned short int maxOrder = std::atoi(argv[5]);
 	maxOrder -= (maxOrder % 2);
 	SetPowOverflow(maxOrder);
@@ -216,430 +176,9 @@ int RunFromTerminal(char** argv, const std::string options){
 		outputName = NameOutputFile(nullptr);
 		std::remove(outputName.c_str());
 	}
-	FindCoefficients(runVector, hp, maxOrder, outputName);
+	FindCoefficients(runVector, maxOrder, outputName, bGiven);
 	if(wolframOutput) std::cout << "}";
 	return 0;
-}
-
-int ReadRunfile(char* filename, mpf_class** &runs, int* &maxOrders){
-	int numberOfLines = 0;
-	int readStatus = 0;
-	int c;
-	std::string workingString = ExpandRunFile(filename);
-	const char* workingFilename = workingString.c_str();
-	if(strcmp(workingFilename, "__READFAIL") == 0) return -1;
-	if(strcmp(workingFilename, "__NOBRACE") == 0) return -2;
-	FILE* runfile = fopen(workingFilename,"r");
-	c = fgetc(runfile);
-	while(c != EOF){
-		if(c == '\n') ++numberOfLines;
-		c = fgetc(runfile);
-	}
-	rewind(runfile);
-	runs = new mpf_class*[numberOfLines];
-	maxOrders = new int[numberOfLines];
-	for(int currentLine = 1; currentLine <= numberOfLines; ++currentLine){
-		runs[currentLine-1] = new mpf_class[4];
-		for(int i = 1; i <= 4; ++i){
-			readStatus = ReadMPF(runs[currentLine-1][i-1], runfile);
-			if(readStatus != 0) return -3;
-		}
-		maxOrders[currentLine-1] = ReadMaxOrder(runfile);
-		if(maxOrders[currentLine-1] <= 0) return -3;
-		fgetc(runfile);
-	}
-	std::remove(workingFilename);
-	return numberOfLines;
-}
-
-std::string ExpandRunFile(char* filename){
-	std::string expandedName, tempName;
-	expandedName = filename;
-	expandedName.append("__EXPANDED");
-	ExpandBraces(filename);
-	ExpandRelativeEqns(expandedName);
-	ExpandBraces(expandedName);
-	tempName = expandedName + "__EXPANDED";
-	std::rename(tempName.c_str(), expandedName.c_str());
-	return expandedName;
-}
-
-int ExpandBraces(std::string filename){
-	std::string expandedName = filename+"__EXPANDED";
-	std::string tempName = filename+"__TEMP";
-	std::ifstream inStream;
-	std::ofstream tempStream, outStream;
-	inStream.open(filename, std::ifstream::in);
-	outStream.open(expandedName, std::ofstream::out);
-	if((inStream.rdstate() & std::ifstream::failbit) != 0 || (outStream.rdstate() & std::ofstream::failbit) != 0){
-		return -1;
-	}
-	std::string currentLine, firstHalf, secondHalf, insideBraces;
-	std::size_t leftPos, rightPos;
-	mpf_class lowerBound, upperBound, increment;
-	std::tuple<mpf_class, mpf_class, mpf_class> parsedBraces;
-	std::getline(inStream, currentLine);
-	bool needRerun = false;
-	while(true){
-		if((leftPos = currentLine.find("{")) != std::string::npos){
-			firstHalf = currentLine.substr(0, leftPos);
-			if((rightPos = currentLine.find("}", leftPos+1)) == std::string::npos){
-				return -2;
-			} else if(currentLine.find_first_not_of("0123456789-. ,;", leftPos+1) == rightPos) {
-				secondHalf = currentLine.substr(rightPos+1, currentLine.length()-rightPos-1);
-				insideBraces = currentLine.substr(leftPos+1, rightPos-leftPos-1);
-				parsedBraces = ParseBraces(firstHalf, insideBraces);
-				if(std::get<0>(parsedBraces) > std::get<1>(parsedBraces) || std::get<2>(parsedBraces) <= 0) return -2;
-				for(mpf_class currentValue = std::get<0>(parsedBraces); currentValue <= std::get<1>(parsedBraces); currentValue += std::get<2>(parsedBraces)){
-					outStream << firstHalf << currentValue << secondHalf << std::endl;
-				}
-				needRerun = true;
-			} else {
-				outStream << currentLine << std::endl;
-			}
-		} else {
-			outStream << currentLine << std::endl;
-		}
-		std::getline(inStream, currentLine);
-		if(currentLine.empty()){
-			if(needRerun){
-				inStream.close();
-				outStream.close();
-				inStream.open(expandedName, std::ifstream::in);
-				outStream.open(tempName, std::ofstream::out);
-				outStream << inStream.rdbuf();
-				inStream.close();
-				outStream.close();
-				inStream.open(tempName, std::ifstream::in);
-				outStream.open(expandedName, std::ofstream::out);
-				needRerun = false;
-				std::getline(inStream, currentLine);
-			} else {
-				inStream.close();
-				outStream.close();
-				break;
-			}
-		}
-	}
-	std::remove(tempName.c_str());
-	return 0;
-}
-
-std::tuple<mpf_class, mpf_class, mpf_class> ParseBraces(std::string firstHalf, std::string insideBraces){
-	mpf_class lowerBound, upperBound, increment;
-	std::size_t numStart, numEnd;
-	numStart = insideBraces.find_first_of("0123456789-.ch");
-	numEnd = insideBraces.find_first_of(" ,;", numStart+1);
-	if(insideBraces.find_first_of("ch") >= numEnd){
-		lowerBound = insideBraces.substr(numStart, numEnd-numStart);
-	} else {
-		lowerBound = RelativeMPF(firstHalf, insideBraces.substr(numStart, numEnd-numStart));
-	}
-	numStart = insideBraces.find_first_of("0123456789-.ch", numEnd+1);
-	numEnd = insideBraces.find_first_of(" ,;", numStart+1);
-	if(insideBraces.find_first_of("ch") >= numEnd){
-		upperBound = insideBraces.substr(numStart, numEnd-numStart);
-	} else {
-		upperBound = RelativeMPF(firstHalf, insideBraces.substr(numStart, numEnd-numStart));
-	}
-	numStart = insideBraces.find_first_of("0123456789-.ch", numEnd+1);
-	numEnd = insideBraces.find_first_of(" ,;", numStart+1);
-	if(insideBraces.find_first_of("ch") >= numEnd){
-		increment = insideBraces.substr(numStart, numEnd-numStart);
-	} else {
-		increment = RelativeMPF(firstHalf, insideBraces.substr(numStart, numEnd-numStart));
-	}
-	return std::make_tuple(lowerBound, upperBound, increment);
-}
-
-void ExpandRelativeEqns(std::string filename){
-	std::ifstream inStream;
-	std::ofstream outStream;
-	std::string currentLine, firstHalf, secondHalf;
-	size_t leftPos, rightPos, splitPos;
-	mpf_class value;
-	std::string tempName = filename+"__TEMP";
-	bool madeChange = false;
-	inStream.open(filename);
-	outStream.open(tempName);
-	std::getline(inStream, currentLine);
-	while(true){
-		while(true){
-			if((splitPos = currentLine.find_first_of("ch")) != std::string::npos){
-				leftPos = currentLine.find_last_of(" ,;{", splitPos-1);
-				rightPos = currentLine.find_first_of(" ,;}", splitPos+1);
-				firstHalf = currentLine.substr(0, leftPos+1);
-				secondHalf = currentLine.substr(rightPos, currentLine.length() - rightPos);
-				value = RelativeMPF(firstHalf, currentLine.substr(leftPos+1, rightPos-leftPos-1));
-				madeChange = true;
-				outStream << firstHalf << value << secondHalf << std::endl;
-			} else {
-				outStream << currentLine << std::endl;
-			}
-			std::getline(inStream, currentLine);
-			if(currentLine.empty()){
-				inStream.close();
-				outStream.close();
-				break;
-			}
-		}
-		if(madeChange){
-			std::rename(tempName.c_str(), filename.c_str());
-			inStream.open(filename);
-			outStream.open(tempName);
-			madeChange = false;
-			std::getline(inStream, currentLine);
-		} else {
-			break;
-		}
-	}
-	std::rename(tempName.c_str(), filename.c_str());
-	return;
-}
-
-std::tuple<mpf_class, int> ParseRelativeEqn(std::string equation, std::string relTo){
-	mpf_class modifier = 0;
-	int type = -100;
-	std::size_t hit;
-	if((hit = equation.find(relTo)) != std::string::npos){
-		if(hit == 0){
-			if(equation[relTo.length()] == '+'){
-				type = 0;
-				modifier = equation.substr(relTo.size()+1);
-			} else if(equation[relTo.length()] == '-'){
-				type = 1;
-				modifier = equation.substr(relTo.size()+1);
-			} else if(equation[relTo.length()] == '*'){
-				type = 3;
-				modifier = equation.substr(relTo.size()+1);
-			} else if(equation[relTo.length()] == '/'){
-				type = 4;
-				modifier = equation.substr(relTo.size()+1);
-			} else {				// assume it's just equality with no arithmetic
-				type = 0;
-				modifier = 0;
-			}
-		} else if(hit >= 2){
-			if(equation[hit-1] == '+'){
-				type = 0;
-				modifier = equation.substr(0,hit-1);
-			} else if(equation[hit-1] == '-'){
-				type = 2;
-				modifier = equation.substr(0,hit-1);
-			} else if(equation[hit-1] == '*'){
-				type = 3;
-				modifier = equation.substr(0,hit-1);
-			} else if(equation[hit-1] == '/'){
-				type = 5;
-				modifier = equation.substr(0,hit-1);
-			} else {				// assume it's just equality with no arithmetic
-				type = 0;
-				modifier = 0;
-			}
-		}
-	}
-	if(relTo == "c") type += 10;
-	if(relTo == "hl") type += 20;
-	if(relTo == "hh") type += 30;
-	return std::make_tuple(modifier, type);
-}
-
-mpf_class RelativeMPF(std::string firstHalf, std::string equation){
-	mpf_class output = 0;
-	std::size_t baseStart, baseEnd;
-	mpf_class baseMPF;
-	std::tuple<mpf_class, int> parsedEqn;
-	if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "c")) < 0){
-		if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "hl")) < 0){
-			if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "hh")) < 0){
-				return 0;
-			}
-		}
-	}
-	mpf_class modifier = std::get<0>(parsedEqn);
-	int type = std::get<1>(parsedEqn);
-	switch(type){
-		case 10:	// c + n
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF + modifier, 0);
-					break;
-		case 11:	// c - n
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF - modifier, 0);
-					break;
-		case 12:	// n - c
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier - baseMPF, 0);
-					break;
-		case 13:	// n*c
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF*modifier, 0);
-					break;
-		case 14:	// c/n
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF/modifier, 0);
-					break;
-		case 15:	// n/c
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier/baseMPF, 0);
-					break;
-		case 20:	// hl + n
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF + modifier, 0);
-					break;
-		case 21:	// hl - n
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF - modifier, 0);
-					break;
-		case 22:	// n - hl
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier - baseMPF, 0);
-					break;
-		case 23:	// n*hl
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF * modifier, 0);
-					break;
-		case 24:	// hl/n
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF / modifier, 0);
-					break;
-		case 25:	// n/hl
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier / baseMPF, 0);
-					break;
-		case 30:	// hh + n
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier + baseMPF, 0);
-					break;
-		case 31:	// hh - n
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF - modifier, 0);
-					break;
-		case 32:	// n - hh
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier - baseMPF, 0);
-					break;
-		case 33:	// n*hh
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier * baseMPF, 0);
-					break;
-		case 34:	// hh/n
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF/modifier, 0);
-					break;
-		case 35:	// n/hh
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier/baseMPF, 0);
-					break;
-	}
-	return output;
-}
-
-int RunCompare(mpf_class* run1, mpf_class* run2){
-	if(run1[0] != run2[0]) return 0;
-	if(run1[1] != run2[1]) return 0;	// runs are different
-	if(run1[2] != run2[2]) return 0;
-	if(run1[3] != run2[3]) return -2;	// runs differ only by hp
-	return -1;							// runs are identical
-}
-
-int ReadMPF(mpf_class& output, FILE* runfile){
-	ClearStructureChars(runfile);
-	mpf_t temp;
-	char inputBuffer[256]{0};
-	int c = fgetc(runfile);
-	int place = 0;
-	while((c >= '0' && c <= '9') || c == '.' || c == '-'){
-		inputBuffer[place] = (char)c;
-		c = fgetc(runfile);
-		++place;
-	}
-	if(place == 0) return -1;
-	if(mpf_init_set_str(temp, inputBuffer, 10) == -1) return -1;
-	mpf_set(output.get_mpf_t(), temp);
-	mpf_clear(temp);
-	ungetc(c, runfile);
-	switch(c){
-		case ' ':	return 0;
-					break;
-		case ',':	return 0;
-					break;
-		case ';':	return 0;
-					break;
-		case '\n':	return 1;
-					break;	
-		case EOF:	return 2;
-					break;
-	}
-	return -1;
-}
-
-int ReadMaxOrder(FILE* runfile){
-	ClearStructureChars(runfile);
-	int maxOrder = 0;
-	int c = fgetc(runfile);
-	while(c >= '0' && c <= '9'){
-		maxOrder *= 10;
-		maxOrder += c - '0';
-		c = fgetc(runfile);
-	}
-	maxOrder -= maxOrder%2;
-	ungetc(c, runfile);
-	return maxOrder;
 }
 
 void SetPowOverflow(unsigned short int maxOrder){
@@ -657,10 +196,12 @@ void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class
 	}
 }
 
-void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> hp, unsigned short int maxOrder, const std::string outputName){
+void FindCoefficients(const std::vector<mpf_class> runVector, unsigned short int maxOrder, const std::string outputName, const int bGiven){
 	// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
 	mpf_class bsq, invBsq, llsq, lhsq, temp1, temp2;
 	ConvertInputs(bsq, invBsq, llsq, lhsq, runVector[0], runVector[1], runVector[2], temp1, temp2);
+	if(bGiven == 1) bsq = runVector[0]*runVector[0];
+	if(bGiven == 2) bsq = runVector[0];
 	CheckForDivergences(&invBsq, maxOrder);
 	if(maxOrder <= 2) return;
 
@@ -687,11 +228,11 @@ void FindCoefficients(const mpf_class* runVector, const std::vector<mpf_class> h
 	
 	// corral H by q order and display coefficients
 	mpf_class* H = new mpf_class[maxOrder/2+1];
-	for(unsigned int i = 1; i <= hp.size(); ++i){
+	for(unsigned int i = 4; i <= runVector.size(); ++i){
 		H[0] = 1;
-		FillH(H, &Hmn, &Cpqmn, hp[i-1], mnLocation, mnMultiplicity, maxOrder);
-		if(outputName.empty() || outputName == "__CONSOLE") DisplayH(H, runVector[0], runVector[1], runVector[2], hp[i-1], maxOrder);
-		if(outputName != "__CONSOLE") WriteH(H, runVector[0], runVector[1], runVector[2], hp[i-1], maxOrder, outputName);
+		FillH(H, &Hmn, &Cpqmn, runVector[i-1], mnLocation, mnMultiplicity, maxOrder);
+		if(outputName.empty() || outputName == "__CONSOLE") DisplayH(H, runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
+		if(outputName != "__CONSOLE") WriteH(H, runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder, outputName);
 	}
 	delete[] mnLocation;
 	delete[] mnMultiplicity;

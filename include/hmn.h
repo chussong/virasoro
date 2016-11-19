@@ -5,8 +5,8 @@
 #include <gmpxx.h>
 #include "cpqmn.h"
 
-extern const int maxThreads;
-extern const int precision;
+extern int maxThreads;
+extern int precision;
 extern mpf_class* powOverflow;
 
 class Hmn_t{

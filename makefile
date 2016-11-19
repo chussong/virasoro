@@ -2,11 +2,11 @@ CC=g++
 IDIR =./include
 CFLAGS=-Wall -Werror -Wextra -pedantic -I$(IDIR) -O3 -pg -std=c++14 -c
 LDFLAGS= -lpthread -lgmpxx -lgmp
-SOURCES=virasoro.cpp cpqmn.cpp hmn.cpp
+SOURCES=virasoro.cpp cpqmn.cpp hmn.cpp runfile.cpp
 ODIR = obj
 _OBJECTS=$(SOURCES:.cpp=.o)
 OBJECTS=$(patsubst %,$(ODIR)/%,$(_OBJECTS))
-_DEPS = virasoro.h cpqmn.h hmn.h
+_DEPS = virasoro.h cpqmn.h hmn.h runfile.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 EXECUTABLE=virasoro
 
@@ -24,6 +24,9 @@ obj/cpqmn.o: cpqmn.cpp $(IDIR)/cpqmn.h | $(ODIR)
 obj/hmn.o: hmn.cpp $(IDIR)/hmn.h cpqmn.cpp $(IDIR)/cpqmn.h | $(ODIR)
 	$(CC) $(CFLAGS) $< -o $@
 
+obj/runfile.o: runfile.cpp $(IDIR)/runfile.h | $(ODIR)
+	$(CC) $(CFLAGS) $< -o $@
+
 $(ODIR):
 	mkdir $(ODIR)
 
@@ -36,3 +39,5 @@ cpqmn.o :
 	make obj/cpqmn.o
 hmn.o :
 	make obj/hmn.o
+runfile.o :
+	make obj/runfile.o
