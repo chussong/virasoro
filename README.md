@@ -21,13 +21,13 @@ There are two known seemingly-plausible input categories which will cause the pr
 
 There are five options available, which can be placed either before or after the arguments. They are:  
 | Option | Description |
-|--------|-------------|
-| -m	 | give output as a single \[M\]athematica vector suitable for return from RunThrough |
-| -c	 | print output to the \[c\]onsole but do not write a file |
-| -p#	 | set numerical precision to # (any number, default would be -p512) |
-| -t#	 | set number of threads to # (any number, default would be -t8) |
-| -b	 | first provided value is b instead of c |
-| -bb	 | first provided value is b^2 instead of c |
+| ------ | ----------- |
+| -m | give output as a single \[M\]athematica vector suitable for return from RunThrough |
+| -c | print output to the \[c\]onsole but do not write a file |
+| -p# | set numerical precision to # (any number, default would be -p512) |
+| -t# | set number of threads to # (any number, default would be -t8) |
+| -b | first provided value is b instead of c |
+| -bb | first provided value is b^2 instead of c |
 
 To call this function from Mathematica, do the following:  
 SetDirectory["\<directory where virasoro is\>"];  
