@@ -1,12 +1,12 @@
 CC=g++
 IDIR =./include
 CFLAGS=-Wall -Werror -Wextra -pedantic -I$(IDIR) -O3 -pg -std=c++14 -c
-LDFLAGS= -lpthread -lgmpxx -lgmp
-SOURCES=virasoro.cpp cpqmn.cpp hmn.cpp runfile.cpp
+LDFLAGS= -lpthread -lgmpxx -lmpc -lmpfr -lgmp
+SOURCES=virasoro.cpp runfile.cpp
 ODIR = obj
 _OBJECTS=$(SOURCES:.cpp=.o)
 OBJECTS=$(patsubst %,$(ODIR)/%,$(_OBJECTS))
-_DEPS = virasoro.h cpqmn.h hmn.h runfile.h
+_DEPS = virasoro.h mpfc_class.h cpqmn.h hmn.h runfile.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 EXECUTABLE=virasoro
 
@@ -18,26 +18,16 @@ $(EXECUTABLE): $(OBJECTS)
 obj/virasoro.o: $(SOURCES) $(DEPS) | $(ODIR)
 	$(CC) $(CFLAGS) $< -o $@
 
-obj/cpqmn.o: cpqmn.cpp $(IDIR)/cpqmn.h | $(ODIR)
-	$(CC) $(CFLAGS) $< -o $@
-
-obj/hmn.o: hmn.cpp $(IDIR)/hmn.h cpqmn.cpp $(IDIR)/cpqmn.h | $(ODIR)
-	$(CC) $(CFLAGS) $< -o $@
-
 obj/runfile.o: runfile.cpp $(IDIR)/runfile.h | $(ODIR)
 	$(CC) $(CFLAGS) $< -o $@
 
 $(ODIR):
 	mkdir $(ODIR)
 
-.PHONY: clean, virasoro.o, cpqmn.o, hmn.o
+.PHONY: clean, virasoro.o
 clean :
 	rm $(EXECUTABLE) $(OBJECTS)
 virasoro.o :
 	make obj/virasoro.o
-cpqmn.o :
-	make obj/cpqmn.o
-hmn.o :
-	make obj/hmn.o
 runfile.o :
 	make obj/runfile.o
