@@ -3,7 +3,6 @@
 int maxThreads = 8;			// Maximum number of simultaneous threads
 int precision = 512;				// Precision of mpf_class in bits
 const mpf_class tolerance(1e-20);	// Smaller than this is taken to be 0 for comparisons
-mpf_class* powOverflow;
 
 int main(int argc, char** argv){
 	auto programStart = Clock::now();
@@ -121,7 +120,6 @@ int RunFromFile(char* filename, const std::string options){
 	for(unsigned int i = 1; i <= runfile.runs.size(); ++i){
 		if(runfile.maxOrders[i-1] > highestMax) highestMax = runfile.maxOrders[i-1];
 	}
-	SetPowOverflow(highestMax);
 	auto runStart = Clock::now();
 	std::string outputName;
 	std::vector<mpfc_class> complexRunVector;
@@ -180,7 +178,6 @@ int RunFromTerminal(char** argv, const std::string options){
 	}
 	unsigned short int maxOrder = std::atoi(argv[5]);
 	maxOrder -= (maxOrder % 2);
-	SetPowOverflow(maxOrder);
 //	DebugPrintRunVector(runVector, hp, maxOrder);
 	std::string outputName;
 	if(wolframOutput){
@@ -201,15 +198,6 @@ int RunFromTerminal(char** argv, const std::string options){
 	}
 	if(wolframOutput) std::cout << "}";
 	return 0;
-}
-
-void SetPowOverflow(unsigned short int maxOrder){
-	powOverflow = new mpf_class[maxOrder/256+1];
-	powOverflow[0] = 1;
-	for(int i = 1; i <= maxOrder/256; ++i){
-		powOverflow[i] = 16;
-		mpf_pow_ui(powOverflow[i].get_mpf_t(), powOverflow[i].get_mpf_t(), 256*i);
-	}
 }
 
 void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder){
@@ -286,15 +274,18 @@ std::string to_string(const mpf_class N, int digits){
 	if(digits < 0) digits = -digits;	
 	mp_exp_t dotPos;
 	std::string output = N.get_str(dotPos, 10, digits);
+	double Nd = N.get_d();
 	if(output.empty()) return "0";
 	if(digits > 0 && dotPos < digits){				// number small enough, just write it
 		while(dotPos > (int)output.size()) output.append("0");
 		if(dotPos < (int)output.size()){
-			if(N >= 1) output.insert(abs(dotPos), ".");
-		} else if(N < 1 && N > 0) {
-			output.insert(0, "0.");
-		} else if(N < 0) {
-			output.insert(abs(dotPos)+1, ".");
+			if(Nd >= 1){
+				output.insert(abs(dotPos), ".");
+			} else if(Nd < 1 && Nd > 0) {
+				output.insert(0, "0.");
+			} else if(Nd < 0) {
+				output.insert(abs(dotPos)+1, ".");
+			}
 		}
 	}
 	if(digits > 0 && abs(dotPos) > digits){			// number too big, use a*10^b
@@ -305,16 +296,16 @@ std::string to_string(const mpf_class N, int digits){
 		output.append(std::to_string(dotPos));
 	}
 	if(digits == 0){								// entire number has been requested
-		if(N >= 1){
+		if(Nd >= 1){
 			while(dotPos > (int)output.size()) output.append("0");
 			output.insert(dotPos, ".");
-		} else if(N > 0) {
+		} else if(Nd > 0) {
 			while(-dotPos > (int)output.size()) output.insert(0, "0");
 			output.insert(0, "0.");
-		} else if(N > -1) {
+		} else if(Nd > -1) {
 			while(-dotPos > (int)output.size()) output.insert(1, "0");
 			output.insert(1, "0.");
-		} else if(N <= -1) {
+		} else if(Nd <= -1) {
 			while(dotPos > (int)output.size()) output.append("0");
 			output.insert(dotPos+1, ".");
 		}

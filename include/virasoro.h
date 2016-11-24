@@ -21,7 +21,6 @@
 extern int maxThreads;
 extern int precision;
 extern const mpf_class tolerance;
-extern mpf_class* powOverflow;
 
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -36,8 +35,6 @@ std::string ParseOptions(int &argc, char** &argv);
 int RunFromFile(char* filename, const std::string options);
 
 int RunFromTerminal(char** argv, const std::string options);
-
-void SetPowOverflow(unsigned short int maxOrder);
 
 void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder);
 
@@ -92,6 +89,7 @@ void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, con
 	auto time2 = Clock::now();
 	CheckForDivergences(&Cpqmn, maxOrder, mnLocation, mnMultiplicity);
 	if(maxOrder <= 2) return;
+	Cpqmn.FillCpqmn();
 
 	// combine Rmn and hpmn into computation of H
 	Hmn_c<T> Hmn(&Cpqmn, numberOfMN, maxOrder, mnLocation, mnMultiplicity, mnLookup);
@@ -164,18 +162,16 @@ void ConvertInputs(T& bsq, T& invBsq, T& llsq, T& lhsq, const T& c, const T& hl,
 
 template<class T>
 void FillH(T* H, const Hmn_c<T>* Hmn, const Cpqmn_c<T>* Cpqmn, const T hp, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder){
-	T temp1, temp2;
+	T temp1;
 	for(int order = 2; order <= maxOrder; order+=2){
 		for(int power = 2; power <= order; power+=2){
 			for(int scanPos = mnLocation[power-1]; scanPos <= mnLocation[power-1] + mnMultiplicity[power-1] - 1; ++scanPos){
 				temp1 = hp - Cpqmn->hpmn[scanPos-1];
 				temp1 = Cpqmn->Rmn[scanPos-1]/temp1;
-				temp1 *= Hmn->Hmn[(order-power)/2][scanPos-1];
-/*				temp1 *= powOverflow[power/256];
-				temp2 = 16;
-				mpf_pow_ui(temp2.get_mpf_t(), temp2.get_mpf_t(), power%256);
-				temp1 *= temp2;*/
 				temp1 <<= 4*power;		// fast multiplication by 2^(4*power)
+//				std::cout << "H[" << order << "] += (" << to_string(temp1, 4) << ")*(";
+				temp1 *= Hmn->Hmn[(order-power)/2][scanPos-1];
+//				std::cout << to_string(Hmn->Hmn[(order-power)/2][scanPos-1], 4) << ") = (" << to_string(temp1, 4) << ")" << std::endl;
 				H[order/2] += temp1;
 			}
 		}

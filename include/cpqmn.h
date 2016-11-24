@@ -16,6 +16,7 @@ class Cpqmn_c{
 		T* hpmn;
 		T* Amn;
 		T* Rmn;
+		T** Cpqmn;
 
 		Cpqmn_c(const T* bsq, const T* invBsq, const int numberOfMN, const unsigned short int maxOrder, const unsigned short int* mTable, const unsigned short int* nTable, const int* mnLookup);
 		~Cpqmn_c();
@@ -27,6 +28,8 @@ class Cpqmn_c{
 		void FindAmn(const unsigned int m, const unsigned int n, T& temp1, T& temp2, T& prod);
 
 		void FillRmn(const T* llsq, const T* lhsq);
+
+		void FillCpqmn();
 };
 
 template<class T>
@@ -35,6 +38,8 @@ Cpqmn_c<T>::Cpqmn_c(const T* bsq, const T* invBsq, const int numberOfMN, const u
 	hpmn = new T[numberOfMN];
 	Amn = new T[numberOfMN];
 	Rmn = new T[numberOfMN];
+	Cpqmn = new T*[numberOfMN];
+	for(int pos = 1; pos <= numberOfMN; ++pos) Cpqmn[pos-1] = new T[numberOfMN];
 }
 
 template<class T>
@@ -42,6 +47,8 @@ Cpqmn_c<T>::~Cpqmn_c(){
 	delete[] hpmn;
 	delete[] Amn;
 	delete[] Rmn;
+	for(int pos = 1; pos <= numberOfMN; ++pos) delete[] Cpqmn[pos-1];
+	delete[] Cpqmn;
 //	hpmn = nullptr;
 //	Amn = nullptr;
 //	Rmn = nullptr;
@@ -268,6 +275,21 @@ void Cpqmn_c<T>::FillRmn(const T* llsq, const T* lhsq){
 //		std::cout << "Rmn[" << mTable[pos-1] << "," << nTable[pos-1] << "] = " << to_string(Rmn[pos-1], 10) << std::endl;
 	}
 	
+	return;
+}
+
+template<class T>
+void Cpqmn_c<T>::FillCpqmn(){
+	T temp;
+	for(int pos = 1; pos <= numberOfMN; ++pos){
+		for(int scanPos = 1; scanPos <= numberOfMN; ++scanPos){
+			temp = hpmn[pos-1] + mTable[pos-1]*nTable[pos-1];
+			Cpqmn[pos-1][scanPos-1] = Rmn[scanPos-1];
+			Cpqmn[pos-1][scanPos-1] <<= 4*mTable[scanPos-1]*nTable[scanPos-1];	// C*=2^(4*mn)
+			temp -= hpmn[scanPos-1];
+			Cpqmn[pos-1][scanPos-1] /= temp;
+		}
+	}
 	return;
 }
 #endif

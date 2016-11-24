@@ -2,7 +2,10 @@
 #define MPFC_CLASS_H_
 
 #include <string>
+#include <gmpxx.h>
 #include <mpc.h>
+
+extern const mpf_class tolerance;
 
 class mpfc_class{
 
@@ -406,9 +409,78 @@ inline bool operator != (const mpfc_class& a, const mpfc_class& b){return !(mpc_
 
 inline std::string mpfc_class::to_string(int digits, int base) const{
 	char* cstr = mpc_get_str(base, digits, value, rnd_mode);
-	std::string output = cstr;
+	std::string output(cstr);
 	mpc_free_str(cstr);
-	return output;
+	size_t splitLoc = output.find(" ");
+	std::string halves[2];
+	halves[0] = output.substr(1, splitLoc-1);
+	halves[1] = output.substr(splitLoc+1, output.size()-splitLoc-2);
+	mpf_class mpfHalf;
+	for(int i = 1; i <= 2; ++i){
+		if(halves[i-1] == "+0" || halves[i-1] == "-0"){
+			halves[i-1].clear();
+		} else {
+			if(halves[i-1][0] == '-'){
+				mpfHalf = halves[i-1].substr(1);
+			} else {
+				mpfHalf = halves[i-1];
+			}
+			if(mpfHalf < tolerance) halves[i-1].clear();
+		}
+	}
+	size_t eLoc, eEnd;
+	for(int i = 1; i <= 2; ++i){
+		if(halves[i-1].empty()) continue;
+		if((eLoc=halves[i-1].find("e")) < std::string::npos){
+			eEnd = halves[i-1].find(" )", eLoc+3);
+			int exp = std::stoi(halves[i-1].substr(eLoc+1, eEnd-eLoc-1));
+			if(std::abs(exp) < digits){
+				halves[i-1].erase(eLoc, eEnd-eLoc);
+				if(exp > 0){
+					if(halves[i-1][0] == '-'){
+						halves[i-1].erase(2, 1);
+						halves[i-1].insert(exp+2, ".");
+					} else {
+						halves[i-1].erase(1, 1);
+						halves[i-1].insert(exp+1, ".");
+					}
+				} else {
+					if(halves[i-1][0] == '-'){
+						halves[i-1].erase(2, 1);
+						halves[i-1].insert(1, "0.");
+						halves[i-1].insert(3, -1-exp, '0');
+					} else {
+						halves[i-1].erase(1, 1);
+						halves[i-1].insert(0, "0.");
+						halves[i-1].insert(2, -1-exp, '0');
+					}
+				}
+			} else {
+				if(halves[i-1][eLoc+1] == '+'){
+					halves[i-1].replace(eLoc, 2, "*10^");
+				} else {
+					halves[i-1].replace(eLoc, 1, "*10^");
+				}
+			}
+		}
+		eEnd = halves[i-1].find_last_not_of("0");
+		if(halves[i-1][eEnd] == '.') halves[i-1].erase(eEnd);
+	}
+	if(halves[0].empty()){
+		if(halves[1].empty()){
+			return "0";
+		} else {
+			halves[1].append("*I");
+			return halves[1];
+		}
+	} else {
+		if(halves[1].empty()){
+			return halves[0];
+		} else {
+			if(halves[1][0] == '-') return halves[0] + " - " + halves[1].substr(1) + "*I";
+			return halves[0] + " + " + halves[1] + "*I";
+		}
+	}
 }
 
 inline mpfc_class mpfc_class::sqr(){

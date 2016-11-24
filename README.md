@@ -17,15 +17,14 @@ will tell the program to read 1to30.txt and perform all the runs shown in it. A 
 35 1 3 0 1000  
 would run the program twice, once with c=30 and once with c=35. Parameters can be separated by single spaces, commas, or semicolons.  
 
-Multiple runs can be described in a batch using Mathematica-like syntax: for instance, the following line:  
+Multiple runs can be described in a batch on one line using Mathematica-like syntax: for instance, the following line:  
 {26,34,2} 1 3 {0,5,1} 1000  
 would expand to running with hp=0,1,2,3,4,5 for each of c=26,28,30,32,34, a total of 30 order-1000 runs. This would most likely finish in under an hour. The program automatically combines runs which differ only in hp and/or qmax in order to save time.  
 It's also possible to specify parameters in terms of others, which is quite useful for batch runs. For example, if you wanted to do a lot of runs with hl = c/25 and hh = c/11, you could just write the following:  
 {26, 34, 0.2} c/25 c/11 0 1000  
-
 This is still not very robust, so you have to be careful: the parameters must be immediately followed or preceded by an explicit operation, so c/25 and 25\*c are legal but c / 25 and 25c are not. Parameters can also only be defined relative to those which appear to their left, so hh can be set to 2.3\*hl but hl can not be set to hh/2.3. +, -, \*, and / are supported. **The bracket and arithmetic syntax only works within runfiles, not from the terminal.**  
 
-There are a couple of parameter restrictions to be aware of. First, if c is between 1 and 25, the computation will have to be done using complex numbers, which is about 8 times slower; the output is also not ideally set up yet. Second, if b^2 or 1/b^2 is a rational number with relatively small numerator or denominator, it will cause the internal Hmn and/or Amn to diverge. If such a c is detected, the maxOrder will automatically be adjusted down to the highest safe value.  
+There are a couple of parameter restrictions to be aware of. First, if c is between 1 and 25, the computation will have to be done using complex numbers, which is about 8 times slower; the output is also not yet ideally formatted. Second, if b^2 or 1/b^2 is a rational number with relatively small numerator or denominator, it will cause the internal Hmn and/or Amn to diverge. If such a c is detected, the maxOrder will automatically be adjusted down to the highest safe value.  
 
 There are six options available, which can be placed either before or after the arguments. They are:  
 
