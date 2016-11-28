@@ -275,31 +275,37 @@ void ShowTime(std::string computationName, std::chrono::time_point<std::chrono::
 
 std::string to_string(const mpf_class N, int digits){
 	if(digits < 0) digits = -digits;	
-	mp_exp_t dotPos;
-	std::string output = N.get_str(dotPos, 10, digits);
+	mp_exp_t expo, dotPos;
+	std::string output = N.get_str(expo, 10, digits);
+	dotPos = expo;
+	if(dotPos >= 0 && sgn(N) == -1) ++dotPos;
+	if(dotPos < 0 && sgn(N) == -1) --dotPos;
 	double Nd = N.get_d();
 	if(output.empty()) return "0";
-	if(digits > 0 && dotPos < digits){				// number small enough, just write it
+	if(digits > 0 && abs(expo) <= digits){				// number small enough, just write it
 		while(dotPos > (int)output.size()) output.append("0");
 		if(dotPos < (int)output.size()){
-			if(Nd >= 1){
-				output.insert(abs(dotPos), ".");
+			if(Nd >= 1 || Nd <= -1){
+				output.insert(dotPos, ".");
 			} else if(Nd < 1 && Nd > 0) {
 				output.insert(0, "0.");
-			} else if(Nd < 0) {
-				output.insert(abs(dotPos)+1, ".");
+			} else if(Nd < 0 && Nd > -1){
+				output.insert(1, "0.");
 			}
 		}
 	}
-	if(digits > 0 && abs(dotPos) > digits){			// number too big, use a*10^b
+	if(digits > 0 && abs(expo) > digits){			// number too big, use a*10^b
 		while((int)output.size() < digits) output.append("0");
 		if(sgn(N) == 1) output.insert(1, ".");		
-		if(sgn(N) == -1) output.insert(2, ".");
+		if(sgn(N) == -1){
+			output.append("0");
+			output.insert(2, ".");
+		}
 		output.append("*10^");
-		output.append(std::to_string(dotPos));
+		output.append(std::to_string(expo-1));
 	}
 	if(digits == 0){								// entire number has been requested
-		if(Nd >= 1){
+		if(Nd >= 1 || Nd <= -1){
 			while(dotPos > (int)output.size()) output.append("0");
 			output.insert(dotPos, ".");
 		} else if(Nd > 0) {
@@ -308,9 +314,6 @@ std::string to_string(const mpf_class N, int digits){
 		} else if(Nd > -1) {
 			while(-dotPos > (int)output.size()) output.insert(1, "0");
 			output.insert(1, "0.");
-		} else if(Nd <= -1) {
-			while(dotPos > (int)output.size()) output.append("0");
-			output.insert(dotPos+1, ".");
 		}
 	}
 	return output;
