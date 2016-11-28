@@ -121,11 +121,11 @@ void CheckForDivergences(const Cpqmn_c<T>* Cpqmn, unsigned short int &maxOrder, 
 		for(int pos = mnLocation[pq-1]; pos < mnLocation[pq-1] + mnMultiplicity[pq-1]; ++pos){
 			for(int mn = pq; mn <= maxOrder-2; mn+=2){
 				for(int scanPos = mnLocation[mn-1]; scanPos < mnLocation[mn-1] + mnMultiplicity[mn-1]; ++scanPos){
-					if(abs(Cpqmn->hpmn[pos-1] + pq - Cpqmn->hpmn[scanPos-1]) < tolerance && maxOrder > std::max(mn,pq)) maxOrder = std::max(mn, pq);
+					if(abs(Cpqmn->hpmn[pos-1] + pq - Cpqmn->hpmn[scanPos-1]) < tolerance && maxOrder > std::max(mn-2,pq-2)) maxOrder = std::max(mn-2, pq-2);
 				}
 			}
-			if(Cpqmn->Amn[pos-1] == 0 && maxOrder > pq){
-				maxOrder = pq;
+			if(Cpqmn->Amn[pos-1] == 0 && maxOrder > pq-2){
+				maxOrder = pq-2;
 				if(maxOrder > 2) printf("Stopping this run at order %i because Amn diverges above this.\n", maxOrder);
 				if(maxOrder <= 2) printf("Skipping this run because Amn diverges immediately.\n");
 				return;

@@ -79,6 +79,7 @@ void Hmn_c<T>::FillHmn(){
 	return;
 }
 
+// change this to only use pos
 template<class T>
 void Hmn_c<T>::ThreadFillHmn(const int startingMN, const int endingMN, const int order, T& temp){
 	for(int mn = startingMN + startingMN%2; mn <= endingMN; mn+=2){

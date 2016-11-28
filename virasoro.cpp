@@ -101,11 +101,11 @@ int RunFromFile(char* filename, const std::string options){
 		for(unsigned int i = 1; i <= runfile.runs.size(); ++i){
 			std::cout << "Run " << i << ": ";
 			for(int j = 1; j <= 3; ++j){
-				std::cout << to_string(runfile.runs[i-1][j-1], 0) << " ";
+				std::cout << to_string(runfile.runs[i-1][j-1], 4) << " ";
 			}
 			if(runfile.runs[i-1].size() > 4) std::cout << "{";
 			for(unsigned int j = 4; j <= runfile.runs[i-1].size(); ++j){
-				std::cout << to_string(runfile.runs[i-1][j-1], 0) << ",";
+				std::cout << to_string(runfile.runs[i-1][j-1], 4) << ",";
 			}
 			if(runfile.runs[i-1].size() > 4){
 				std::cout << "\b} ";
