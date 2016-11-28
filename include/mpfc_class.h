@@ -10,6 +10,7 @@ extern const mpf_class tolerance;
 class mpfc_class{
 
 	public:
+		// these two must be defined in a .cpp file (outside of the actual program)
 		static mpc_rnd_t default_rnd_mode;
 		static mpfr_prec_t default_prec;
 
@@ -82,9 +83,6 @@ class mpfc_class{
 
 		friend void swap(mpfc_class& x, mpfc_class& y);
 };
-
-mpc_rnd_t mpfc_class::default_rnd_mode = MPC_RNDZZ;
-mpfr_prec_t mpfc_class::default_prec = 64;
 
 inline void mpfc_class::set_default_prec(const mpfr_prec_t prec){
 	default_prec = prec;

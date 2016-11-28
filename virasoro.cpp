@@ -4,6 +4,9 @@ int maxThreads = 8;			// Maximum number of simultaneous threads
 int precision = 512;				// Precision of mpf_class in bits
 const mpf_class tolerance(1e-20);	// Smaller than this is taken to be 0 for comparisons
 
+mpc_rnd_t mpfc_class::default_rnd_mode = MPC_RNDZZ;
+mpfr_prec_t mpfc_class::default_prec = 64;
+
 int main(int argc, char** argv){
 	auto programStart = Clock::now();
 	std::string options = ParseOptions(argc, argv);
