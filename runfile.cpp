@@ -287,7 +287,6 @@ mpf_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					std::cout << "Dividing " << to_string(baseMPF, 10) << " by " << to_string(modifier, 0) << " to get " << to_string(baseMPF/modifier, 0) << std::endl;
 					output = to_string(baseMPF/modifier, 0);
 					break;
 		case 15:	// n/c
