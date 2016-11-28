@@ -278,23 +278,26 @@ std::string to_string(const mpf_class N, int digits){
 	mp_exp_t expo, dotPos;
 	std::string output = N.get_str(expo, 10, digits);
 	dotPos = expo;
+	--expo;
 	if(dotPos >= 0 && sgn(N) == -1) ++dotPos;
 	if(dotPos < 0 && sgn(N) == -1) --dotPos;
 	double Nd = N.get_d();
 	if(output.empty()) return "0";
-	if(digits > 0 && abs(expo) <= digits){				// number small enough, just write it
+	if(digits > 0 && abs(expo) <= digits-1){			// number small enough, just write it
 		while(dotPos > (int)output.size()) output.append("0");
 		if(dotPos < (int)output.size()){
 			if(Nd >= 1 || Nd <= -1){
 				output.insert(dotPos, ".");
 			} else if(Nd < 1 && Nd > 0) {
+				output.insert(0, std::max(-(int)dotPos,0), '0');
 				output.insert(0, "0.");
 			} else if(Nd < 0 && Nd > -1){
+				output.insert(1, std::max(-(int)dotPos,0), '0');
 				output.insert(1, "0.");
 			}
 		}
 	}
-	if(digits > 0 && abs(expo) > digits){			// number too big, use a*10^b
+	if(digits > 0 && abs(expo) > digits-1){			// number too big, use a*10^b
 		while((int)output.size() < digits) output.append("0");
 		if(sgn(N) == 1) output.insert(1, ".");		
 		if(sgn(N) == -1){
@@ -302,17 +305,17 @@ std::string to_string(const mpf_class N, int digits){
 			output.insert(2, ".");
 		}
 		output.append("*10^");
-		output.append(std::to_string(expo-1));
+		output.append(std::to_string(expo));
 	}
 	if(digits == 0){								// entire number has been requested
 		if(Nd >= 1 || Nd <= -1){
 			while(dotPos > (int)output.size()) output.append("0");
-			output.insert(dotPos, ".");
+			if(dotPos < (int)output.size()) output.insert(dotPos, ".");
 		} else if(Nd > 0) {
-			while(-dotPos > (int)output.size()) output.insert(0, "0");
+			output.insert(0, std::max(-(int)dotPos, 0), '0');
 			output.insert(0, "0.");
 		} else if(Nd > -1) {
-			while(-dotPos > (int)output.size()) output.insert(1, "0");
+			output.insert(1, std::max(-(int)dotPos, 0), '0');
 			output.insert(1, "0.");
 		}
 	}
