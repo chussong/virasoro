@@ -55,11 +55,6 @@ std::string NameOutputFile(const char* runfileName);
 template<class T>
 void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, const std::string outputName, const int bGiven){
 	// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
-	std::cout << "Run vector: ";
-	for(unsigned int i = 1; i <= runVector.size(); ++i){
-		std::cout << to_string(runVector[i-1], 4) << " ";
-	}
-	std::cout << "\b." << std::endl;
 	T bsq, invBsq, llsq, lhsq, temp1, temp2;
 	if(bGiven == 1){
 		bsq = runVector[0]*runVector[0];
