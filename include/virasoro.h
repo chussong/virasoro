@@ -54,11 +54,12 @@ std::string NameOutputFile(const char* runfileName);
 
 template<class T>
 void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, const std::string outputName, const int bGiven){
-/*	if(runVector[0] > 1 && runVector[0] < 25 && bGiven == 0){
-		std::cout << "This run appears to have a c value of " << runVector[0] << ", which is between 1 and 25. This will result in a complex b^2 and currently can not be handled. If this is supposed to be a value of b or b^2 instead of c, run again with -b or -bb." << std::endl;
-		return;
-	}*/
 	// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
+	std::cout << "Run vector: ";
+	for(unsigned int i = 1; i <= runVector.size(); ++i){
+		std::cout << to_string(runVector[i-1], 4) << " ";
+	}
+	std::cout << "\b." << std::endl;
 	T bsq, invBsq, llsq, lhsq, temp1, temp2;
 	if(bGiven == 1){
 		bsq = runVector[0]*runVector[0];

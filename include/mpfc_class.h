@@ -430,9 +430,9 @@ inline std::string mpfc_class::to_string(int digits, int base) const{
 	for(int i = 1; i <= 2; ++i){
 		if(halves[i-1].empty()) continue;
 		if((eLoc=halves[i-1].find("e")) < std::string::npos){
-			eEnd = halves[i-1].find(" )", eLoc+3);
+			eEnd = halves[i-1].find_first_of(" )", eLoc+3);
 			int exp = std::stoi(halves[i-1].substr(eLoc+1, eEnd-eLoc-1));
-			if(std::abs(exp) < digits){
+			if(digits == 0 || std::abs(exp) < digits){
 				halves[i-1].erase(eLoc, eEnd-eLoc);
 				if(exp > 0){
 					if(halves[i-1][0] == '-'){
