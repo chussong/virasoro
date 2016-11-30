@@ -54,6 +54,13 @@ std::string NameOutputFile(const char* runfileName);
 
 template<class T>
 void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, const std::string outputName, const int bGiven){
+	std::cout << "Beginning run with";
+	std::cout << " c=" << to_string(runVector[0], 4);
+	std::cout << " hl=" << to_string(runVector[1], 4);
+	std::cout << " hh=" << to_string(runVector[2], 4);
+	std::cout << " hp=";
+	for(unsigned int i = 4; i <= runVector.size(); ++i) std::cout << to_string(runVector[i-1], 4) << ",";
+	std::cout << "\b " << std::endl;
 	// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
 	T bsq, invBsq, llsq, lhsq, temp1, temp2;
 	if(bGiven == 1){
@@ -160,6 +167,7 @@ template<class T>
 void FillH(T* H, const Hmn_c<T>* Hmn, const Cpqmn_c<T>* Cpqmn, const T hp, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder){
 	T temp1;
 	for(int order = 2; order <= maxOrder; order+=2){
+		H[order/2] = 0;
 		for(int power = 2; power <= order; power+=2){
 			for(int scanPos = mnLocation[power-1]; scanPos <= mnLocation[power-1] + mnMultiplicity[power-1] - 1; ++scanPos){
 				temp1 = hp - Cpqmn->hpmn[scanPos-1];
