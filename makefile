@@ -8,9 +8,10 @@ _OBJECTS=$(SOURCES:.cpp=.o)
 OBJECTS=$(patsubst %,$(ODIR)/%,$(_OBJECTS))
 _DEPS = virasoro.h mpfc_class.h cpqmn.h hmn.h runfile.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
+CFG = config.txt
 EXECUTABLE=virasoro
 
-all: $(SOURCES) $(DEPS) $(EXECUTABLE)
+all: $(SOURCES) $(DEPS) $(EXECUTABLE) $(CFG)
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
@@ -24,7 +25,14 @@ obj/runfile.o: runfile.cpp $(IDIR)/runfile.h | $(ODIR)
 $(ODIR):
 	mkdir $(ODIR)
 
-.PHONY: clean, virasoro.o
+$(CFG): virasoro.cpp
+	$(file > $(CFG),[default parameters])
+	$(file >> $(CFG),maxThreads=8)
+	$(file >> $(CFG),precision=512)
+	$(file >> $(CFG),tolerance=1e-20)
+	$(file >> $(CFG),showProgressBar=true)
+
+.PHONY: clean, virasoro.o, runfile.o
 clean :
 	rm $(EXECUTABLE) $(OBJECTS)
 virasoro.o :

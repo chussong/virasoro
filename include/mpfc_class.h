@@ -5,7 +5,7 @@
 #include <gmpxx.h>
 #include <mpc.h>
 
-extern const mpf_class tolerance;
+extern mpf_class tolerance;
 
 class mpfc_class{
 

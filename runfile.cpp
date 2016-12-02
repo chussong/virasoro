@@ -263,79 +263,79 @@ mpf_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF + modifier, 0);
+					output = baseMPF + modifier;
 					break;
 		case 11:	// c - n
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF - modifier, 0);
+					output = baseMPF - modifier;
 					break;
 		case 12:	// n - c
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier - baseMPF, 0);
+					output = modifier - baseMPF;
 					break;
 		case 13:	// n*c
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF*modifier, 0);
+					output = baseMPF*modifier;
 					break;
 		case 14:	// c/n
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF/modifier, 0);
+					output = baseMPF/modifier;
 					break;
 		case 15:	// n/c
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier/baseMPF, 0);
+					output = modifier/baseMPF;
 					break;
 		case 20:	// hl + n
 					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF + modifier, 0);
+					output = baseMPF + modifier;
 					break;
 		case 21:	// hl - n
 					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF - modifier, 0);
+					output = baseMPF - modifier;
 					break;
 		case 22:	// n - hl
 					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier - baseMPF, 0);
+					output = modifier - baseMPF;
 					break;
 		case 23:	// n*hl
 					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF * modifier, 0);
+					output = baseMPF * modifier;
 					break;
 		case 24:	// hl/n
 					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF / modifier, 0);
+					output = baseMPF / modifier;
 					break;
 		case 25:	// n/hl
 					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier / baseMPF, 0);
+					output = modifier / baseMPF;
 					break;
 		case 30:	// hh + n
 					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
@@ -343,7 +343,7 @@ mpf_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier + baseMPF, 0);
+					output = modifier + baseMPF;
 					break;
 		case 31:	// hh - n
 					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
@@ -351,7 +351,7 @@ mpf_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF - modifier, 0);
+					output = baseMPF - modifier;
 					break;
 		case 32:	// n - hh
 					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
@@ -359,7 +359,7 @@ mpf_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier - baseMPF, 0);
+					output = modifier - baseMPF;
 					break;
 		case 33:	// n*hh
 					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
@@ -367,7 +367,7 @@ mpf_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier * baseMPF, 0);
+					output = modifier * baseMPF;
 					break;
 		case 34:	// hh/n
 					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
@@ -375,7 +375,7 @@ mpf_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(baseMPF/modifier, 0);
+					output = baseMPF/modifier;
 					break;
 		case 35:	// n/hh
 					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
@@ -383,7 +383,7 @@ mpf_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 					baseStart = 0;
 					baseEnd = firstHalf.find_first_of(" ,;");
 					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
-					output = to_string(modifier/baseMPF, 0);
+					output = modifier/baseMPF;
 					break;
 	}
 	return output;

@@ -1,33 +1,36 @@
 #include "virasoro.h"
 
-int maxThreads = 8;			// Maximum number of simultaneous threads
-int precision = 512;				// Precision of mpf_class in bits
-const mpf_class tolerance(1e-20);	// Smaller than this is taken to be 0 for comparisons
+int maxThreads = 8;					// Maximum number of simultaneous threads
+int precision = 512;				// Precision of mpf_class and mpfc_class in bits
+mpf_class tolerance(1e-20);			// Smaller than this is taken to be 0 for comparisons
+bool showProgressBar = true;		// Show progress bar during FillHmn()
 
 mpc_rnd_t mpfc_class::default_rnd_mode = MPC_RNDZZ;
 mpfr_prec_t mpfc_class::default_prec = 64;
 
 int main(int argc, char** argv){
 	auto programStart = Clock::now();
-	std::string options = ParseOptions(argc, argv);
+	ReadDefaults("config.txt");
+	std::vector<std::string> args = CollectArgs(argc, argv);
+	std::string options = ParseOptions(args);
 	mpf_set_default_prec(precision);
 	mpfc_class::set_default_prec(precision);
 	mpfc_class::set_default_rnd_mode(MPC_RNDZZ);
 	int exitCode;
-	switch(argc){
+	switch(args.size()){
 		default:	printf("Error: input either the name of a runfile or the five parameters c, hl, hh, hp, maxOrder\n");
 					return EXIT_FAILURE;
-		case 2:		if(options.find("m", 0) != std::string::npos){
-						exitCode = RunFromFile(argv[1], options);
+		case 1:		if(options.find("m", 0) != std::string::npos){
+						exitCode = RunFromFile(args[0], options);
 					} else {
-						exitCode = RunFromFile(argv[1], options);
+						exitCode = RunFromFile(args[0], options);
 						ShowTime("Entire computation", programStart);
 					}
 					break;
-		case 6:		if(options.find("m", 0) != std::string::npos){
-						exitCode = RunFromTerminal(argv, options);
+		case 5:		if(options.find("m", 0) != std::string::npos){
+						exitCode = RunFromTerminal(args, options);
 					} else {
-						exitCode = RunFromTerminal(argv, options);
+						exitCode = RunFromTerminal(args, options);
 						ShowTime("Entire computation", programStart);
 					}
 					break;
@@ -36,63 +39,104 @@ int main(int argc, char** argv){
 	return exitCode;
 }
 
-// some day I'll get around to turning argv into a std::vector<std::string> to begin with
-std::string ParseOptions(int &argc, char** &argv){
-	std::string options = "";
-	char** newArgv;
-	int newArgc = argc;
-	bool* realArg = new bool[argc]();
-	for(int i = 1; i < argc; ++i){
-		if(argv[i][0] != '-'){
-			realArg[i] = true;
+std::vector<std::string> CollectArgs(int argc, char** argv){
+	std::vector<std::string> args;
+	for(int i = 1; i <= argc-1; ++i){
+		args.emplace_back(argv[i]);
+	}
+	return args;
+}
+
+void ReadDefaults(std::string filename){
+	std::ifstream inStream;
+	inStream.open(filename, std::ifstream::in);
+	if((inStream.rdstate() & std::ifstream::failbit) != 0){
+		CreateConfigFile(filename);
+		inStream.open(filename, std::ifstream::in);
+	}
+	std::string currentLine;
+	std::vector<std::string> lines;
+	while(true){
+		std::getline(inStream, currentLine);
+		if(currentLine.empty()) break;
+		lines.push_back(currentLine);
+	}
+	for(unsigned int i = 1; i <= lines.size(); ++i){
+		if(lines[i-1].size() >= 12 && lines[i-1].substr(0,10).compare("maxThreads") == 0){
+			maxThreads = std::stoi(lines[i-1].substr(11));
 			continue;
-		} else if(strcmp(argv[i], "-m") == 0){
+		}
+		if(lines[i-1].size() >= 11 && lines[i-1].substr(0,9).compare("precision") == 0){
+			precision = std::stoi(lines[i-1].substr(10));
+			continue;
+		}
+		if(lines[i-1].size() >= 11 && lines[i-1].substr(0,9).compare("tolerance") == 0){
+			tolerance = lines[i-1].substr(10).c_str();
+			continue;
+		}
+		if(lines[i-1].size() >= 17 && lines[i-1].substr(0,15).compare("showProgressBar") == 0){
+			if(lines[i-1].substr(16) == "false"){
+				showProgressBar = false;
+			} else {
+				showProgressBar = true;
+			}
+		}
+	}
+	inStream.close();
+	return;
+}
+
+void CreateConfigFile(std::string filename){
+	std::ofstream outStream;
+	outStream.open(filename, std::ofstream::out);
+	outStream << "[default parameters]" << std::endl;
+	outStream << "maxThreads=8" << std::endl;
+	outStream << "precision=512" << std::endl;
+	outStream << "tolerance=1e-20" << std::endl;
+	outStream << "showProgressBar=true" << std::endl;
+	outStream.close();
+	return;
+}
+
+std::string ParseOptions(std::vector<std::string> &args){
+	std::string options = "";
+	std::vector<bool> realArg;
+	realArg.resize(args.size());
+	for(unsigned int i = 1; i <= args.size(); ++i){
+		if(args[i-1][0] != '-'){
+			realArg[i-1] = true;
+			continue;
+		} else if(args[i-1].substr(0,2).compare("-m") == 0){
 			options.append("m");
-			--newArgc;
-			realArg[i] = false;
-		} else if(strcmp(argv[i], "-c") == 0){
+			realArg[i-1] = false;
+		} else if(args[i-1].substr(0,2).compare("-c") == 0){
 			options.append("c");
-			--newArgc;
-			realArg[i] = false;
-		} else if(strcmp(argv[i], "-bb") == 0){
+			realArg[i-1] = false;
+		} else if(args[i-1].substr(0,3).compare("-bb") == 0){
 			options.append("bb");
-			--newArgc;
-			realArg[i] = false;
-		} else if(strcmp(argv[i], "-b") == 0){
+			realArg[i-1] = false;
+		} else if(args[i-1].substr(0,2).compare("-b") == 0){
 			options.append("b");
-			--newArgc;
-			realArg[i] = false;
-		} else if(strncmp(argv[i], "-p", 2) == 0){
-			std::string precString = argv[i];
-			precision = std::stoi(precString.substr(2), nullptr, 10);
-			--newArgc;
-			realArg[i] = false;
-		} else if(strncmp(argv[i], "-t", 2) == 0){
-			std::string threadString = argv[i];
-			maxThreads = std::stoi(threadString.substr(2), nullptr, 10);
-			--newArgc;
-			realArg[i] = false;
+			realArg[i-1] = false;
+		} else if(args[i-1].substr(0,2).compare("-p") == 0){
+			precision = std::stoi(args[i-1].substr(2));
+			realArg[i-1] = false;
+		} else if(args[i-1].substr(0,2).compare("-t") == 0){
+			maxThreads = std::stoi(args[i-1].substr(2));
+			realArg[i-1] = false;
 		} else {
-			realArg[i] = true;
+			realArg[i-1] = true;
 		}
 	}
-	newArgv = new char*[newArgc];
-	newArgv[0] = argv[0];
-	int pos = 1;
-	for(int i = 1; i < argc; ++i){
-		if(realArg[i]){
-			newArgv[pos] = argv[i];
-			++pos;
+	for(unsigned int i = realArg.size(); i >= 1; --i){
+		if(!realArg[i-1]){
+			args.erase(args.begin()+i-1);
 		}
 	}
-	argc = newArgc;
-	argv = newArgv;
-	delete[] newArgv;
-	delete[] realArg;
 	return options;
 }
 
-int RunFromFile(char* filename, const std::string options){
+int RunFromFile(std::string filename, const std::string options){
 	const bool wolframOutput = options.find("m", 0) != std::string::npos;
 	const bool consoleOutput = options.find("c", 0) != std::string::npos;	
 	int bGiven = 0;
@@ -171,7 +215,7 @@ int RunFromFile(char* filename, const std::string options){
 	return 0;
 }
 
-int RunFromTerminal(char** argv, const std::string options){
+int RunFromTerminal(std::vector<std::string> args, const std::string options){
 	const bool wolframOutput = options.find("m", 0) != std::string::npos;
 	const bool consoleOutput = options.find("c", 0) != std::string::npos;
 	int bGiven = 0;
@@ -179,10 +223,9 @@ int RunFromTerminal(char** argv, const std::string options){
 	if(options.find("bb", 0) != std::string::npos) bGiven = 2;
 	std::vector<mpf_class> runVector;
 	for(int i = 1; i <= 4; ++i){
-		std::cout << " \b";				// mystifyingly it segfaults without this
-		runVector.emplace_back(argv[i]);
+		runVector.emplace_back(args[i-1]);
 	}
-	unsigned short int maxOrder = std::atoi(argv[5]);
+	unsigned short int maxOrder = std::stoi(args[4]);
 	maxOrder -= (maxOrder % 2);
 //	DebugPrintRunVector(runVector, hp, maxOrder);
 	std::string outputName;
@@ -192,7 +235,7 @@ int RunFromTerminal(char** argv, const std::string options){
 	} else if(consoleOutput) {
 		outputName = "__CONSOLE";
 	} else {
-		outputName = NameOutputFile(nullptr);
+		outputName = NameOutputFile("");
 		std::remove(outputName.c_str());
 	}
 	if(bGiven == 0 && runVector[0] < 25 && runVector[0] > 1){
@@ -326,15 +369,10 @@ std::string to_string(const mpf_class N, int digits){
 	return output;
 }
 
-std::string NameOutputFile(const char* runfileName){
-	std::string filename;
-	if(runfileName == nullptr){
-		filename = "";
-	} else {
-		filename = runfileName;
-		std::size_t delPos = filename.find(".txt");
-		if(delPos != std::string::npos) filename.erase(delPos, 4);
-		filename.append("_results.txt");
-	}
+std::string NameOutputFile(std::string runfileName){
+	std::string filename = runfileName;
+	std::size_t delPos = filename.find(".txt");
+	if(delPos != std::string::npos) filename.erase(delPos, 4);
+	filename.append("_results.txt");
 	return filename;
 }

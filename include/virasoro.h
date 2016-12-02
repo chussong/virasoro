@@ -20,7 +20,7 @@
 
 extern int maxThreads;
 extern int precision;
-extern const mpf_class tolerance;
+extern mpf_class tolerance;
 
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -30,11 +30,17 @@ inline void ClearStructureChars(FILE* file){
 	ungetc(c, file);
 }
 
-std::string ParseOptions(int &argc, char** &argv);
+std::vector<std::string> CollectArgs(int argc, char** argv);
 
-int RunFromFile(char* filename, const std::string options);
+void ReadDefaults(std::string filename);
 
-int RunFromTerminal(char** argv, const std::string options);
+void CreateConfigFile(std::string filename);
+
+std::string ParseOptions(std::vector<std::string> &args);
+
+int RunFromFile(std::string filename, const std::string options);
+
+int RunFromTerminal(std::vector<std::string> args, const std::string options);
 
 void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder);
 
@@ -50,17 +56,17 @@ inline std::string to_string(const mpfc_class N, int digits){
 	return N.to_string(digits);
 }
 
-std::string NameOutputFile(const char* runfileName);
+std::string NameOutputFile(std::string runfileName);
 
 template<class T>
 void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, const std::string outputName, const int bGiven){
-	std::cout << "Beginning run with";
+/*	std::cout << "Beginning run with";
 	std::cout << " c=" << to_string(runVector[0], 4);
 	std::cout << " hl=" << to_string(runVector[1], 4);
 	std::cout << " hh=" << to_string(runVector[2], 4);
 	std::cout << " hp=";
 	for(unsigned int i = 4; i <= runVector.size(); ++i) std::cout << to_string(runVector[i-1], 4) << ",";
-	std::cout << "\b " << std::endl;
+	std::cout << "\b " << std::endl;*/
 	// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
 	T bsq, invBsq, llsq, lhsq, temp1, temp2;
 	if(bGiven == 1){

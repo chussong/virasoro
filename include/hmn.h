@@ -7,6 +7,7 @@
 
 extern int maxThreads;
 extern int precision;
+extern bool showProgressBar;
 
 template <class T> // to be used with either mpf_class or mpfc_class
 class Hmn_c{
@@ -58,12 +59,28 @@ Hmn_c<T>::~Hmn_c(){
 	delete[] mnAtThisOrder;
 }
 
+inline void DrawProgressBar(const float progress){
+	int barWidth = 70;
+	std::cout << "[";
+	int progPos = barWidth*progress;
+	for(int i = 1; i <= barWidth; ++i){
+		if(i <= progPos) std::cout << "-";
+		else std::cout << " ";
+	}
+	std::cout << "] " << int(progress * 100.0) << " %\r";
+	std::cout.flush();
+}
+
 template<class T>
 void Hmn_c<T>::FillHmn(){	
 	std::thread* thread = new std::thread[maxThreads];
 //	T temp1[maxThreads], temp2[maxThreads], hpTemp[maxThreads];
 	T* temp = new T[maxThreads];
 	int numThreads;
+	float progress = 0.0;
+	if(showProgressBar){
+		DrawProgressBar(progress);
+	}
 	for(int order = 2; order < maxOrder; order+=2){	
 		numThreads = std::min(maxThreads,(maxOrder-order)/2);
 		thread[0] = std::thread(Hmn_c::StartThread, this, 2, (maxOrder-order)/numThreads + (maxOrder-order)%numThreads, order, std::ref(temp[0]));
@@ -73,6 +90,15 @@ void Hmn_c<T>::FillHmn(){
 		for(int i=1; i<= numThreads; ++i){
 			thread[i-1].join();
 		}
+		if(showProgressBar){
+			progress += (float)2/maxOrder;
+			DrawProgressBar(progress);
+		}
+	}
+	if(showProgressBar){
+		progress = 1.0f;
+		DrawProgressBar(progress);
+		std::cout << std::endl;
 	}
 	delete[] temp;
 	delete[] thread;
