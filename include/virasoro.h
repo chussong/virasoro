@@ -21,6 +21,7 @@
 extern int maxThreads;
 extern int precision;
 extern mpf_class tolerance;
+extern bool showProgressBar;
 
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -68,6 +69,10 @@ void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, con
 	for(unsigned int i = 4; i <= runVector.size(); ++i) std::cout << to_string(runVector[i-1], 4) << ",";
 	std::cout << "\b " << std::endl;*/
 	// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
+	if(showProgressBar){
+		std::cout << "Computing prefactors...";
+		std::cout.flush();
+	}
 	T bsq, invBsq, llsq, lhsq, temp1, temp2;
 	if(bGiven == 1){
 		bsq = runVector[0]*runVector[0];

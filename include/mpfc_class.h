@@ -25,7 +25,7 @@ class mpfc_class{
 		mpfc_class(mpfc_class&& u);
 		mpfc_class(long rlPart, long imPart = 0, mpfr_prec_t prec = default_prec, mpc_rnd_t rnd_mode = default_rnd_mode);
 		mpfc_class(mpf_class rlPart, mpf_class imPart = 0, mpfr_prec_t prec = default_prec, mpc_rnd_t rnd_mode = default_rnd_mode);
-		mpfc_class(std::string& str, int base = 10, mpfr_prec_t prec = default_prec, mpc_rnd_t rnd_mode = default_rnd_mode);
+		mpfc_class(const std::string& str, int base = 10, mpfr_prec_t prec = default_prec, mpc_rnd_t rnd_mode = default_rnd_mode);
 		~mpfc_class();
 		
 		mpfc_class& operator=(const mpfc_class& v);
@@ -74,6 +74,9 @@ class mpfc_class{
 		mpfc_class& operator<<=(const unsigned long u);
 
 		std::string to_string(int digits = 0, int base = 10) const;
+		mpf_class realPart();
+		mpf_class imPart();
+		bool isReal();
 
 		mpfc_class sqr();
 		mpfc_class sqrt();
@@ -106,7 +109,7 @@ inline mpfc_class::mpfc_class(const mpfc_class& u){
 
 inline mpfc_class::mpfc_class(mpfc_class&& u){
 	rnd_mode = u.rnd_mode;
-//	mpc_init2(value, mpfc_class::default_prec);		not sure if we need this or not
+	mpc_init2(value, mpfc_class::default_prec);
 	mpc_swap(value, u.value);
 }
 
@@ -120,7 +123,7 @@ inline mpfc_class::mpfc_class(mpf_class rlPart, mpf_class imPart, mpfr_prec_t pr
 	mpc_set_f_f(value, rlPart.get_mpf_t(), imPart.get_mpf_t(), rnd_mode);
 }
 
-inline mpfc_class::mpfc_class(std::string& str, int base, mpfr_prec_t prec, mpc_rnd_t rnd_mode):rnd_mode(rnd_mode){
+inline mpfc_class::mpfc_class(const std::string& str, int base, mpfr_prec_t prec, mpc_rnd_t rnd_mode):rnd_mode(rnd_mode){
 	mpc_init2(value, prec);
 	mpc_set_str(value, str.c_str(), base, rnd_mode);
 }
@@ -130,7 +133,7 @@ inline mpfc_class::~mpfc_class(){
 }
 
 // this is needed for the templates
-namespace internal{
+namespace mpfc_internal{
 
 	template <typename ArgumentType> struct result_type {};
 
@@ -142,35 +145,35 @@ namespace internal{
 }
 
 template <typename Rhs>
-inline const typename internal::result_type<Rhs>::type
+inline const typename mpfc_internal::result_type<Rhs>::type
 	operator+(const mpfc_class& lhs, const Rhs& rhs){ return mpfc_class(lhs) += rhs; }
 
 template <typename Lhs>
-inline const typename internal::result_type<Lhs>::type
+inline const typename mpfc_internal::result_type<Lhs>::type
 	operator+(const Lhs& lhs, const mpfc_class& rhs){ return mpfc_class(rhs) += lhs; }
 
 template <typename Rhs>
-inline const typename internal::result_type<Rhs>::type
+inline const typename mpfc_internal::result_type<Rhs>::type
 	operator-(const mpfc_class& lhs, const Rhs& rhs){ return mpfc_class(lhs) -= rhs; }
 
 template <typename Lhs>
-inline const typename internal::result_type<Lhs>::type
+inline const typename mpfc_internal::result_type<Lhs>::type
 	operator-(const Lhs& lhs, const mpfc_class& rhs){ return mpfc_class(lhs) -= rhs; }
 
 template <typename Rhs>
-inline const typename internal::result_type<Rhs>::type
+inline const typename mpfc_internal::result_type<Rhs>::type
 	operator*(const mpfc_class& lhs, const Rhs& rhs){ return mpfc_class(lhs) *= rhs; }
 
 template <typename Lhs>
-inline const typename internal::result_type<Lhs>::type
+inline const typename mpfc_internal::result_type<Lhs>::type
 	operator*(const Lhs& lhs, const mpfc_class& rhs){ return mpfc_class(rhs) *= lhs; }
 
 template <typename Rhs>
-inline const typename internal::result_type<Rhs>::type
+inline const typename mpfc_internal::result_type<Rhs>::type
 	operator/(const mpfc_class& lhs, const Rhs& rhs){ return mpfc_class(lhs) /= rhs; }
 
 template <typename Lhs>
-inline const typename internal::result_type<Lhs>::type
+inline const typename mpfc_internal::result_type<Lhs>::type
 	operator/(const Lhs& lhs, const mpfc_class& rhs){ return mpfc_class(lhs) /= rhs; }
 
 inline mpfc_class& mpfc_class::operator=(const mpfc_class& v){
@@ -406,7 +409,7 @@ inline bool operator == (const mpfc_class& a, const mpfc_class& b){return (mpc_c
 inline bool operator != (const mpfc_class& a, const mpfc_class& b){return !(mpc_cmp(a.value,b.value)==0);}
 
 inline std::string mpfc_class::to_string(int digits, int base) const{
-	char* cstr = mpc_get_str(base, digits, value, rnd_mode);
+	char* cstr = mpc_get_str(base, digits, value, MPC_RNDNN);
 	std::string output(cstr);
 	mpc_free_str(cstr);
 	size_t splitLoc = output.find(" ");
@@ -479,6 +482,28 @@ inline std::string mpfc_class::to_string(int digits, int base) const{
 			return halves[0] + " + " + halves[1] + "*I";
 		}
 	}
+}
+
+inline mpf_class mpfc_class::realPart(){
+	mpfr_t realPart;
+	mpfr_init(realPart);
+	mpc_real(realPart, value, (mpfr_rnd_t)this->rnd_mode);
+	mpf_class ret;
+	mpfr_get_f(ret.get_mpf_t(), realPart, (mpfr_rnd_t)this->rnd_mode);
+	return ret;
+}
+inline mpf_class mpfc_class::imPart(){
+	mpfr_t imPart;
+	mpfr_init(imPart);
+	mpc_imag(imPart, value, (mpfr_rnd_t)this->rnd_mode);
+	mpf_class ret;
+	mpfr_get_f(ret.get_mpf_t(), imPart, (mpfr_rnd_t)this->rnd_mode);
+	return ret;
+}
+
+inline bool mpfc_class::isReal(){
+	if(this->imPart() < tolerance) return true;
+	return false;
 }
 
 inline mpfc_class mpfc_class::sqr(){

@@ -169,26 +169,28 @@ int RunFromFile(std::string filename, const std::string options){
 	}
 	auto runStart = Clock::now();
 	std::string outputName;
-	std::vector<mpfc_class> complexRunVector;
+	std::vector<mpf_class> realRunVector;
+	bool allReal;
 	if(wolframOutput){
 		outputName = "__MATHEMATICA";
 		std::cout << "{";
-		for(unsigned int run = 1; run < runfile.runs.size(); ++run){
-			if(bGiven == 0 && runfile.runs[run-1][0] < 25 && runfile.runs[run-1][0] > 1){
-				for(unsigned int i = 1; i <= runfile.runs[run-1].size(); ++i) complexRunVector.emplace_back(runfile.runs[run-1][i-1]);
-				FindCoefficients<mpfc_class>(complexRunVector, runfile.maxOrders[run-1], outputName, bGiven);
-				complexRunVector.clear();
-			} else {
-				FindCoefficients<mpf_class>(runfile.runs[run-1], runfile.maxOrders[run-1], outputName, bGiven);
+		for(unsigned int run = 1; run <= runfile.runs.size(); ++run){
+			allReal = true;
+			for(unsigned int i = 1; i <= runfile.runs[run-1].size(); ++i){
+				if(!runfile.runs[run-1][i-1].isReal()){
+					allReal = false;
+					break;
+				}
 			}
-			std::cout << ",";
-		}
-		if(bGiven == 0 && runfile.runs[runfile.runs.size()-1][0] > 1 && runfile.runs[runfile.runs.size()-1][0] > 1){
-			for(unsigned int i = 1; i <= runfile.runs[runfile.runs.size()-1].size(); ++i) complexRunVector.emplace_back(runfile.runs[runfile.runs.size()-1][i-1]);
-			FindCoefficients<mpfc_class>(complexRunVector, runfile.maxOrders[runfile.runs.size()-1], outputName, bGiven);
-			complexRunVector.clear();
-		} else {
-			FindCoefficients<mpf_class>(runfile.runs[runfile.runs.size()-1], runfile.maxOrders[runfile.runs.size()-1], outputName, bGiven);
+			if(bGiven == 0 && runfile.runs[run-1][0].realPart() < 25 && runfile.runs[run-1][0].realPart() > 1) allReal = false;
+			if(allReal){
+				for(unsigned int i = 1; i <= runfile.runs[run-1].size(); ++i) realRunVector.push_back(runfile.runs[run-1][i-1].realPart());
+				FindCoefficients<mpf_class>(realRunVector, runfile.maxOrders[run-1], outputName, bGiven);
+				realRunVector.clear();
+			} else {
+				FindCoefficients<mpfc_class>(runfile.runs[run-1], runfile.maxOrders[run-1], outputName, bGiven);
+			}
+			if(run < runfile.runs.size()) std::cout << ",";
 		}
 		std::cout << "}";
 	} else {
@@ -202,12 +204,20 @@ int RunFromFile(std::string filename, const std::string options){
 			runStart = Clock::now();
 //			DebugPrintRunVector(runs[run-1], hp[run-1], maxOrders[run-1]);
 			std::cout << "Beginning run " << run << " of " << runfile.runs.size() << "." << std::endl;
-			if(bGiven == 0 && runfile.runs[run-1][0] < 25 && runfile.runs[run-1][0] > 1){
-				for(unsigned int i = 1; i <= runfile.runs[run-1].size(); ++i) complexRunVector.emplace_back(runfile.runs[run-1][i-1]);
-				FindCoefficients<mpfc_class>(complexRunVector, runfile.maxOrders[run-1], outputName, bGiven);
-				complexRunVector.clear();
+			allReal = true;
+			for(unsigned int i = 1; i <= runfile.runs[run-1].size(); ++i){
+				if(!runfile.runs[run-1][i-1].isReal()){
+					allReal = false;
+					break;
+				}
+			}
+			if(bGiven == 0 && runfile.runs[run-1][0].realPart() < 25 && runfile.runs[run-1][0].realPart() > 1) allReal = false;
+			if(allReal){
+				for(unsigned int i = 1; i <= runfile.runs[run-1].size(); ++i) realRunVector.push_back(runfile.runs[run-1][i-1].realPart());
+				FindCoefficients<mpf_class>(realRunVector, runfile.maxOrders[run-1], outputName, bGiven);
+				realRunVector.clear();
 			} else {
-				FindCoefficients<mpf_class>(runfile.runs[run-1], runfile.maxOrders[run-1], outputName, bGiven);
+				FindCoefficients<mpfc_class>(runfile.runs[run-1], runfile.maxOrders[run-1], outputName, bGiven);
 			}
 			ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
 		}

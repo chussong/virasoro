@@ -22,6 +22,15 @@ Runfile_c::Runfile_c(const std::string filename): filename(filename)
 		lines.push_back(currentLine);
 	}
 }
+Runfile_c::Runfile_c(const std::vector<std::string> line): filename(""){
+	std::string combinedLine = "";
+	for(unsigned int i = 1; i <= line.size(); ++i){
+		combinedLine += line[i-1];
+		combinedLine += " ";
+	}
+	combinedLine.erase(combinedLine.length()-1);
+	lines.push_back(combinedLine);
+}
 
 int Runfile_c::ReadRunfile(){
 	if(lines.empty()){
@@ -34,7 +43,7 @@ int Runfile_c::ReadRunfile(){
 		return -2;
 	}
 	size_t leftPos, rightPos;
-	std::vector<mpf_class> currentRun;
+	std::vector<mpfc_class> currentRun;
 	int currentMO;
 	for(unsigned int i = 1; i <= lines.size(); ++i){
 		leftPos = 0;
@@ -110,7 +119,7 @@ int Runfile_c::ExpandBraces(){
 	std::vector<std::string> newLines;
 	std::string firstHalf, secondHalf, insideBraces;
 	std::size_t leftPos, rightPos;
-	std::tuple<mpf_class, mpf_class, mpf_class> parsedBraces;
+	std::tuple<mpfc_class, mpfc_class, mpfc_class> parsedBraces;
 	bool needRerun;
 	do{
 		needRerun = false;
@@ -123,8 +132,8 @@ int Runfile_c::ExpandBraces(){
 					secondHalf = lines[i-1].substr(rightPos+1, lines[i-1].length()-rightPos-1);
 					insideBraces = lines[i-1].substr(leftPos+1, rightPos-leftPos-1);
 					parsedBraces = ParseBraces(firstHalf, insideBraces);
-					if(std::get<0>(parsedBraces) > std::get<1>(parsedBraces) || std::get<2>(parsedBraces) <= 0) return -2;
-					for(mpf_class currentValue = std::get<0>(parsedBraces); currentValue <= std::get<1>(parsedBraces); currentValue += std::get<2>(parsedBraces)){
+//					if(std::get<0>(parsedBraces) > std::get<1>(parsedBraces) || std::get<2>(parsedBraces) <= 0) return -2;
+					for(mpfc_class currentValue = std::get<0>(parsedBraces); currentValue.realPart() <= std::get<1>(parsedBraces).realPart(); currentValue += std::get<2>(parsedBraces).realPart()){
 						newLines.push_back(firstHalf + to_string(currentValue, 0) + secondHalf);
 					}
 					needRerun = true;
@@ -141,8 +150,8 @@ int Runfile_c::ExpandBraces(){
 	return 0;
 }
 
-std::tuple<mpf_class, mpf_class, mpf_class> Runfile_c::ParseBraces(std::string firstHalf, std::string insideBraces){
-	mpf_class lowerBound, upperBound, increment;
+std::tuple<mpfc_class, mpfc_class, mpfc_class> Runfile_c::ParseBraces(std::string firstHalf, std::string insideBraces){
+	mpfc_class lowerBound, upperBound, increment;
 	std::size_t numStart, numEnd;
 	numStart = insideBraces.find_first_of("0123456789-.ch");
 	numEnd = insideBraces.find_first_of(" ,;", numStart+1);
@@ -173,7 +182,7 @@ int Runfile_c::ExpandRelativeEqns(){
 	std::vector<std::string> newLines;
 	std::string currentLine, firstHalf, secondHalf;
 	size_t leftPos, rightPos, splitPos;
-	mpf_class value;
+	mpfc_class value;
 	bool madeChange = true;
 	while(madeChange){
 		madeChange = false;
@@ -197,8 +206,8 @@ int Runfile_c::ExpandRelativeEqns(){
 	return changesMade;
 }
 
-std::tuple<mpf_class, int> Runfile_c::ParseRelativeEqn(std::string equation, std::string relTo){
-	mpf_class modifier = 0;
+std::tuple<mpfc_class, int> Runfile_c::ParseRelativeEqn(std::string equation, std::string relTo){
+	mpfc_class modifier = 0;
 	int type = -100;
 	std::size_t hit;
 	if((hit = equation.find(relTo)) != std::string::npos){
@@ -244,11 +253,11 @@ std::tuple<mpf_class, int> Runfile_c::ParseRelativeEqn(std::string equation, std
 	return std::make_tuple(modifier, type);
 }
 
-mpf_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
-	mpf_class output = 0;
+mpfc_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
+	mpfc_class output = 0;
 	std::size_t baseStart, baseEnd;
-	mpf_class baseMPF;
-	std::tuple<mpf_class, int> parsedEqn;
+	mpfc_class baseMPF;
+	std::tuple<mpfc_class, int> parsedEqn;
 	if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "c")) < 0){
 		if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "hl")) < 0){
 			if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "hh")) < 0){
@@ -256,7 +265,7 @@ mpf_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 			}
 		}
 	}
-	mpf_class modifier = std::get<0>(parsedEqn);
+	mpfc_class modifier = std::get<0>(parsedEqn);
 	int type = std::get<1>(parsedEqn);
 	switch(type){
 		case 10:	// c + n
@@ -389,7 +398,7 @@ mpf_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 	return output;
 }
 
-int Runfile_c::RunCompare(std::vector<mpf_class> run1, std::vector<mpf_class> run2){
+int Runfile_c::RunCompare(std::vector<mpfc_class> run1, std::vector<mpfc_class> run2){
 /*	std::cout << "Comparing these two runs:" << std::endl;
 	for(unsigned int i = 1; i <= run1.size(); ++i) std::cout << run1[i-1] << " ";
 	std::cout << std::endl;

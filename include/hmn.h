@@ -79,6 +79,7 @@ void Hmn_c<T>::FillHmn(){
 	int numThreads;
 	float progress = 0.0;
 	if(showProgressBar){
+		std::cout << "\r";
 		DrawProgressBar(progress);
 	}
 	for(int order = 2; order < maxOrder; order+=2){	

@@ -7,17 +7,19 @@
 #include <vector>
 #include <gmpxx.h>
 #include "virasoro.h"
+#include "mpfc_class.h"
 
 class Runfile_c{
 	const std::string filename;
 	std::vector<std::string> lines;
 
 	public:
-		std::vector<std::vector<mpf_class>> runs;
+		std::vector<std::vector<mpfc_class>> runs;
 		std::vector<int> maxOrders;
 
 		Runfile_c(const char* filename);
 		Runfile_c(const std::string filename);
+		Runfile_c(const std::vector<std::string> line);
 		
 		int ReadRunfile();
 
@@ -25,19 +27,19 @@ class Runfile_c{
 
 		int ExpandBraces();
 
-		std::tuple<mpf_class, mpf_class, mpf_class> ParseBraces(std::string firstHalf, std::string insideBraces);
+		std::tuple<mpfc_class, mpfc_class, mpfc_class> ParseBraces(std::string firstHalf, std::string insideBraces);
 
 		int ExpandRelativeEqns();
 			
-		std::tuple<mpf_class, int> ParseRelativeEqn(std::string equation, std::string relTo);
+		std::tuple<mpfc_class, int> ParseRelativeEqn(std::string equation, std::string relTo);
 
-		mpf_class RelativeMPF(std::string firstHalf, std::string equation);
+		mpfc_class RelativeMPF(std::string firstHalf, std::string equation);
 
-		int ReadMPF(mpf_class& output, FILE* runfile);
+		int ReadMPF(mpfc_class& output, FILE* runfile);
 
 		int ReadMaxOrder(FILE* runfile);
 
-		int RunCompare(std::vector<mpf_class> run1, std::vector<mpf_class> run2);
+		int RunCompare(std::vector<mpfc_class> run1, std::vector<mpfc_class> run2);
 };
 
 #endif
