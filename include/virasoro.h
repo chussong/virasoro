@@ -25,12 +25,6 @@ extern bool showProgressBar;
 
 typedef std::chrono::high_resolution_clock Clock;
 
-inline void ClearStructureChars(FILE* file){
-	char c = fgetc(file);
-	while(c == ' ' || c == ',' || c == ';') c = fgetc(file);
-	ungetc(c, file);
-}
-
 std::vector<std::string> CollectArgs(int argc, char** argv);
 
 void ReadDefaults(std::string filename);
@@ -43,6 +37,8 @@ int RunFromFile(std::string filename, const std::string options);
 
 int RunFromTerminal(std::vector<std::string> args, const std::string options);
 
+int ExecuteRunfile(Runfile_c runfile, std::string options);
+
 void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder);
 
 int EnumerateMN (int* mnLocation, int* mnMultiplicity,  unsigned short int maxOrder);
@@ -52,12 +48,6 @@ void FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int 
 void ShowTime(std::string computationName, std::chrono::time_point<std::chrono::high_resolution_clock> timeStart);
 
 std::string to_string(const mpf_class N, int digits);
-
-inline std::string to_string(const mpfc_class N, int digits){
-	return N.to_string(digits);
-}
-
-std::string NameOutputFile(std::string runfileName);
 
 template<class T>
 void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, const std::string outputName, const int bGiven){
@@ -216,9 +206,6 @@ void WriteH(const T* H, const T c, const T hl, const T hh, const T hp, const uns
 		}
 		std::cout << "}";
 		return;
-	}
-	if(outputName.empty()){
-		filename = "virasoro_" + to_string(c, 3) + "_" + to_string(hl, 3) + "_" + to_string(hh, 3) + "_" + to_string(hp, 1) + "_" + std::to_string(maxOrder) + ".txt";
 	}
 	outputFile.open (filename, std::ios_base::app | std::ios_base::out);
 	if(outputName.empty()){

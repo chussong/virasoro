@@ -22,7 +22,7 @@ Runfile_c::Runfile_c(const std::string filename): filename(filename)
 		lines.push_back(currentLine);
 	}
 }
-Runfile_c::Runfile_c(const std::vector<std::string> line): filename(""){
+Runfile_c::Runfile_c(const std::vector<std::string> line): filename("command_line"){
 	std::string combinedLine = "";
 	for(unsigned int i = 1; i <= line.size(); ++i){
 		combinedLine += line[i-1];
@@ -46,13 +46,20 @@ int Runfile_c::ReadRunfile(){
 	std::vector<mpfc_class> currentRun;
 	int currentMO;
 	for(unsigned int i = 1; i <= lines.size(); ++i){
+//		std::cout << "About to parse the following line:" << std::endl;
+//		std::cout << lines[i-1] << std::endl;
 		leftPos = 0;
 		rightPos = 0;
 		for(int j = 1; j <= 4; ++j){
-			leftPos = lines[i-1].find_first_of("0123456789.-", rightPos);
-			rightPos = lines[i-1].find_first_not_of("0123456789.-", leftPos);
+			leftPos = lines[i-1].find_first_of("0123456789.-(", rightPos);
+			if(lines[i-1][leftPos] == '('){
+				rightPos = lines[i-1].find(")", leftPos) + 1;
+			} else {
+				rightPos = lines[i-1].find_first_not_of("0123456789.-", leftPos);
+			}
+//			std::cout << "Going to emplace with this:" << lines[i-1].substr(leftPos, rightPos-leftPos) << std::endl;
 			currentRun.emplace_back(lines[i-1].substr(leftPos, rightPos-leftPos));
-/*			if(something){
+/*			if(emplacing doesn't work){
 				perror("Error: expected a number in the runfile but failed to read one.\n");
 				return -3;
 			}*/
@@ -134,7 +141,7 @@ int Runfile_c::ExpandBraces(){
 					parsedBraces = ParseBraces(firstHalf, insideBraces);
 //					if(std::get<0>(parsedBraces) > std::get<1>(parsedBraces) || std::get<2>(parsedBraces) <= 0) return -2;
 					for(mpfc_class currentValue = std::get<0>(parsedBraces); currentValue.realPart() <= std::get<1>(parsedBraces).realPart(); currentValue += std::get<2>(parsedBraces).realPart()){
-						newLines.push_back(firstHalf + to_string(currentValue, 0) + secondHalf);
+						newLines.push_back(firstHalf + to_string(currentValue, -1) + secondHalf);
 					}
 					needRerun = true;
 				} else {
@@ -195,7 +202,7 @@ int Runfile_c::ExpandRelativeEqns(){
 				value = RelativeMPF(firstHalf, lines[i-1].substr(leftPos+1, rightPos-leftPos-1));
 				madeChange = true;
 				++changesMade;
-				newLines.push_back(firstHalf + to_string(value, 0) + secondHalf);
+				newLines.push_back(firstHalf + to_string(value, -1) + secondHalf);
 			} else {
 				newLines.push_back(lines[i-1]);
 			}
@@ -255,7 +262,6 @@ std::tuple<mpfc_class, int> Runfile_c::ParseRelativeEqn(std::string equation, st
 
 mpfc_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 	mpfc_class output = 0;
-	std::size_t baseStart, baseEnd;
 	mpfc_class baseMPF;
 	std::tuple<mpfc_class, int> parsedEqn;
 	if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "c")) < 0){
@@ -269,133 +275,97 @@ mpfc_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 	int type = std::get<1>(parsedEqn);
 	switch(type){
 		case 10:	// c + n
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 0);
 					output = baseMPF + modifier;
 					break;
 		case 11:	// c - n
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 0);
 					output = baseMPF - modifier;
 					break;
 		case 12:	// n - c
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 0);
 					output = modifier - baseMPF;
 					break;
 		case 13:	// n*c
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 0);
 					output = baseMPF*modifier;
 					break;
 		case 14:	// c/n
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 0);
 					output = baseMPF/modifier;
 					break;
 		case 15:	// n/c
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 0);
 					output = modifier/baseMPF;
 					break;
 		case 20:	// hl + n
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 1);
 					output = baseMPF + modifier;
 					break;
 		case 21:	// hl - n
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 1);
 					output = baseMPF - modifier;
 					break;
 		case 22:	// n - hl
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 1);
 					output = modifier - baseMPF;
 					break;
 		case 23:	// n*hl
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 1);
 					output = baseMPF * modifier;
 					break;
 		case 24:	// hl/n
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 1);
 					output = baseMPF / modifier;
 					break;
 		case 25:	// n/hl
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 1);
 					output = modifier / baseMPF;
 					break;
 		case 30:	// hh + n
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 2);
 					output = modifier + baseMPF;
 					break;
 		case 31:	// hh - n
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 2);
 					output = baseMPF - modifier;
 					break;
 		case 32:	// n - hh
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 2);
 					output = modifier - baseMPF;
 					break;
 		case 33:	// n*hh
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 2);
 					output = modifier * baseMPF;
 					break;
 		case 34:	// hh/n
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 2);
 					output = baseMPF/modifier;
 					break;
 		case 35:	// n/hh
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					firstHalf.erase(0, firstHalf.find_first_of(" ,;")+1);
-					baseStart = 0;
-					baseEnd = firstHalf.find_first_of(" ,;");
-					baseMPF = firstHalf.substr(baseStart, baseEnd - baseStart);
+					baseMPF = FindBaseNumber(firstHalf, 2);
 					output = modifier/baseMPF;
 					break;
 	}
 	return output;
+}
+
+std::string Runfile_c::FindBaseNumber(std::string sourceString, const int paramNumber){
+	std::size_t baseStart, baseEnd;
+	for(int i = 1; i <= paramNumber; ++i){
+		if(sourceString[baseStart] == '('){
+			sourceString.erase(0, sourceString.find(")")+2);
+		} else {
+			sourceString.erase(0, sourceString.find_first_of(" ,;")+1);
+		}
+	}
+	baseStart = 0;
+	if(sourceString[baseStart] == '('){
+		baseEnd = sourceString.find(")")+1;
+	} else {
+		baseEnd = sourceString.find_first_of(" ,;");
+	}
+	return sourceString.substr(baseStart, baseEnd - baseStart);
 }
 
 int Runfile_c::RunCompare(std::vector<mpfc_class> run1, std::vector<mpfc_class> run2){
@@ -411,4 +381,16 @@ int Runfile_c::RunCompare(std::vector<mpfc_class> run1, std::vector<mpfc_class> 
 		}
 	}
 	return -1;							// runs are identical
+}
+
+std::string Runfile_c::NameOutputFile(){
+	std::string outputname = filename;
+	if(lines.size() == 1){
+		outputname = "virasoro_" + to_string(runs[0][0], 3) + "_" + to_string(runs[0][1], 3) + "_" + to_string(runs[0][2], 3) + "_" + to_string(runs[0][3], 1) + "_" + std::to_string(maxOrders[0]) + ".txt";
+	} else {
+		std::size_t delPos = outputname.find(".txt");
+		if(delPos != std::string::npos) outputname.erase(delPos, 4);
+		outputname.append("_results.txt");
+	}
+	return outputname;
 }

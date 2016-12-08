@@ -83,6 +83,7 @@ class mpfc_class{
 
 		const mpfc_class sqrt(const mpfc_class& v);
 		const mpfr_t* abs(const mpfc_class& v);
+		const std::string to_string(const mpfc_class& v, int digits = 0);
 
 		friend void swap(mpfc_class& x, mpfc_class& y);
 };
@@ -409,9 +410,12 @@ inline bool operator == (const mpfc_class& a, const mpfc_class& b){return (mpc_c
 inline bool operator != (const mpfc_class& a, const mpfc_class& b){return !(mpc_cmp(a.value,b.value)==0);}
 
 inline std::string mpfc_class::to_string(int digits, int base) const{
-	char* cstr = mpc_get_str(base, digits, value, MPC_RNDNN);
+	char* cstr = mpc_get_str(base, std::max(digits,0), value, MPC_RNDNN);
 	std::string output(cstr);
 	mpc_free_str(cstr);
+	if(digits < 0){
+		return output;
+	}
 	size_t splitLoc = output.find(" ");
 	std::string halves[2];
 	halves[0] = output.substr(1, splitLoc-1);
@@ -478,8 +482,8 @@ inline std::string mpfc_class::to_string(int digits, int base) const{
 		if(halves[1].empty()){
 			return halves[0];
 		} else {
-			if(halves[1][0] == '-') return halves[0] + " - " + halves[1].substr(1) + "*I";
-			return halves[0] + " + " + halves[1] + "*I";
+			if(halves[1][0] == '-') return halves[0] + "-" + halves[1].substr(1) + "*I";
+			return halves[0] + "+" + halves[1] + "*I";
 		}
 	}
 }
@@ -537,6 +541,10 @@ inline const mpf_class abs(const mpfc_class& v){
 	mpf_class ret;
 	mpfr_get_f(ret.get_mpf_t(), abs, (mpfr_rnd_t)v.rnd_mode);
 	return ret;
+}
+
+inline const std::string to_string(const mpfc_class& v, int digits = 0){
+	return v.to_string(digits);
 }
 
 inline void swap(mpfc_class& a, mpfc_class& b){	mpc_swap(a.value, b.value);	}
