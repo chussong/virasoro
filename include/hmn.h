@@ -74,11 +74,14 @@ inline void DrawProgressBar(const float progress){
 template<class T>
 void Hmn_c<T>::FillHmn(){	
 	std::thread* thread = new std::thread[maxThreads];
-//	T temp1[maxThreads], temp2[maxThreads], hpTemp[maxThreads];
 	T* temp = new T[maxThreads];
 	int numThreads;
 	float progress = 0.0;
+	float totalComputations = maxOrder*maxOrder*maxOrder/6.0f; 
 	if(showProgressBar){
+		for(int mn = 2; mn < maxOrder; mn+=2){
+			totalComputations += 0.5f*(maxOrder-mn)*mnMultiplicity[mn-1];
+		}
 		std::cout << "\r";
 		DrawProgressBar(progress);
 	}
@@ -92,7 +95,8 @@ void Hmn_c<T>::FillHmn(){
 			thread[i-1].join();
 		}
 		if(showProgressBar){
-			progress += (float)2/maxOrder;
+//			progress += (float)2/maxOrder;
+			progress += order*(maxOrder-order)/totalComputations;
 			DrawProgressBar(progress);
 		}
 	}

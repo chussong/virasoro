@@ -1,7 +1,7 @@
 # virasoro
-Numerical computation of Virasoro block coefficients in CFT_2.
+Numerical computation of Virasoro block coefficients in CFT<sub>2</sub>.  
 
-To compile, type "make" into a terminal in this directory. You will need GCC (or another compiler if you change the makefile) and the following dependencies:
+To compile, type "make" into a terminal in this directory. You will need GCC (or another compiler if you change the makefile) and the following dependencies:  
 GMP arbitrary-precision math library from [here](gmplib.org).  
 GNU MPFR from [here](mpfr.org).  
 GNU MPC from [here](multiprecision.org/index.php?prog=mpc&page=home).  
@@ -46,7 +46,7 @@ There is also a configuration file, config.txt, which contains the default value
 | maxThreads | Maximum number of threads to use in the slow part of the calculation. Default 8, appropriate for a 4-core system. |
 | precision | Number of bits of precision used to represent all numbers interally. Default is 512, which is good enough to get most parameter ranges to order 1000. |
 | tolerance | This is the level below which numbers will be treated as zero when checking, for example, if a complex number is purely real. Default 10^-20, though that's probably aggressive. |
-| showProgressBar | Shows a progress bar for the slow part of the calculation. It's inaccurate (slower in the middle) but does a decent job. Automatically suppressed if -m is given in run commands. Default true, set to false if you don't like it or really need those precious milliseconds. |
+| showProgressBar | Shows a progress bar for the slow part of the calculation. Automatically suppressed if -m is given in run commands. Default true, set to false if you don't like it or really need those precious milliseconds. |
 
 To call this function from Mathematica, do the following:  
 SetDirectory["\<directory where virasoro is\>"];  

@@ -193,7 +193,7 @@ int ExecuteRunfile(Runfile_c runfile, std::string options){
 			std::cout << runfile.maxOrders[i-1];
 			std::cout << std::endl;
 		}
-		std::cout << "Output will be saved to " << runfile.NameOutputFile() << ". If it exists, it will be overwritten." << std::endl;
+		if(!consoleOutput) std::cout << "Output will be saved to " << runfile.NameOutputFile() << ". If it exists, it will be overwritten." << std::endl;
 	}
 	int highestMax = 0;
 	for(unsigned int i = 1; i <= runfile.runs.size(); ++i){
