@@ -76,12 +76,10 @@ void Hmn_c<T>::FillHmn(){
 	std::thread* thread = new std::thread[maxThreads];
 	T* temp = new T[maxThreads];
 	int numThreads;
-	float progress = 0.0;
-	float totalComputations = maxOrder*maxOrder*maxOrder/6.0f; 
+	float progress, totalComputations=0.0f;
 	if(showProgressBar){
-		for(int mn = 2; mn < maxOrder; mn+=2){
-			totalComputations += 0.5f*(maxOrder-mn)*mnMultiplicity[mn-1];
-		}
+		progress = 0.0;
+		totalComputations = (maxOrder*maxOrder*maxOrder - 10*maxOrder + 12)/12.0f; 
 		std::cout << "\r";
 		DrawProgressBar(progress);
 	}
@@ -95,7 +93,6 @@ void Hmn_c<T>::FillHmn(){
 			thread[i-1].join();
 		}
 		if(showProgressBar){
-//			progress += (float)2/maxOrder;
 			progress += order*(maxOrder-order)/totalComputations;
 			DrawProgressBar(progress);
 		}

@@ -77,6 +77,7 @@ void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, con
 	}
 	ConvertInputs(bsq, invBsq, llsq, lhsq, runVector[0], runVector[1], runVector[2], temp1, temp2);
 
+	maxOrder -= maxOrder%2;
 	int* mnLocation = new int[maxOrder]; /* "pos" (location+1) in mn vector at which i+1 = m*n starts */
 	int* mnMultiplicity = new int[maxOrder]();	/* number of mn combinations giving i+1 = m*n */
 	int numberOfMN = EnumerateMN(mnLocation, mnMultiplicity, maxOrder);
@@ -130,6 +131,7 @@ void CheckForDivergences(const Cpqmn_c<T>* Cpqmn, unsigned short int &maxOrder, 
 			}
 			if(Cpqmn->Amn[pos-1] == 0 && maxOrder > pq-2){
 				maxOrder = pq-2;
+				if(showProgressBar) printf("\r");
 				if(maxOrder > 2) printf("Stopping this run at order %i because Amn diverges above this.\n", maxOrder);
 				if(maxOrder <= 2) printf("Skipping this run because Amn diverges immediately.\n");
 				return;
@@ -138,6 +140,7 @@ void CheckForDivergences(const Cpqmn_c<T>* Cpqmn, unsigned short int &maxOrder, 
  	}
 	maxOrder = maxOrder - (maxOrder%2);
 	if(maxOrder < oldMax){
+		if(showProgressBar) printf("\r");
 		if(maxOrder > 2) printf("Stopping this run at order %i because the coefficients diverge above this.\n",maxOrder);
 		if(maxOrder <= 2) printf("Skipping this run because the coefficients diverge immediately.\n");
 	}
