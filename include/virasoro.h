@@ -33,10 +33,6 @@ void CreateConfigFile(std::string filename);
 
 std::string ParseOptions(std::vector<std::string> &args);
 
-int RunFromFile(std::string filename, const std::string options);
-
-int RunFromTerminal(std::vector<std::string> args, const std::string options);
-
 int ExecuteRunfile(Runfile_c runfile, std::string options);
 
 void DebugPrintRunVector(const mpf_class* runVector, const std::vector<mpf_class> hp, const unsigned short int maxOrder);

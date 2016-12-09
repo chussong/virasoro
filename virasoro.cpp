@@ -22,15 +22,11 @@ int main(int argc, char** argv){
 					{Runfile_c runfile(args);
 					exitCode = ExecuteRunfile(runfile, options);
 					break;}
-					//return EXIT_FAILURE;
 		case 1:		{Runfile_c runfile(args[0]);
 					exitCode = ExecuteRunfile(runfile, options);
 					break;}
-		case 5:		{Runfile_c runfile(args);
-					exitCode = ExecuteRunfile(runfile, options);
-					break;}
 	}
-	if(options.find("m", 0) != std::string::npos) ShowTime("Entire computation", programStart);
+	if(options.find("m", 0) == std::string::npos) ShowTime("Entire computation", programStart);
 	return exitCode;
 }
 
@@ -131,43 +127,6 @@ std::string ParseOptions(std::vector<std::string> &args){
 	return options;
 }
 
-int RunFromFile(std::string filename, const std::string options){
-	Runfile_c runfile(filename);
-	return ExecuteRunfile(runfile, options);
-}
-
-int RunFromTerminal(std::vector<std::string> args, const std::string options){
-	Runfile_c runfile(args);
-	return ExecuteRunfile(runfile, options);
-/*	std::vector<mpf_class> runVector;
-	for(int i = 1; i <= 4; ++i){
-		runVector.emplace_back(args[i-1]);
-	}
-	unsigned short int maxOrder = std::stoi(args[4]);
-	maxOrder -= (maxOrder % 2);
-	DebugPrintRunVector(runVector, hp, maxOrder);
-	std::string outputName;
-	if(wolframOutput){
-		outputName = "__MATHEMATICA";
-		std::cout << "{";
-	} else if(consoleOutput) {
-		outputName = "__CONSOLE";
-	} else {
-		outputName = NameOutputFile("");
-		std::remove(outputName.c_str());
-	}
-	if(bGiven == 0 && runVector[0] < 25 && runVector[0] > 1){
-		std::vector<mpfc_class> complexRunVector;
-		for(unsigned int i = 1; i <= runVector.size(); ++i) complexRunVector.emplace_back(runVector[i-1]);
-		FindCoefficients<mpfc_class>(complexRunVector, maxOrder, outputName, bGiven);
-		complexRunVector.clear();
-	} else {
-		FindCoefficients<mpf_class>(runVector, maxOrder, outputName, bGiven);
-	}
-	if(wolframOutput) std::cout << "}";
-	return 0;*/
-}
-
 int ExecuteRunfile(Runfile_c runfile, std::string options){
 	const bool wolframOutput = options.find("m", 0) != std::string::npos;
 	const bool consoleOutput = options.find("c", 0) != std::string::npos;	
@@ -252,7 +211,7 @@ int ExecuteRunfile(Runfile_c runfile, std::string options){
 			} else {
 				FindCoefficients<mpfc_class>(runfile.runs[run-1], runfile.maxOrders[run-1], outputName, bGiven);
 			}
-			ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
+			if(runfile.runs.size() > 1) ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
 		}
 	}
 	return 0;
