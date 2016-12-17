@@ -5,7 +5,7 @@ To compile, type "make" into a terminal in this directory. You will need GCC (or
 GMP arbitrary-precision math library from [here](gmplib.org).  
 GNU MPFR from [here](mpfr.org).  
 GNU MPC from [here](multiprecision.org/index.php?prog=mpc&page=home).  
-Prebuilt versions of these are available for some systems (they're on the Ubuntu repositories, anyway); if you build it yourself, GMP must be compiled with C++ support by using "./configure --enable-cxx" before invoking its make. If you get an error saying libgmp.so.4 is missing, it means you don't have GMP installed correctly; if you get one saying libgmpxx.so.4 is missing, it means you have installed GMP correctly but without C++ support.  
+Prebuilt versions of these are available for some systems (they're on the Ubuntu repositories, anyway), but in my brief testing the prebuilt ones were about half as fast. If you build everything yourself, GMP must be compiled with C++ support by using "./configure --enable-cxx" before invoking its make. If you get an error saying libgmp.so.4 is missing, it means you don't have GMP installed correctly; if you get one saying libgmpxx.so.4 is missing, it means you have installed GMP correctly but without C++ support.  
 
 There are two ways to invoke runs. For a single run, simply pass the parameters c, hl, hh, hp, and qmax. For example, to get a run with c=30, hl=1, hh=3, hp=0, qmax=1000, you would type:  
 ./virasoro 30 1 3 0 1000  

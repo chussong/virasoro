@@ -104,112 +104,156 @@ int Runfile_c::ReadRunfile(){
 }
 
 int Runfile_c::Expand(){
-	int changesMade;
-	int expansions = 1;
-	while(expansions > 0){
-		expansions = 0;
-		changesMade = 1;
-		while(changesMade > 0){
-			changesMade = ExpandBraces();
-			expansions += changesMade;
-		}
-		changesMade = 1;
-		while(changesMade > 0){
-			changesMade = ExpandRelativeEqns();
-			expansions += changesMade;
-		}
+	for(int param = 1; param <= 4; ++param){
+		ExpandRelativeEqns(param-1);
+		ExpandBraces(param-1);
 	}
 	return 0; 
 }
 
-int Runfile_c::ExpandBraces(){
+// param=0 is c/b/b^2; param=1 is hl; param=2 is hh; param=3 is hp
+int Runfile_c::ExpandBraces(const int param){
 	std::vector<std::string> newLines;
-	std::string firstHalf, secondHalf, insideBraces;
-	std::size_t leftPos, rightPos;
 	std::tuple<mpfc_class, mpfc_class, mpfc_class> parsedBraces;
-	bool needRerun;
-	do{
-		needRerun = false;
-		for(unsigned int i = 1; i <= lines.size(); ++i){
-			if((leftPos = lines[i-1].find("{")) != std::string::npos){
-				firstHalf = lines[i-1].substr(0, leftPos);
-				if((rightPos = lines[i-1].find("}", leftPos+1)) == std::string::npos){
-					return -2;
-				} else if(lines[i-1].find_first_not_of("0123456789-. ,;", leftPos+1) == rightPos) {
-					secondHalf = lines[i-1].substr(rightPos+1, lines[i-1].length()-rightPos-1);
-					insideBraces = lines[i-1].substr(leftPos+1, rightPos-leftPos-1);
-					parsedBraces = ParseBraces(firstHalf, insideBraces);
-//					if(std::get<0>(parsedBraces) > std::get<1>(parsedBraces) || std::get<2>(parsedBraces) <= 0) return -2;
-					for(mpfc_class currentValue = std::get<0>(parsedBraces); currentValue.realPart() <= std::get<1>(parsedBraces).realPart(); currentValue += std::get<2>(parsedBraces).realPart()){
-						newLines.push_back(firstHalf + to_string(currentValue, -1) + secondHalf);
-					}
-					needRerun = true;
-				} else {
-					newLines.push_back(lines[i-1]);
+	mpfc_class currentValue;
+	std::string currentParam, insideBraces, firstHalf, secondHalf;
+	size_t paramLeftPos, paramRightPos, leftPos, rightPos;
+	std::tuple<size_t, size_t> paramLocation;
+	mpfc_class value;
+	for(unsigned int i = 1; i <= lines.size(); ++i){
+		paramLocation = FindNthParameter(lines[i-1], param);
+		paramLeftPos = std::get<0>(paramLocation);
+		paramRightPos = std::get<1>(paramLocation);
+		currentParam = lines[i-1].substr(paramLeftPos, paramRightPos-paramLeftPos+1);
+//		std::cout << "Checking " << currentParam << " for braces." << std::endl;
+		if((leftPos = currentParam.find("{")) != std::string::npos){
+			firstHalf = lines[i-1].substr(0, paramLeftPos+leftPos);
+			if((rightPos = currentParam.find("}", leftPos+1)) == std::string::npos){
+//				std::cout << "Found unpaired braces in " << currentParam << "." << std::endl;
+				return -2;
+			} else if(currentParam.find_first_not_of("0123456789-+()e. ,;", leftPos+1) == rightPos) {
+//				std::cout << "Found paired braces in " << currentParam << ", parsing." << std::endl;
+				secondHalf = lines[i-1].substr(paramLeftPos+rightPos+1);
+				insideBraces = currentParam.substr(leftPos+1, rightPos-leftPos-1);
+				parsedBraces = ParseBraces(insideBraces);
+//				if(std::get<0>(parsedBraces).realPart() => std::get<1>(parsedBraces).realPart() || std::get<2>(parsedBraces).realPart() <= 0) return -2;
+//				std::cout << "Parsed " << currentParam << " into the following lines:" << std::endl;
+				for(currentValue = std::get<0>(parsedBraces); currentValue.realPart() <= std::get<1>(parsedBraces).realPart(); currentValue += std::get<2>(parsedBraces)){
+					newLines.push_back(firstHalf + to_string(currentValue, -1) + secondHalf);
+//					std::cout << firstHalf + to_string(currentValue, -1) + secondHalf << std::endl;
 				}
 			} else {
+//				std::cout << "Got confused by " << currentParam << ", skipping." << std::endl;
 				newLines.push_back(lines[i-1]);
 			}
+		} else {
+			newLines.push_back(lines[i-1]);
 		}
-		lines = newLines;
-		newLines.clear();
-	}while(needRerun);
+	}
+	lines = newLines;
+	newLines.clear();
 	return 0;
 }
 
-std::tuple<mpfc_class, mpfc_class, mpfc_class> Runfile_c::ParseBraces(std::string firstHalf, std::string insideBraces){
-	mpfc_class lowerBound, upperBound, increment;
+std::tuple<mpfc_class, mpfc_class, mpfc_class> Runfile_c::ParseBraces(std::string insideBraces){
 	std::size_t numStart, numEnd;
-	numStart = insideBraces.find_first_of("0123456789-.ch");
-	numEnd = insideBraces.find_first_of(" ,;", numStart+1);
-	if(insideBraces.find_first_of("ch") >= numEnd){
-		lowerBound = insideBraces.substr(numStart, numEnd-numStart);
+
+	numStart = insideBraces.find_first_of("(0123456789-+.ch");
+	if(insideBraces[numStart] == '('){
+		numEnd = insideBraces.find_first_of(")", numStart+1);
 	} else {
-		lowerBound = RelativeMPF(firstHalf, insideBraces.substr(numStart, numEnd-numStart));
+		numEnd = insideBraces.find_first_of(" ,;", numStart+1)-1;
 	}
-	numStart = insideBraces.find_first_of("0123456789-.ch", numEnd+1);
-	numEnd = insideBraces.find_first_of(" ,;", numStart+1);
-	if(insideBraces.find_first_of("ch") >= numEnd){
-		upperBound = insideBraces.substr(numStart, numEnd-numStart);
+	mpfc_class lowerBound(insideBraces.substr(numStart, numEnd-numStart+1));
+//	std::cout << "Lower bound is " << to_string(lowerBound, 4) << " parsed from " << insideBraces.substr(numStart, numEnd-numStart+1) << std::endl;
+
+	numStart = insideBraces.find_first_of("(0123456789-+.ch", numEnd+2);
+	if(insideBraces[numStart] == '('){
+		numEnd = insideBraces.find_first_of(")", numStart+1);
 	} else {
-		upperBound = RelativeMPF(firstHalf, insideBraces.substr(numStart, numEnd-numStart));
+		numEnd = insideBraces.find_first_of(" ,;", numStart+1)-1;
 	}
-	numStart = insideBraces.find_first_of("0123456789-.ch", numEnd+1);
-	numEnd = insideBraces.find_first_of(" ,;", numStart+1);
-	if(insideBraces.find_first_of("ch") >= numEnd){
-		increment = insideBraces.substr(numStart, numEnd-numStart);
+	mpfc_class upperBound(insideBraces.substr(numStart, numEnd-numStart+1));
+//	std::cout << "Upper bound is " << to_string(upperBound, 4) << " parsed from " << insideBraces.substr(numStart, numEnd-numStart+1) << std::endl;
+
+	numStart = insideBraces.find_first_of("(0123456789-+.ch", numEnd+2);
+	if(insideBraces[numStart] == '('){
+		numEnd = insideBraces.find_first_of(")", numStart+1);
 	} else {
-		increment = RelativeMPF(firstHalf, insideBraces.substr(numStart, numEnd-numStart));
+		numEnd = insideBraces.find_first_of(" ,;", numStart+1)-1;
 	}
+	mpfc_class increment(insideBraces.substr(numStart, numEnd-numStart+1));
+//	std::cout << "Increment is " << to_string(increment, 4) << " parsed from " << insideBraces.substr(numStart, numEnd-numStart+1).c_str() << std::endl;
+
 	return std::make_tuple(lowerBound, upperBound, increment);
 }
 
-int Runfile_c::ExpandRelativeEqns(){
+std::tuple<size_t, size_t> Runfile_c::FindNthParameter(const std::string line, const int param){
+//	std::cout << "Finding parameter #" << param << " from the following line: " << line << std::endl;
+	size_t splitPos;
+	size_t leftPos = 0;
+	size_t rightPos = 0;
+	int paramsFound = 0;
+	std::vector<size_t> paramLocations;
+	paramLocations.push_back(0);
+	do{
+		splitPos = line.find_first_of(" ", rightPos+2);
+		leftPos = line.find_last_of("(", splitPos-1);
+		rightPos = line.find_last_of(")", splitPos-1);
+		if(leftPos == std::string::npos || (rightPos!=std::string::npos && leftPos < rightPos)){
+			rightPos = splitPos-1;
+			++paramsFound;
+			paramLocations.push_back(rightPos+2);
+		} else {
+			rightPos = splitPos-1;
+		}
+	}while(paramsFound <= param);
+//	std::cout << "It's " << line.substr(paramLocations[param], paramLocations[param+1]-2-paramLocations[param]+1) << " between positions " << paramLocations[param] << " and " << paramLocations[param+1] << std::endl;
+	return std::make_tuple(paramLocations[param], paramLocations[param+1]-2);
+}
+
+// param=0 is c/b/b^2; param=1 is hl; param=2 is hh; param=3 is hp
+int Runfile_c::ExpandRelativeEqns(const int param){
+/*	std::cout << "Parsing parameter " << param << " from these lines:" << std::endl;
+	for(unsigned int i = 1; i <= lines.size(); ++i){
+		std::cout << lines[i-1] << std::endl;
+	}*/
 	int changesMade = 0;
 	std::vector<std::string> newLines;
-	std::string currentLine, firstHalf, secondHalf;
-	size_t leftPos, rightPos, splitPos;
+	std::string currentParam, newParam, firstHalf, secondHalf;
+	size_t paramLeftPos, paramRightPos, leftPos, rightPos, splitPos;
+	std::tuple<size_t,size_t> paramLocation;
 	mpfc_class value;
 	bool madeChange = true;
-	while(madeChange){
-		madeChange = false;
-		for(unsigned int i = 1; i <= lines.size(); ++i){
-			if((splitPos = lines[i-1].find_first_of("ch")) != std::string::npos){
-				leftPos = lines[i-1].find_last_of(" ,;{", splitPos-1);
-				rightPos = lines[i-1].find_first_of(" ,;}", splitPos+1);
-				firstHalf = lines[i-1].substr(0, leftPos+1);
-				secondHalf = lines[i-1].substr(rightPos, currentLine.length() - rightPos);
-				value = RelativeMPF(firstHalf, lines[i-1].substr(leftPos+1, rightPos-leftPos-1));
+	for(unsigned int i = 1; i <= lines.size(); ++i){
+		paramLocation = FindNthParameter(lines[i-1], param);
+		paramLeftPos = std::get<0>(paramLocation);
+		paramRightPos = std::get<1>(paramLocation);
+		currentParam = lines[i-1].substr(paramLeftPos, paramRightPos-paramLeftPos+1);
+//		std::cout << "Checking " << currentParam << " for relative MPFs." << std::endl;
+		do{
+			madeChange = false;
+			if((splitPos = currentParam.find_first_of("ch")) != std::string::npos){
+				leftPos = currentParam.find_last_of(" ,;{", splitPos-1) + 1;
+				rightPos = currentParam.find_first_of(" ,;}", splitPos+1) - 1;
+				if(rightPos >= currentParam.length()) rightPos = currentParam.length()-1;
+				firstHalf = currentParam.substr(0, leftPos);
+				secondHalf = currentParam.substr(rightPos+1);
+				value = RelativeMPF(lines[i-1].substr(0, paramLeftPos), currentParam.substr(leftPos, rightPos-leftPos+1));
 				madeChange = true;
 				++changesMade;
-				newLines.push_back(firstHalf + to_string(value, -1) + secondHalf);
-			} else {
-				newLines.push_back(lines[i-1]);
+				currentParam = firstHalf + to_string(value, -1) + secondHalf;
+//				std::cout << currentParam << "." << std::endl;
 			}
-		}
-		lines = newLines;
-		newLines.clear();
+		}while(madeChange);
+		newLines.push_back(lines[i-1].substr(0, paramLeftPos) + currentParam + lines[i-1].substr(paramRightPos+1));
 	}
+	lines = newLines;
+	newLines.clear();
+/*	std::cout << "Ended up with these lines:" << std::endl;
+	for(unsigned int i = 1; i <= lines.size(); ++i){
+		std::cout << lines[i-1] << std::endl;
+	}*/
 	return changesMade;
 }
 
@@ -352,6 +396,7 @@ mpfc_class Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 
 std::string Runfile_c::FindBaseNumber(std::string sourceString, const int paramNumber){
 	std::size_t baseStart, baseEnd;
+	baseStart = 0;
 	for(int i = 1; i <= paramNumber; ++i){
 		if(sourceString[baseStart] == '('){
 			sourceString.erase(0, sourceString.find(")")+2);
@@ -359,7 +404,6 @@ std::string Runfile_c::FindBaseNumber(std::string sourceString, const int paramN
 			sourceString.erase(0, sourceString.find_first_of(" ,;")+1);
 		}
 	}
-	baseStart = 0;
 	if(sourceString[baseStart] == '('){
 		baseEnd = sourceString.find(")")+1;
 	} else {

@@ -25,11 +25,13 @@ class Runfile_c{
 
 		int Expand();
 
-		int ExpandBraces();
+		int ExpandBraces(const int param);
 
-		std::tuple<mpfc_class, mpfc_class, mpfc_class> ParseBraces(std::string firstHalf, std::string insideBraces);
+		std::tuple<mpfc_class, mpfc_class, mpfc_class> ParseBraces(std::string insideBraces);
 
-		int ExpandRelativeEqns();
+		std::tuple<size_t, size_t> FindNthParameter(const std::string line, const int param);
+
+		int ExpandRelativeEqns(const int param);
 			
 		std::tuple<mpfc_class, int> ParseRelativeEqn(std::string equation, std::string relTo);
 
