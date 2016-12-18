@@ -494,6 +494,7 @@ inline mpf_class mpfc_class::realPart(){
 	mpc_real(realPart, value, (mpfr_rnd_t)this->rnd_mode);
 	mpf_class ret;
 	mpfr_get_f(ret.get_mpf_t(), realPart, (mpfr_rnd_t)this->rnd_mode);
+	mpfr_clear(realPart);
 	return ret;
 }
 inline mpf_class mpfc_class::imPart(){
@@ -502,6 +503,7 @@ inline mpf_class mpfc_class::imPart(){
 	mpc_imag(imPart, value, (mpfr_rnd_t)this->rnd_mode);
 	mpf_class ret;
 	mpfr_get_f(ret.get_mpf_t(), imPart, (mpfr_rnd_t)this->rnd_mode);
+	mpfr_clear(imPart);
 	return ret;
 }
 
@@ -540,6 +542,7 @@ inline const mpf_class abs(const mpfc_class& v){
 	mpc_abs(abs, v.value, (mpfr_rnd_t)v.rnd_mode);
 	mpf_class ret;
 	mpfr_get_f(ret.get_mpf_t(), abs, (mpfr_rnd_t)v.rnd_mode);
+	mpfr_clear(abs);
 	return ret;
 }
 
