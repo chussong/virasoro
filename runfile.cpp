@@ -1,5 +1,8 @@
 #include "runfile.h"
 
+Runfile_c::Runfile_c(){}
+Runfile_c::Runfile_c(const Runfile_c& other): filename(other.filename), lines(other.lines), maxThreads(other.maxThreads), precision(other.precision), tolerance(other.tolerance), showProgressBar(other.showProgressBar){}
+Runfile_c::Runfile_c(Runfile_c&& other): Runfile_c(){	swap(*this, other);	}
 Runfile_c::Runfile_c(const char* filename): filename(filename)
 {
 	std::ifstream inStream;
@@ -30,6 +33,58 @@ Runfile_c::Runfile_c(const std::vector<std::string> line): filename("command_lin
 	}
 	combinedLine.erase(combinedLine.length()-1);
 	lines.push_back(combinedLine);
+}
+Runfile_c::~Runfile_c(){
+}
+void Runfile_c::swap(Runfile_c& first, Runfile_c& second){
+	std::swap(first.filename, second.filename);
+	std::swap(first.lines, second.lines);
+	std::swap(first.maxThreads, second.maxThreads);
+	std::swap(first.precision, second.precision);
+	std::swap(first.tolerance, second.tolerance);
+	std::swap(first.showProgressBar, second.showProgressBar);
+	return;
+}
+
+Runfile_c& Runfile_c::operator=(Runfile_c&& v){
+	swap(*this, v);
+	return *this;
+}
+Runfile_c& Runfile_c::operator=(Runfile_c v){
+	swap(*this, v);
+	return *this;
+}
+Runfile_c& Runfile_c::operator=(const char* &filename){
+	Runfile_c newFile(filename);
+	swap(*this, newFile);
+	return *this;
+}
+Runfile_c& Runfile_c::operator=(const std::string& filename){
+	Runfile_c newFile(filename);
+	swap(*this, newFile);
+	return *this;
+}
+Runfile_c& Runfile_c::operator=(const std::vector<std::string> line){
+	Runfile_c newFile(line);
+	swap(*this, newFile);
+	return *this;
+}
+
+void Runfile_c::SetMaxThreads(int newMax){
+	maxThreads = newMax;
+	return;
+}
+void Runfile_c::SetPrecision(int newPrec){
+	precision = newPrec;
+	return;
+}
+void Runfile_c::SetTolerance(mpf_class newTolerance){
+	tolerance = newTolerance;
+	return;
+}
+void Runfile_c::SetProgressBar(bool newProgressBar){
+	showProgressBar = newProgressBar;
+	return;
 }
 
 int Runfile_c::ReadRunfile(){
@@ -437,4 +492,207 @@ std::string Runfile_c::NameOutputFile(){
 		outputname.append("_results.txt");
 	}
 	return outputname;
+}
+
+int Runfile_c::Execute(std::string options){
+	const bool wolframOutput = options.find("m", 0) != std::string::npos;
+	const bool consoleOutput = options.find("c", 0) != std::string::npos;	
+	int bGiven = 0;
+	if(options.find("b", 0) != std::string::npos) bGiven = 1;
+	if(options.find("bb", 0) != std::string::npos) bGiven = 2;
+	if(ReadRunfile() <= 0) return -1;
+	if(!wolframOutput){
+		for(unsigned int i = 1; i <= runs.size(); ++i){
+			std::cout << "Run " << i << ": ";
+			for(int j = 1; j <= 3; ++j){
+				std::cout << to_string(runs[i-1][j-1], 4) << " ";
+			}
+			if(runs[i-1].size() > 4) std::cout << "{";
+			for(unsigned int j = 4; j <= runs[i-1].size(); ++j){
+				std::cout << to_string(runs[i-1][j-1], 4) << ",";
+			}
+			if(runs[i-1].size() > 4){
+				std::cout << "\b} ";
+			} else {
+				std::cout << "\b ";
+			}
+			std::cout << maxOrders[i-1];
+			std::cout << std::endl;
+		}
+		if(!consoleOutput) std::cout << "Output will be saved to " << NameOutputFile() << ". If it exists, it will be overwritten." << std::endl;
+	}
+	int highestMax = 0;
+	for(unsigned int i = 1; i <= runs.size(); ++i){
+		if(maxOrders[i-1] > highestMax) highestMax = maxOrders[i-1];
+	}
+	auto runStart = Clock::now();
+	std::string outputName;
+	std::vector<mpf_class> realRunVector;
+	bool allReal;
+	if(wolframOutput){
+		showProgressBar = false;
+		outputName = "__MATHEMATICA";
+		std::cout << "{";
+		for(unsigned int run = 1; run <= runs.size(); ++run){
+			allReal = true;
+			for(unsigned int i = 1; i <= runs[run-1].size(); ++i){
+				if(!runs[run-1][i-1].isReal()){
+					allReal = false;
+					break;
+				}
+			}
+			if(bGiven == 0 && runs[run-1][0].realPart() < 25 && runs[run-1][0].realPart() > 1) allReal = false;
+			if(allReal){
+				for(unsigned int i = 1; i <= runs[run-1].size(); ++i) realRunVector.push_back(runs[run-1][i-1].realPart());
+				FindCoefficients<mpf_class>(realRunVector, maxOrders[run-1], outputName, bGiven);
+				realRunVector.clear();
+			} else {
+				FindCoefficients<mpfc_class>(runs[run-1], maxOrders[run-1], outputName, bGiven);
+			}
+			if(run < runs.size()) std::cout << ",";
+		}
+		std::cout << "}";
+	} else {
+		if(consoleOutput){
+			outputName = "__CONSOLE";
+		} else {
+			outputName = NameOutputFile();
+			std::remove(outputName.c_str());
+		}
+		for(unsigned int run = 1; run <= runs.size(); ++run){
+			runStart = Clock::now();
+//			DebugPrintRunVector(runs[run-1], hp[run-1], maxOrders[run-1]);
+			std::cout << "Beginning run " << run << " of " << runs.size() << "." << std::endl;
+			allReal = true;
+			for(unsigned int i = 1; i <= runs[run-1].size(); ++i){
+				if(!runs[run-1][i-1].isReal()){
+					allReal = false;
+					break;
+				}
+			}
+			if(bGiven == 0 && runs[run-1][0].realPart() < 25 && runs[run-1][0].realPart() > 1) allReal = false;
+			if(allReal){
+				for(unsigned int i = 1; i <= runs[run-1].size(); ++i) realRunVector.push_back(runs[run-1][i-1].realPart());
+				FindCoefficients<mpf_class>(realRunVector, maxOrders[run-1], outputName, bGiven);
+				realRunVector.clear();
+			} else {
+				FindCoefficients<mpfc_class>(runs[run-1], maxOrders[run-1], outputName, bGiven);
+			}
+			if(runs.size() > 1) ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
+		}
+	}
+	return 0;
+}
+
+int Runfile_c::EnumerateMN (int* mnLocation, int* mnMultiplicity, const unsigned short int maxOrder){
+	int numberOfMN = 0;
+	for(int m=1; m <= maxOrder; m+=2){
+		for(int n=2; m*n <= maxOrder; n+=2){		// odd m, even n
+			++mnMultiplicity[m*n-1];
+			++numberOfMN;
+		}
+		for(int n=1; (m+1)*n <= maxOrder; ++n){		// even m
+			++mnMultiplicity[(m+1)*n-1];
+			++numberOfMN;
+		}
+	}
+	mnLocation[1] = 1;
+	for(int i = 4; i <= maxOrder; i+=2){
+		mnLocation[i-1] = mnLocation[i-3] + mnMultiplicity[i-3];
+	}
+	return numberOfMN;
+}
+
+void Runfile_c::FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int *nTable, const int *mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder){
+	int pos;
+	for(int m = 1; m <= maxOrder; m+=2){
+		for(int n = 2; m*n <= maxOrder; n+=2){		// odd m, even n
+			for(pos = mnLocation[m*n-1]; pos <= mnLocation[m*n-1]+mnMultiplicity[m*n-1]; ++pos){
+				if(mTable[pos-1]==0){
+					mTable[pos-1] = m;
+					nTable[pos-1] = n;
+					mnLookup[(m-1)*maxOrder + n-1] = pos;	
+					break;
+				}
+			}
+		}
+		for(int n = 1; (m+1)*n <= maxOrder; ++n){	// even m, all n
+			for(pos = mnLocation[(m+1)*n-1]; pos <= mnLocation[(m+1)*n-1]+mnMultiplicity[(m+1)*n-1]; ++pos){
+				if(mTable[pos-1]==0){
+					mTable[pos-1] = m+1;
+					nTable[pos-1] = n;
+					mnLookup[m*maxOrder + n-1] = pos;	
+					break;
+				}
+			}
+		}
+	}
+}
+
+void Runfile_c::ShowTime(std::string computationName, std::chrono::time_point<std::chrono::high_resolution_clock> timeStart){
+	auto timeEnd = Clock::now();
+	int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count();
+	std::string unit = "ms";
+	if(elapsed > 5000){
+		elapsed = std::chrono::duration_cast<std::chrono::seconds>(timeEnd - timeStart).count();
+		unit = "s";
+		if(elapsed > 300){
+			elapsed = std::chrono::duration_cast<std::chrono::minutes>(timeEnd - timeStart).count();
+			unit = "m";
+			if(elapsed > 300){
+				elapsed = std::chrono::duration_cast<std::chrono::hours>(timeEnd - timeStart).count();
+				unit = "hr";
+			}
+		}
+	}
+	std::cout << computationName << " took " << elapsed << unit << "." << std::endl;	
+}
+
+std::string to_string(const mpf_class N, int digits){
+	if(digits < 0) digits = -digits;	
+	mp_exp_t expo, dotPos;
+	std::string output = N.get_str(expo, 10, digits);
+	dotPos = expo;
+	--expo;
+	if(dotPos >= 0 && sgn(N) == -1) ++dotPos;
+	if(dotPos < 0 && sgn(N) == -1) --dotPos;
+	double Nd = N.get_d();
+	if(output.empty()) return "0";
+	if(digits > 0 && abs(expo) <= digits-1){			// number small enough, just write it
+		while(dotPos > (int)output.size()) output.append("0");
+		if(dotPos < (int)output.size()){
+			if(Nd >= 1 || Nd <= -1){
+				output.insert(dotPos, ".");
+			} else if(Nd < 1 && Nd > 0) {
+				output.insert(0, std::max(-(int)dotPos,0), '0');
+				output.insert(0, "0.");
+			} else if(Nd < 0 && Nd > -1){
+				output.insert(1, std::max(-(int)dotPos,0), '0');
+				output.insert(1, "0.");
+			}
+		}
+	}
+	if(digits > 0 && abs(expo) > digits-1){			// number too big, use a*10^b
+		while((int)output.size() < digits) output.append("0");
+		if(sgn(N) == 1) output.insert(1, ".");		
+		if(sgn(N) == -1){
+			output.append("0");
+			output.insert(2, ".");
+		}
+		output.append("*10^");
+		output.append(std::to_string(expo));
+	}
+	if(digits == 0){								// entire number has been requested
+		if(Nd >= 1 || Nd <= -1){
+			while(dotPos > (int)output.size()) output.append("0");
+			if(dotPos < (int)output.size()) output.insert(dotPos, ".");
+		} else if(Nd > 0) {
+			output.insert(0, std::max(-(int)dotPos, 0), '0');
+			output.insert(0, "0.");
+		} else if(Nd > -1) {
+			output.insert(1, std::max(-(int)dotPos, 0), '0');
+			output.insert(1, "0.");
+		}
+	}
+	return output;
 }
