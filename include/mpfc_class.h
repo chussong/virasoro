@@ -5,17 +5,17 @@
 #include <gmpxx.h>
 #include <mpc.h>
 
-extern mpf_class tolerance;
-
 class mpfc_class{
 
 	public:
 		// these two must be defined in a .cpp file (outside of the actual program)
 		static mpc_rnd_t default_rnd_mode;
 		static mpfr_prec_t default_prec;
+		static mpf_class tolerance;
 
 		static void set_default_prec(const mpfr_prec_t prec);
 		static void set_default_rnd_mode(const mpc_rnd_t rnd_mode);
+		static void set_tolerance(const mpf_class tol);
 
 		mpc_rnd_t rnd_mode;
 		mpc_t value;
@@ -94,6 +94,10 @@ inline void mpfc_class::set_default_prec(const mpfr_prec_t prec){
 
 inline void mpfc_class::set_default_rnd_mode(const mpc_rnd_t rnd_mode){
 	default_rnd_mode = rnd_mode;
+}
+
+inline void mpfc_class::set_tolerance(const mpf_class tol){
+	tolerance = tol;
 }
 
 inline mpfc_class::mpfc_class(){

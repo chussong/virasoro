@@ -8,6 +8,9 @@
 #include <vector>
 #include <tuple>
 #include <gmpxx.h>
+#ifdef WSTP
+#include <wstp.h>
+#endif
 #include "mpfc_class.h"
 #include "cpqmn.h"
 #include "hmn.h"
@@ -48,6 +51,7 @@ class Runfile_c{
 		void SetPrecision(int newPrec);
 		void SetTolerance(mpf_class newTolerance);
 		void SetProgressBar(bool newProgressBar);
+		int NumberOfRuns();
 
 		int ReadRunfile();
 		int Execute(std::string options);
@@ -65,7 +69,6 @@ class Runfile_c{
 		int RunCompare(std::vector<mpfc_class> run1, std::vector<mpfc_class> run2);
 
 		std::string NameOutputFile();
-		std::vector<std::vector<std::string>> WSTPOut();
 
 		int EnumerateMN (int* mnLocation, int* mnMultiplicity,  unsigned short int maxOrder);
 		void FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int *nTable, const int *mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
@@ -114,7 +117,11 @@ class Runfile_c{
 			auto time1 = Clock::now();
 			Cpqmn.FillRmn(&llsq, &lhsq);
 			auto time2 = Clock::now();
-			CheckForDivergences(&Cpqmn, maxOrder, mnLocation, mnMultiplicity);
+			if(outputName == "__WSTP" || outputName == "__MATHEMATICA"){
+				CheckForDivergences(&Cpqmn, maxOrder, mnLocation, mnMultiplicity, true);
+			} else {
+				CheckForDivergences(&Cpqmn, maxOrder, mnLocation, mnMultiplicity, false);
+			}
 			if(maxOrder <= 2) return;
 			Cpqmn.FillCpqmn();
 
@@ -130,7 +137,10 @@ class Runfile_c{
 				H[0] = 1;
 				FillH(H, &Hmn, &Cpqmn, runVector[i-1], mnLocation, mnMultiplicity, maxOrder);
 				if(outputName.empty() || outputName == "__CONSOLE") DisplayH(H, runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
-				if(outputName != "__CONSOLE") WriteH(H, runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder, outputName);
+				if(outputName != "__CONSOLE" && outputName != "__WSTP") WriteH(H, runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder, outputName);
+#ifdef WSTP
+				if(outputName == "__WSTP") WSTPOut(H, runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
+#endif
 			}
 			delete[] mnLocation;
 			delete[] mnMultiplicity;
@@ -141,8 +151,9 @@ class Runfile_c{
 			return;
 		}
 
+		// this needs to not print stuff in __WSTP and __MATHEMATICA modes
 		template<class T>
-		void CheckForDivergences(const Cpqmn_c<T>* Cpqmn, unsigned short int &maxOrder, const int* mnLocation, const int* mnMultiplicity){
+		void CheckForDivergences(const Cpqmn_c<T>* Cpqmn, unsigned short int &maxOrder, const int* mnLocation, const int* mnMultiplicity, bool quiet){
 			int oldMax = maxOrder;
 			for(int pq = 2; pq <= maxOrder-2; pq+=2){
 				for(int pos = mnLocation[pq-1]; pos < mnLocation[pq-1] + mnMultiplicity[pq-1]; ++pos){
@@ -154,8 +165,10 @@ class Runfile_c{
 					if(Cpqmn->Amn[pos-1] == 0 && maxOrder > pq-2){
 						maxOrder = pq-2;
 						if(showProgressBar) printf("\r");
-						if(maxOrder > 2) printf("Stopping this run at order %i because Amn diverges above this.\n", maxOrder);
-						if(maxOrder <= 2) printf("Skipping this run because Amn diverges immediately.\n");
+						if(!quiet){
+							if(maxOrder > 2) printf("Stopping this run at order %i because Amn diverges above this.\n", maxOrder);
+							if(maxOrder <= 2) printf("Skipping this run because Amn diverges immediately.\n");
+						}
 						return;
 					}
 				}
@@ -163,8 +176,10 @@ class Runfile_c{
 			maxOrder = maxOrder - (maxOrder%2);
 			if(maxOrder < oldMax){
 				if(showProgressBar) printf("\r");
-				if(maxOrder > 2) printf("Stopping this run at order %i because the coefficients diverge above this.\n",maxOrder);
-				if(maxOrder <= 2) printf("Skipping this run because the coefficients diverge immediately.\n");
+				if(!quiet){
+					if(maxOrder > 2) printf("Stopping this run at order %i because the coefficients diverge above this.\n",maxOrder);
+					if(maxOrder <= 2) printf("Skipping this run because the coefficients diverge immediately.\n");
+				}
 			}
 			return;
 		}
@@ -250,6 +265,23 @@ class Runfile_c{
 			outputFile << "}" << std::endl;
 			outputFile.close();
 		}
+#ifdef WSTP
+		template<class T>
+		void WSTPOut(const T* H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
+			WSPutFunction(stdlink, "List", 5);
+			WSPutString(stdlink, to_string(c,0).c_str());
+			WSPutString(stdlink, to_string(hl,0).c_str());
+			WSPutString(stdlink, to_string(hh,0).c_str());
+			WSPutString(stdlink, to_string(hp,0).c_str());
+			std::string moString(std::to_string(maxOrder));
+			WSPutString(stdlink, moString.c_str()); 
+			WSPutFunction(stdlink, "List", maxOrder/2 + 1);
+			for(unsigned int orderBy2 = 0; 2*orderBy2 <= maxOrder; ++orderBy2){
+				WSPutString(stdlink, to_string(H[orderBy2],0).c_str());
+			}
+			return;
+		}
+#endif
 };
 
 #endif

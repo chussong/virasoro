@@ -86,6 +86,9 @@ void Runfile_c::SetProgressBar(bool newProgressBar){
 	showProgressBar = newProgressBar;
 	return;
 }
+int Runfile_c::NumberOfRuns(){
+	return (int)lines.size();	// this should be runs.size() after expanding but whatever
+}
 
 int Runfile_c::ReadRunfile(){
 	if(lines.empty()){
@@ -495,13 +498,15 @@ std::string Runfile_c::NameOutputFile(){
 }
 
 int Runfile_c::Execute(std::string options){
+	auto programStart = Clock::now();
 	const bool wolframOutput = options.find("m", 0) != std::string::npos;
 	const bool consoleOutput = options.find("c", 0) != std::string::npos;	
+	const bool wstp = options.find("w", 0) != std::string::npos;
 	int bGiven = 0;
 	if(options.find("b", 0) != std::string::npos) bGiven = 1;
 	if(options.find("bb", 0) != std::string::npos) bGiven = 2;
 	if(ReadRunfile() <= 0) return -1;
-	if(!wolframOutput){
+	if(!wstp && !wolframOutput){
 		for(unsigned int i = 1; i <= runs.size(); ++i){
 			std::cout << "Run " << i << ": ";
 			for(int j = 1; j <= 3; ++j){
@@ -529,10 +534,14 @@ int Runfile_c::Execute(std::string options){
 	std::string outputName;
 	std::vector<mpf_class> realRunVector;
 	bool allReal;
-	if(wolframOutput){
+	if(wstp || wolframOutput){
 		showProgressBar = false;
-		outputName = "__MATHEMATICA";
-		std::cout << "{";
+		if(wolframOutput){
+			outputName = "__MATHEMATICA";
+			std::cout << "{";
+		} else {
+			outputName = "__WSTP";
+		}
 		for(unsigned int run = 1; run <= runs.size(); ++run){
 			allReal = true;
 			for(unsigned int i = 1; i <= runs[run-1].size(); ++i){
@@ -551,7 +560,7 @@ int Runfile_c::Execute(std::string options){
 			}
 			if(run < runs.size()) std::cout << ",";
 		}
-		std::cout << "}";
+		if(wolframOutput) std::cout << "}";
 	} else {
 		if(consoleOutput){
 			outputName = "__CONSOLE";
@@ -581,6 +590,7 @@ int Runfile_c::Execute(std::string options){
 			if(runs.size() > 1) ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
 		}
 	}
+	if(!wstp && !wolframOutput) ShowTime("Entire computation", programStart);
 	return 0;
 }
 

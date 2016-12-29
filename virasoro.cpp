@@ -1,7 +1,11 @@
 #include "virasoro.h"
+#ifdef WSTP
+WSLINK stdlink = 0;
+#endif
 
 mpc_rnd_t mpfc_class::default_rnd_mode = MPC_RNDZZ;
 mpfr_prec_t mpfc_class::default_prec = 64;
+mpf_class mpfc_class::tolerance = 1e-10;
 
 int maxThreads;
 int precision;
@@ -9,13 +13,13 @@ mpf_class tolerance;
 bool showProgressBar;
 
 int main(int argc, char** argv){
-//	auto programStart = Clock::now();
 	ReadDefaults("config.txt");
 	std::vector<std::string> args = CollectArgs(argc, argv);
 	std::string options = ParseOptions(args);
 	mpf_set_default_prec(precision);
 	mpfc_class::set_default_prec(precision);
 	mpfc_class::set_default_rnd_mode(MPC_RNDZZ);
+	mpfc_class::set_tolerance(tolerance);
 	int exitCode;
 	Runfile_c runfile;
 	if(args.size() == 1){
@@ -28,7 +32,6 @@ int main(int argc, char** argv){
 	runfile.SetTolerance(tolerance);
 	runfile.SetProgressBar(showProgressBar);
 	exitCode = runfile.Execute(options);
-//	if(options.find("m", 0) == std::string::npos) ShowTime("Entire computation", programStart);
 	return exitCode;
 }
 

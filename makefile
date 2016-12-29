@@ -1,25 +1,70 @@
+UNAME := $(shell uname -s)
+ifeq ($(UNAME),Linux)
+	SYS = Linux
+endif
+ifeq ($(UNAME),Darwin)
+	SYS = MaxOSX-x86-64
+endif
 CC=g++
+MATHDIR = $(shell echo $$MATHEMATICA_HOME)
+WSTPDIR = $(MATHDIR)/SystemFiles/Links/WSTP/DeveloperKit/$(SYS)/CompilerAdditions
+WSPREP = $(WSTPDIR)/wsprep
 IDIR =./include
-CFLAGS=-Wall -Werror -Wextra -pedantic -I$(IDIR) -O3 -pg -std=c++14 -c
-LDFLAGS= -lpthread -lgmpxx -lmpc -lmpfr -lgmp
-SOURCES=virasoro.cpp runfile.cpp
-ODIR = obj
+CFLAGS=-Wall -Wextra -pedantic -Werror -I$(IDIR) -O3 -pg -std=c++14 -c
+VCFLAGS=
+WCFLAGS=-Wno-unused-parameter -I$(WSTPDIR)
+ifdef MATHDIR
+	CFLAGS += -DWSTP
+endif
+LDFLAGS=-lpthread -lgmpxx -lmpc -lmpfr -lgmp
+VLDFLAGS=
+WLDFLAGS=-L$(WSTPDIR) -lWSTP64i4 -lm -lrt -lstdc++ -ldl -luuid
+SOURCES=runfile.cpp
+VSOURCES=virasoro.cpp
+WSOURCES=vwstp.cpp vwstptm.c
+ODIR=obj
 _OBJECTS=$(SOURCES:.cpp=.o)
 OBJECTS=$(patsubst %,$(ODIR)/%,$(_OBJECTS))
-_DEPS = virasoro.h mpfc_class.h cpqmn.h hmn.h runfile.h
-DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
-CFG = config.txt
+_VOBJECTS=$(VSOURCES:.cpp=.o)
+VOBJECTS=$(patsubst %,$(ODIR)/%,$(_VOBJECTS))
+_WOBJECTS=vwstp.o vwstptm.o
+WOBJECTS=$(patsubst %,$(ODIR)/%,$(_WOBJECTS))
+_DEPS=mpfc_class.h cpqmn.h hmn.h runfile.h
+DEPS=$(patsubst %,$(IDIR)/%,$(_DEPS))
+_VDEPS=virasoro.h
+VDEPS=$(patsubst %,$(IDIR)/%,$(_VDEPS))
+WDEPS=vwstp.tm
+CFG=config.txt
 EXECUTABLE=virasoro
+WSTP=vwstp
+ALLRECIPE= $(SOURCES) $(DEPS) $(EXECUTABLE) $(CFG)
 
-all: $(SOURCES) $(DEPS) $(EXECUTABLE) $(CFG)
+ifdef MATHDIR
+	ALLRECIPE += $(WSTP)
+	LDFLAGS += $(WLDFLAGS)
+endif
 
-$(EXECUTABLE): $(OBJECTS)
-	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
+all: $(ALLRECIPE)
 
-obj/virasoro.o: $(SOURCES) $(DEPS) | $(ODIR)
-	$(CC) $(CFLAGS) $< -o $@
+$(EXECUTABLE): $(OBJECTS) $(VOBJECTS) $(CFG)
+	$(CC) $(OBJECTS) $(VOBJECTS) $(LDFLAGS) $(VLDFLAGS) -o $@
 
-obj/runfile.o: runfile.cpp $(IDIR)/runfile.h | $(ODIR)
+$(WSTP): $(OBJECTS) $(WOBJECTS)
+	$(CC) $(OBJECTS) $(WOBJECTS) $(LDFLAGS) -o $@
+
+$(ODIR)/virasoro.o: $(VSOURCES) $(DEPS) $(VDEPS) | $(ODIR)
+	$(CC) $(CFLAGS) $(VCFLAGS) $< -o $@
+
+$(ODIR)/vwstp.o: vwstp.cpp $(DEPS) $(WDEPS) | $(ODIR)
+	$(CC) $(CFLAGS) $(WCFLAGS) $< -o $@
+
+$(ODIR)/vwstptm.o: vwstptm.c | $(ODIR)
+	$(CC) $(CFLAGS) $(WCFLAGS) $< -o $@
+
+vwstptm.c: $(WDEPS)
+	$(WSPREP) $? -o $@
+
+$(ODIR)/runfile.o: $(SOURCES) $(DEPS) | $(ODIR)
 	$(CC) $(CFLAGS) $< -o $@
 
 $(ODIR):
@@ -28,14 +73,16 @@ $(ODIR):
 $(CFG): virasoro.cpp
 	$(file > $(CFG),[default parameters])
 	$(file >> $(CFG),maxThreads=8)
-	$(file >> $(CFG),precision=512)
-	$(file >> $(CFG),tolerance=1e-20)
+	$(file >> $(CFG),precision=768)
+	$(file >> $(CFG),tolerance=1e-10)
 	$(file >> $(CFG),showProgressBar=true)
 
-.PHONY: clean, virasoro.o, runfile.o
+.PHONY: clean, virasoro.o, vwstp.o, runfile.o
 clean :
-	rm $(EXECUTABLE) $(OBJECTS)
+	-rm -f $(EXECUTABLE) $(WSTP) $(OBJECTS) $(VOBJECTS) $(WOBJECTS) vwstptm.c
 virasoro.o :
 	make obj/virasoro.o
+vwstp.o :
+	make obj/vwstp.o
 runfile.o :
 	make obj/runfile.o
