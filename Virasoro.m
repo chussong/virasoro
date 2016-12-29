@@ -19,6 +19,7 @@ DegenBlock21::usage = "DegenBlock21[c_,hL_,hh_,r_,tL_] gives the exact degenerat
 
 (*For reading results from virasoro batch runs*)
 VRun::usage = "VRun[c, hl, hh, hp, maxOrder] or VRun[{c, hl, hh, hp, maxOrder}] computes the coefficients for the given parameter set(s) and returns them as a list of lists using the same format as VRead."
+VRunFromFile::usage = "VRunFromFile[filename] or simply VRun[filename] invokes a C++ run from the named runfile and returns the results.";
 VLengthCheck::usage = "VLengthCheck[filename_] gives the length of the result vector filename.";
 VRead::usage = "VRead[filename_] gives the run results as a vector of vectors of numbers, ready to be used in Mathematica.";
 VPlot::usage = "VPlot[results_,startingRun_,runStep_,r_(,Option\[Rule]Value)] plots all runs in the VRead output results, using radius r. runStep>1 allows you to skip runs.
@@ -61,13 +62,25 @@ params[[i]] = StringReplace[params[[i]], {" +" -> "", " -" -> "", " I" -> ""}];
 ],{i,1,Length@params}];
 results = Global`VPass[params[[1]],params[[2]],params[[3]],params[[4]],params[[5]]];
 Uninstall[link];
-Return[results];\[AliasDelimiter]
-];
-VRun[paramVec_]:=Module[{results},
-If[Length@paramVec==5,
-results=VRun[paramVec[[1]],paramVec[[2]],paramVec[[3]],paramVec[[4]],paramVec[[5]]];
 Return[results];
-, Failure["InvalidParameters", <|"MessageTemplate":>VRun::paramError|>]];
+];
+VRunFromFile::notFound = "The argument given was not a vector of parameters or valid filename.";
+VRunFromFile[filename_]:=Module[{link,results},
+If[FindFile[NotebookDirectory[]<>filename] == $Failed,
+Failure["FileNotFound", <|"MessageTemplate":>VRunFromFile::notFound|>]];
+link = Install[NotebookDirectory[]<>"vwstp"];
+results = Global`VPassFilename[NotebookDirectory[]<>filename];
+Uninstall[link];
+Return[results];
+];
+VRun[paramVec_]:=Module[{stringParam,results},
+If[VectorQ[paramVec], stringParam=ToString/@paramVec, stringParam=StringReplace[ToString@paramVec," "->""]];
+Switch[Length@stringParam
+,0,results=VRunFromFile[stringParam];
+,1,results=VRunFromFile[stringParam[[1]]];
+,5,results=VRun[stringParam[[1]],stringParam[[2]],stringParam[[3]],stringParam[[4]],stringParam[[5]]];
+,_, Failure["InvalidParameters", <|"MessageTemplate":>VRun::paramError|>]];
+Return[results];
 ];
 VLengthCheck[filename_]:=Module[{resultFile,entries, null},
 resultFile=OpenRead[filename];

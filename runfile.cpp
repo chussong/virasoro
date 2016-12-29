@@ -87,7 +87,11 @@ void Runfile_c::SetProgressBar(bool newProgressBar){
 	return;
 }
 int Runfile_c::NumberOfRuns(){
-	return (int)lines.size();	// this should be runs.size() after expanding but whatever
+	int count = 0;
+	for(unsigned int i = 1; i <= runs.size(); ++i){
+		count += runs[i-1].size()-3;
+	}
+	return count;
 }
 
 int Runfile_c::ReadRunfile(){
@@ -505,7 +509,6 @@ int Runfile_c::Execute(std::string options){
 	int bGiven = 0;
 	if(options.find("b", 0) != std::string::npos) bGiven = 1;
 	if(options.find("bb", 0) != std::string::npos) bGiven = 2;
-	if(ReadRunfile() <= 0) return -1;
 	if(!wstp && !wolframOutput){
 		for(unsigned int i = 1; i <= runs.size(); ++i){
 			std::cout << "Run " << i << ": ";

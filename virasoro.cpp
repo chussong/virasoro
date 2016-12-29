@@ -31,6 +31,7 @@ int main(int argc, char** argv){
 	runfile.SetPrecision(precision);
 	runfile.SetTolerance(tolerance);
 	runfile.SetProgressBar(showProgressBar);
+	runfile.ReadRunfile();
 	exitCode = runfile.Execute(options);
 	return exitCode;
 }

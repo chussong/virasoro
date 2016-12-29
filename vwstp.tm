@@ -8,4 +8,16 @@ void RunFromComponents P((char*, char*, char*, char*, char*));
 :ReturnType:	Manual
 :End:
 
-:Evaluate: VPass::usage = "VPass[c, hl, hh, hp, maxOrder] sends the run to Virasoro for computation, returning the Mathematica object that would be given by VRead[]. Arguments must be strings!"
+:Evaluate: VPass::usage = "VPass[c, hl, hh, hp, maxOrder] or sends the run to Virasoro for computation, returning the Mathematica object that would be given by VRead[]. Arguments must be strings!"
+
+void RunFromFile P((char*));
+
+:Begin:
+:Function:		RunFromFile
+:Pattern:		VPassFilename[filename_String]
+:Arguments:		{filename}
+:ArgumentTypes:	{String}
+:ReturnType:	Manual
+:End:
+
+:Evaluate: VPassFilename::usage = "VPassFilename[filename] tells Virasoro to compute the given runfile, returning the Mathematica object that would be given by VRead[]. Argument must be a string!"

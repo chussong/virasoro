@@ -31,6 +31,12 @@ void RunFromComponents P((char*, char*, char*, char*, char*));
 # line 32 "vwstptm.c"
 
 
+# line 13 "vwstp.tm"
+void RunFromFile P((char*));
+
+# line 38 "vwstptm.c"
+
+
 void RunFromComponents P(( const char * _tp1, const char * _tp2, const char * _tp3, const char * _tp4, const char * _tp5));
 
 #if WSPROTOTYPES
@@ -65,23 +71,50 @@ L0:	return res;
 } /* _tr0 */
 
 
+void RunFromFile P(( const char * _tp1));
+
+#if WSPROTOTYPES
+static int _tr1( WSLINK mlp)
+#else
+static int _tr1(mlp) WSLINK mlp;
+#endif
+{
+	int	res = 0;
+	const char * _tp1;
+	if ( ! WSGetString( mlp, &_tp1) ) goto L0;
+	if ( ! WSNewPacket(mlp) ) goto L1;
+
+	RunFromFile(_tp1);
+
+	res = 1;
+L1:	WSReleaseString(mlp, _tp1);
+
+L0:	return res;
+} /* _tr1 */
+
+
 static struct func {
 	int   f_nargs;
 	int   manual;
 	int   (*f_func)P((WSLINK));
 	const char  *f_name;
-	} _tramps[1] = {
-		{ 5, 0, _tr0, "RunFromComponents" }
+	} _tramps[2] = {
+		{ 5, 0, _tr0, "RunFromComponents" },
+		{ 1, 0, _tr1, "RunFromFile" }
 		};
 
 static const char* evalstrs[] = {
-	"VPass::usage = \"VPass[c, hl, hh, hp, maxOrder] sends the run to ",
-	"Virasoro for computation, returning the Mathematica object that ",
-	"would be given by VRead[]. Arguments must be strings!\"",
+	"VPass::usage = \"VPass[c, hl, hh, hp, maxOrder] or sends the run ",
+	"to Virasoro for computation, returning the Mathematica object th",
+	"at would be given by VRead[]. Arguments must be strings!\"",
+	(const char*)0,
+	"VPassFilename::usage = \"VPassFilename[filename] tells Virasoro t",
+	"o compute the given runfile, returning the Mathematica object th",
+	"at would be given by VRead[]. Argument must be a string!\"",
 	(const char*)0,
 	(const char*)0
 };
-#define CARDOF_EVALSTRS 1
+#define CARDOF_EVALSTRS 2
 
 static int _definepattern P(( WSLINK, char*, char*, int));
 
@@ -100,6 +133,8 @@ int WSInstall(mlp) WSLINK mlp;
 	_res = WSConnect(mlp);
 	if (_res) _res = _definepattern(mlp, (char *)"VPass[c_String, hl_String, hh_String, hp_String, maxOrder_String]", (char *)"{c, hl, hh, hp, maxOrder}", 0);
 	if (_res) _res = _doevalstr( mlp, 0);
+	if (_res) _res = _definepattern(mlp, (char *)"VPassFilename[filename_String]", (char *)"{filename}", 1);
+	if (_res) _res = _doevalstr( mlp, 1);
 	if (_res) _res = WSPutSymbol( mlp, "End");
 	if (_res) _res = WSFlush( mlp);
 	return _res;
@@ -112,7 +147,7 @@ int WSDoCallPacket( WSLINK mlp)
 int WSDoCallPacket( mlp) WSLINK mlp;
 #endif
 {
-	return _WSDoCallPacket( mlp, _tramps, 1);
+	return _WSDoCallPacket( mlp, _tramps, 2);
 } /* WSDoCallPacket */
 
 /******************************* begin trailer ********************************/
