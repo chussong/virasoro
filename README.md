@@ -48,7 +48,6 @@ There is also a configuration file, config.txt, which contains the default value
 | tolerance | This is the level below which numbers will be treated as zero when checking, for example, if a complex number is purely real. Default 10^-20, though that's probably aggressive. |
 | showProgressBar | Shows a progress bar for the slow part of the calculation. Automatically suppressed if -m is given in run commands. Default true, set to false if you don't like it or really need those precious milliseconds. |
 
-To call this function from Mathematica, do the following:  
-SetDirectory["\<directory where virasoro is\>"];  
-vec = RunThrough["./virasoro -m \<c\> \<hl\> \<hh\> \<hp\> \<maxOrder\>",""]; or "./virasoro -m \<name of runfile\>"  
-Either one of these calls will fill vec with a Mathematica vector containing parameters used (in odd entries) and coefficients (in even entries).  
+To call this function from Mathematica, load the library Virasoro.m like in the provided vwstp\_test.nb and call VRun, like the following:  
+results = VRun[30, 1, 3, 0, 1000];  
+This will fill results with a Mathematica vector of vectors containing parameters used (in odd entries) and coefficients (in even entries). This can then be plotted with VPlot[results, 1, 1, 0.99]; for explanations of the parameters to VPlot, call ?VPlot.
