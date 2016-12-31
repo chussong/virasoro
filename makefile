@@ -18,10 +18,10 @@ ifdef MATHDIR
 endif
 LDFLAGS=-lpthread -lgmpxx -lmpc -lmpfr -lgmp
 VLDFLAGS=
-ifeq ($(SYS),Linux)
+ifeq ($(UNAME),Linux)
 	WLDFLAGS=-L$(WSTPDIR) -lWSTP64i4 -lm -lrt -lstdc++ -ldl -luuid
 endif
-ifeq ($(SYS),MacOSX-x86-64)
+ifeq ($(UNAME),Darwin)
 	WLDFLAGS=-lc++ -lWSTPi4 -framework Foundation
 endif
 SOURCES=runfile.cpp

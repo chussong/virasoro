@@ -2,9 +2,9 @@
 Numerical computation of Virasoro block coefficients in CFT<sub>2</sub>.  
 
 To compile, type "make" into a terminal in this directory. You will need GCC (or another compiler if you change the makefile) and the following dependencies:  
-GMP arbitrary-precision math library from [here](gmplib.org).  
-GNU MPFR from [here](mpfr.org).  
-GNU MPC from [here](multiprecision.org/index.php?prog=mpc&page=home).  
+GMP arbitrary-precision math library from [here](https://gmplib.org).  
+GNU MPFR from [here](http://www.mpfr.org).  
+GNU MPC from [here](http://www.multiprecision.org/index.php?prog=mpc).  
 Prebuilt versions of these are available for some systems (they're on the Ubuntu repositories, anyway), but in my brief testing the prebuilt ones were about half as fast. If you build everything yourself, GMP must be compiled with C++ support by using "./configure --enable-cxx" before invoking its make. If you get an error saying libgmp.so.4 is missing, it means you don't have GMP installed correctly; if you get one saying libgmpxx.so.4 is missing, it means you have installed GMP correctly but without C++ support.  
 Linux users who want to build the Mathematica plugin will likely also need to install libuuid, available on apt as uuid-dev and yum as libuuid-devel.  
 
