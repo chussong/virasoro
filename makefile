@@ -3,7 +3,7 @@ ifeq ($(UNAME),Linux)
 	SYS = Linux
 endif
 ifeq ($(UNAME),Darwin)
-	SYS = MaxOSX-x86-64
+	SYS = MacOSX-x86-64
 endif
 CC=g++
 MATHDIR = $(shell echo $$MATHEMATICA_HOME)
@@ -18,7 +18,12 @@ ifdef MATHDIR
 endif
 LDFLAGS=-lpthread -lgmpxx -lmpc -lmpfr -lgmp
 VLDFLAGS=
-WLDFLAGS=-L$(WSTPDIR) -lWSTP64i4 -lm -lrt -lstdc++ -ldl -luuid
+ifeq ($(SYS),Linux)
+	WLDFLAGS=-L$(WSTPDIR) -lWSTP64i4 -lm -lrt -lstdc++ -ldl -luuid
+endif
+ifeq ($(SYS),MacOSX-x86-64)
+	WLDFLAGS=-lc++ -lWSTPi4 -framework Foundation
+endif
 SOURCES=runfile.cpp
 VSOURCES=virasoro.cpp
 WSOURCES=vwstp.cpp vwstptm.c
