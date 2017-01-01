@@ -1,12 +1,14 @@
 UNAME := $(shell uname -s)
 ifeq ($(UNAME),Linux)
 	SYS = Linux
+	CC = gcc
+	CXX = g++ -std=c++14
 endif
 ifeq ($(UNAME),Darwin)
 	SYS = MacOSX-x86-64
+	CC = clang
+	CXX = clang++ -std=c++14
 endif
-CC=gcc
-C++=g++
 ifeq ($(UNAME),Linux)
 	MATHDIR = $(shell echo $$MATHEMATICA_HOME)
 endif
@@ -60,16 +62,16 @@ endif
 all: $(ALLRECIPE)
 
 $(EXECUTABLE): $(OBJECTS) $(VOBJECTS) $(CFG)
-	$(CC) $(OBJECTS) $(VOBJECTS) $(LDFLAGS) $(VLDFLAGS) -o $@
+	$(CXX) $(OBJECTS) $(VOBJECTS) $(LDFLAGS) $(VLDFLAGS) -o $@
 
 $(WSTP): $(OBJECTS) $(WOBJECTS)
-	$(CC) $(OBJECTS) $(WOBJECTS) $(LDFLAGS) -o $@
+	$(CXX) $(OBJECTS) $(WOBJECTS) $(LDFLAGS) -o $@
 
 $(ODIR)/virasoro.o: $(VSOURCES) $(DEPS) $(VDEPS) | $(ODIR)
-	$(CC) $(CFLAGS) $(VCFLAGS) $(WCFLAGS) -std=c++14 $< -o $@
+	$(CXX) $(CFLAGS) $(VCFLAGS) $(WCFLAGS) $< -o $@
 
 $(ODIR)/vwstp.o: vwstp.cpp $(DEPS) $(WDEPS) | $(ODIR)
-	$(CC) $(CFLAGS) $(WCFLAGS) -std=c++14 $< -o $@
+	$(CXX) $(CFLAGS) $(WCFLAGS) $< -o $@
 
 $(ODIR)/vwstptm.o: vwstptm.c | $(ODIR)
 	$(CC) $(CFLAGS) $(WCFLAGS) -x c $< -o $@
@@ -78,7 +80,7 @@ vwstptm.c: $(WDEPS)
 	$(WSPREP) $? -o $@
 
 $(ODIR)/runfile.o: $(SOURCES) $(DEPS) | $(ODIR)
-	$(CC) $(CFLAGS) $(WCFLAGS) -std=c++14 $< -o $@
+	$(CXX) $(CFLAGS) $(WCFLAGS) $< -o $@
 
 $(ODIR):
 	mkdir $(ODIR)
