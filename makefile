@@ -5,7 +5,8 @@ endif
 ifeq ($(UNAME),Darwin)
 	SYS = MacOSX-x86-64
 endif
-CC=g++
+CC=gcc
+C++=g++
 ifeq ($(UNAME),Linux)
 	MATHDIR = $(shell echo $$MATHEMATICA_HOME)
 endif
