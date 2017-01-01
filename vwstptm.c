@@ -26,13 +26,13 @@ WSMessageHandlerObject stdhandler = 0;
 
 
 # line 1 "vwstp.tm"
-void RunFromComponents P((char*, char*, char*, char*, char*));
+void RunFromComponents P((const char*, const char*, const char*, const char*, const char*));
 
 # line 32 "vwstptm.c"
 
 
 # line 13 "vwstp.tm"
-void RunFromFile P((char*));
+void RunFromFile P((const char*));
 
 # line 38 "vwstptm.c"
 

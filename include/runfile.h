@@ -9,7 +9,7 @@
 #include <tuple>
 #include <gmpxx.h>
 #ifdef WSTP
-#include <wstp.h>
+#include "wstp.h"
 #endif
 #include "mpfc_class.h"
 #include "cpqmn.h"

@@ -1,4 +1,4 @@
-void RunFromComponents P((char*, char*, char*, char*, char*));
+void RunFromComponents P((const char*, const char*, const char*, const char*, const char*));
 
 :Begin:
 :Function:		RunFromComponents
@@ -10,7 +10,7 @@ void RunFromComponents P((char*, char*, char*, char*, char*));
 
 :Evaluate: VPass::usage = "VPass[c, hl, hh, hp, maxOrder] or sends the run to Virasoro for computation, returning the Mathematica object that would be given by VRead[]. Arguments must be strings!"
 
-void RunFromFile P((char*));
+void RunFromFile P((const char*));
 
 :Begin:
 :Function:		RunFromFile

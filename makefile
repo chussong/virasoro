@@ -6,11 +6,18 @@ ifeq ($(UNAME),Darwin)
 	SYS = MacOSX-x86-64
 endif
 CC=g++
-MATHDIR = $(shell echo $$MATHEMATICA_HOME)
+ifeq ($(UNAME),Linux)
+	MATHDIR = $(shell echo $$MATHEMATICA_HOME)
+endif
+ifeq ($(UNAME),Darwin)
+ifneq ($(wildcard /Applications/Mathematica.app/Contents/.*),)
+	MATHDIR = /Applications/Mathematica.app/Contents
+endif
+endif
 WSTPDIR = $(MATHDIR)/SystemFiles/Links/WSTP/DeveloperKit/$(SYS)/CompilerAdditions
 WSPREP = $(WSTPDIR)/wsprep
 IDIR =./include
-CFLAGS=-Wall -Wextra -pedantic -Werror -I$(IDIR) -O3 -pg -std=c++14 -c
+CFLAGS=-Wall -Wextra -pedantic -Werror -I$(IDIR) -O3 -pg -c
 VCFLAGS=
 WCFLAGS=-Wno-unused-parameter -I$(WSTPDIR)
 ifdef MATHDIR
@@ -22,7 +29,7 @@ ifeq ($(UNAME),Linux)
 	WLDFLAGS=-L$(WSTPDIR) -lWSTP64i4 -lm -lrt -lstdc++ -ldl -luuid
 endif
 ifeq ($(UNAME),Darwin)
-	WLDFLAGS=-lc++ -lWSTPi4 -framework Foundation
+	WLDFLAGS=-L$(WSTPDIR) -lWSTPi4 -lc++ -framework Foundation
 endif
 SOURCES=runfile.cpp
 VSOURCES=virasoro.cpp
@@ -58,19 +65,19 @@ $(WSTP): $(OBJECTS) $(WOBJECTS)
 	$(CC) $(OBJECTS) $(WOBJECTS) $(LDFLAGS) -o $@
 
 $(ODIR)/virasoro.o: $(VSOURCES) $(DEPS) $(VDEPS) | $(ODIR)
-	$(CC) $(CFLAGS) $(VCFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $(VCFLAGS) $(WCFLAGS) -std=c++14 $< -o $@
 
 $(ODIR)/vwstp.o: vwstp.cpp $(DEPS) $(WDEPS) | $(ODIR)
-	$(CC) $(CFLAGS) $(WCFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $(WCFLAGS) -std=c++14 $< -o $@
 
 $(ODIR)/vwstptm.o: vwstptm.c | $(ODIR)
-	$(CC) $(CFLAGS) $(WCFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $(WCFLAGS) -x c $< -o $@
 
 vwstptm.c: $(WDEPS)
 	$(WSPREP) $? -o $@
 
 $(ODIR)/runfile.o: $(SOURCES) $(DEPS) | $(ODIR)
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $(WCFLAGS) -std=c++14 $< -o $@
 
 $(ODIR):
 	mkdir $(ODIR)

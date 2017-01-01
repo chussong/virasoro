@@ -3,8 +3,11 @@
 #include "wstp.h"
 #include "runfile.h"
 
-extern void RunFromComponents(const char* c, const char* hl, const char* hh, const char* hp, const char* maxOrder);
-extern void RunFromFile(const char* filename);
+extern "C"{
+	extern void RunFromComponents(const char* c, const char* hl, const char* hh, const char* hp, const char* maxOrder);
+	extern void RunFromFile(const char* filename);
+}
+
 void Startup(Runfile_c runfile);
 
 mpc_rnd_t mpfc_class::default_rnd_mode = MPC_RNDZZ;

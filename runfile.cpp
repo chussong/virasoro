@@ -671,7 +671,7 @@ std::string to_string(const mpf_class N, int digits){
 	if(dotPos < 0 && sgn(N) == -1) --dotPos;
 	double Nd = N.get_d();
 	if(output.empty()) return "0";
-	if(digits > 0 && abs(expo) <= digits-1){			// number small enough, just write it
+	if(digits > 0 && std::abs(expo) <= digits-1){			// number small enough, just write it
 		while(dotPos > (int)output.size()) output.append("0");
 		if(dotPos < (int)output.size()){
 			if(Nd >= 1 || Nd <= -1){
@@ -685,7 +685,7 @@ std::string to_string(const mpf_class N, int digits){
 			}
 		}
 	}
-	if(digits > 0 && abs(expo) > digits-1){			// number too big, use a*10^b
+	if(digits > 0 && std::abs(expo) > digits-1){			// number too big, use a*10^b
 		while((int)output.size() < digits) output.append("0");
 		if(sgn(N) == 1) output.insert(1, ".");		
 		if(sgn(N) == -1){
