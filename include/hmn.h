@@ -2,6 +2,7 @@
 #define HMN_H_
 
 #include <thread>
+//#include <unistd.h>
 #include <gmpxx.h>
 #include "cpqmn.h"
 
@@ -16,6 +17,7 @@ class Hmn_c{
 	const int* mnLocation, *mnMultiplicity;
 	const int* mnLookup;
 	int* mnAtThisOrder;
+	bool swapping;
 	
 	public:
 		T** Hmn;
@@ -24,18 +26,30 @@ class Hmn_c{
 		Hmn_c(Cpqmn_c<T>* Cpqmn, const int numberOfMN, const unsigned short int maxOrder, const int* mnLocation, const int* mnMultiplicity, const int* mnLookup);
 		~Hmn_c();
 		
+/*		inline static long GetAvailableMemory(){
+			long pages = sysconf(_SC_AVPHYS_PAGES);
+			long page_size = sysconf(_SC_PAGESIZE);
+			return pages*page_size;
+		}*/
+
 		inline static void StartThread(Hmn_c<T>* Hmn, const int startingMN, const int endingMN, const int order, T& temp){
 			Hmn->ThreadFillHmn(startingMN, endingMN, order, temp);
 		}
 		
 		void FillHmn();
-
 		void ThreadFillHmn(const int startingMN, const int endingMN, const int order, T& temp);
 };
 
 template<class T>
 Hmn_c<T>::Hmn_c(Cpqmn_c<T>* Cpqmn, const int numberOfMN, const unsigned short int maxOrder, const int* mnLocation, const int* mnMultiplicity, const int* mnLookup): numberOfMN(numberOfMN), maxOrder(maxOrder), mnLocation(mnLocation), mnMultiplicity(mnMultiplicity), mnLookup(mnLookup), Cpqmn(Cpqmn)
 {
+/*	if(GetAvailableMemory() < (long)maxOrder*numberOfMN*precision/16){
+		swapping = true;
+		std::cout << "I think the available memory, " << GetAvailableMemory() << " isn't enough to store our Hmn at " << (long)maxOrder*numberOfMN*precision/16 << "." << std::endl;
+	} else {
+		swapping = false;
+		std::cout << "I think the available memory, " << GetAvailableMemory() << " is enough to store our Hmn at " << (long)maxOrder*numberOfMN*precision/16 << "." << std::endl;
+	}*/
 	Hmn = new T*[maxOrder/2];
 	Hmn[0] = new T[numberOfMN];
 	for(int pos = 1; pos <= numberOfMN; ++pos) Hmn[0][pos-1] = 1;
@@ -47,6 +61,7 @@ Hmn_c<T>::Hmn_c(Cpqmn_c<T>* Cpqmn, const int numberOfMN, const unsigned short in
 		}
 		Hmn[order/2] = new T[mnAtThisOrder[order/2-1]];
 	}
+//	std::cout << "After allocating, there is now " << GetAvailableMemory() << " available." << std::endl;
 }
 
 template<class T>

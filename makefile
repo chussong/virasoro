@@ -26,7 +26,11 @@ WCFLAGS=-Wno-unused-parameter -I$(WSTPDIR)
 ifdef MATHDIR
 	CFLAGS += -DWSTP
 endif
-LDFLAGS=-lpthread -lgmpxx -lmpc -lmpfr -lgmp -static
+GMP=/usr/local/lib/libgmp.a
+GMPXX=/usr/local/lib/libgmpxx.a
+MPFR=/usr/local/lib/libmpfr.a
+MPC=/usr/local/lib/libmpc.a
+LDFLAGS=-lpthread $(MPC) $(MPFR) $(GMPXX) $(GMP)
 VLDFLAGS=
 ifeq ($(UNAME),Linux)
 	WLDFLAGS=-L$(WSTPDIR) -lWSTP64i4 -lm -lrt -lstdc++ -ldl -luuid
