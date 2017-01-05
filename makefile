@@ -26,7 +26,7 @@ WCFLAGS=-Wno-unused-parameter -I$(WSTPDIR)
 ifdef MATHDIR
 	CFLAGS += -DWSTP
 endif
-LDFLAGS=-lpthread -lgmpxx -lmpc -lmpfr -lgmp
+LDFLAGS=-lpthread -lgmpxx -lmpc -lmpfr -lgmp -static
 VLDFLAGS=
 ifeq ($(UNAME),Linux)
 	WLDFLAGS=-L$(WSTPDIR) -lWSTP64i4 -lm -lrt -lstdc++ -ldl -luuid
