@@ -43,7 +43,7 @@ z=1-r*E^(-I tL);
 SemiClassical[c_,hL_, hH_,r_,tL_]:=Module[{\[Alpha]},(r^hL E^(-I hL (tL+3\[Pi])))((\[Alpha]^(2 hL) r^((\[Alpha]-1)hL) E^(-I tL(\[Alpha]-1)hL))/(1-r^\[Alpha] E^(-I tL \[Alpha]))^(2hL))/.\[Alpha]->Sqrt[1-(24hH)/c]
 ];
 DegenBlock12[c_,hL_,hh_,r_,tL_]:=Module[{a1,b1,c1,z,bsq},
-bsq=1/Bsq[c];
+bsq=Bsq[c];
 1/(1-r*Exp[-I tL])^(2hL) r^b1 Exp[-I b1 tL/2]((Gamma[a1+b1-c1] Gamma[c1])/(Gamma[a1] Gamma[b1]) r^(-a1-b1+c1) Exp[-I (-tL a1-tL b1+tL c1)] Hypergeometric2F1[-a1+c1,-b1+c1,1-a1-b1+c1,r E^(-I tL)] +(Gamma[-a1-b1+c1] Gamma[c1])/(Gamma[c1-a1] Gamma[c1-b1]) Hypergeometric2F1[a1,b1,a1+b1-c1+1,r E^(-I tL)] )/.{a1->1+1/bsq,b1->(1+bsq+Sqrt[1+bsq^2+bsq *(2-4 hh)])/bsq,c1->2+2/bsq}/.z->1-r E^(-I tL)
 ];
 DegenBlock21[c_,hL_,hh_,r_,tL_]:=Module[{a1,b1,c1,z,bsq},
@@ -54,7 +54,7 @@ bsq=Bsq[c];
 VRun::paramError = "Enter 5 parameters, either separately or as a vector.";
 VRun[c_,hl_,hh_,hp_,maxOrder_] := Module[{link,params,results},
 link = Install[NotebookDirectory[]<>"vwstp"];
-params = ToString/@N/@{c,hl,hh,hp,maxOrder};
+params = ToString/@N[{c,hl,hh,hp,maxOrder},768];
 Do[If[StringContainsQ["I"]@params[[i]],
 params[[i]] = StringInsert[params[[i]],"(",1];
 params[[i]] = StringInsert[params[[i]],")",-1];

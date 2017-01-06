@@ -3,14 +3,13 @@
 
 #include <thread>
 //#include <unistd.h>
-#include <gmpxx.h>
 #include "cpqmn.h"
 
 extern int maxThreads;
 extern int precision;
 extern bool showProgressBar;
 
-template <class T> // to be used with either mpf_class or mpfc_class
+template <class T> // to be used with either mpreal or mpcomplex
 class Hmn_c{
 	const int numberOfMN;
 	const unsigned short int maxOrder;

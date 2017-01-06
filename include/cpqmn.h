@@ -2,7 +2,6 @@
 #define CPQMN_H_
 
 #include <iostream>
-#include <gmpxx.h>
 
 template<class T>
 class Cpqmn_c{

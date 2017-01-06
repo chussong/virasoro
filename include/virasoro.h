@@ -9,7 +9,6 @@
 #include <vector>		// std::vector
 #include <fstream>		// file output
 #include <stdio.h>		// fgetc
-#include <gmpxx.h>		// mpf_class
 #include <thread>		// std::thread
 #include <tuple>		// std::tuple
 

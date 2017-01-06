@@ -7,29 +7,29 @@
 #include <string>
 #include <vector>
 #include <tuple>
-#include <gmpxx.h>
 #ifdef WSTP
 #include "wstp.h"
 #endif
-#include "mpfc_class.h"
+#include "mpreal.h"
+#include "mpcomplex.h"
 #include "cpqmn.h"
 #include "hmn.h"
 
 typedef std::chrono::high_resolution_clock Clock;
 
-std::string to_string(const mpf_class N, int digits);
+std::string to_string(const mpfr::mpreal N, int digits);
 
 class Runfile_c{
 	std::string filename;
 	std::vector<std::string> lines;
 
 	int maxThreads = 8;				// Maximum number of simultaneous threads
-	int precision = 768;			// Precision of mpf_class and mpfc_class in bits
-	mpf_class tolerance = 1e-10;	// Smaller than this is taken to be 0 for comparisons
+	int precision = 768;			// Precision of mpfr::mpreal and mpcomplex in bits
+	mpfr::mpreal tolerance = 1e-10;		// Smaller than this is taken to be 0 for comparisons
 	bool showProgressBar = true;	// Show progress bar during FillHmn()
 
 	public:
-		std::vector<std::vector<mpfc_class>> runs;
+		std::vector<std::vector<mpcomplex>> runs;
 		std::vector<int> maxOrders;
 
 		Runfile_c();
@@ -49,7 +49,7 @@ class Runfile_c{
 		
 		void SetMaxThreads(int newMax);
 		void SetPrecision(int newPrec);
-		void SetTolerance(mpf_class newTolerance);
+		void SetTolerance(mpfr::mpreal newTolerance);
 		void SetProgressBar(bool newProgressBar);
 		int NumberOfRuns();
 
@@ -58,15 +58,15 @@ class Runfile_c{
 
 		int Expand();
 		int ExpandBraces(const int param);
-		std::tuple<mpfc_class, mpfc_class, mpfc_class> ParseBraces(std::string insideBraces);
+		std::tuple<mpcomplex, mpcomplex, mpcomplex> ParseBraces(std::string insideBraces);
 		std::tuple<size_t, size_t> FindNthParameter(const std::string line, const int param);
 
 		int ExpandRelativeEqns(const int param);
-		std::tuple<mpfc_class, int> ParseRelativeEqn(std::string equation, std::string relTo);
-		mpfc_class RelativeMPF(std::string firstHalf, std::string equation);
+		std::tuple<mpcomplex, int> ParseRelativeEqn(std::string equation, std::string relTo);
+		mpcomplex RelativeMPF(std::string firstHalf, std::string equation);
 		std::string FindBaseNumber(std::string sourceString, const int paramNumber);
 
-		int RunCompare(std::vector<mpfc_class> run1, std::vector<mpfc_class> run2);
+		int RunCompare(std::vector<mpcomplex> run1, std::vector<mpcomplex> run2);
 
 		std::string NameOutputFile();
 

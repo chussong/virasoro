@@ -3,23 +3,24 @@
 WSLINK stdlink = 0;
 #endif
 
-mpc_rnd_t mpfc_class::default_rnd_mode = MPC_RNDZZ;
-mpfr_prec_t mpfc_class::default_prec = 64;
-mpf_class mpfc_class::tolerance = 1e-10;
+mpc_rnd_t mpcomplex::default_rnd_mode = MPC_RNDZZ;
+mpfr_prec_t mpcomplex::default_prec = 64;
+mpfr::mpreal mpcomplex::tolerance = 1e-10;
 
 int maxThreads;
 int precision;
-mpf_class tolerance;
+mpfr::mpreal tolerance;
 bool showProgressBar;
 
 int main(int argc, char** argv){
 	ReadDefaults("config.txt");
 	std::vector<std::string> args = CollectArgs(argc, argv);
 	std::string options = ParseOptions(args);
-	mpf_set_default_prec(precision);
-	mpfc_class::set_default_prec(precision);
-	mpfc_class::set_default_rnd_mode(MPC_RNDZZ);
-	mpfc_class::set_tolerance(tolerance);
+	mpfr::mpreal::set_default_prec(precision);
+	mpfr::mpreal::set_default_rnd(MPFR_RNDZ);
+	mpcomplex::set_default_prec(precision);
+	mpcomplex::set_default_rnd_mode(MPC_RNDZZ);
+	mpcomplex::set_tolerance(tolerance);
 	int exitCode;
 	Runfile_c runfile;
 	if(args.size() == 1){
@@ -88,7 +89,7 @@ void CreateConfigFile(std::string filename){
 	outStream.open(filename, std::ofstream::out);
 	outStream << "[default parameters]" << std::endl;
 	outStream << "maxThreads=8" << std::endl;
-	outStream << "precision=512" << std::endl;
+	outStream << "precision=768" << std::endl;
 	outStream << "tolerance=1e-20" << std::endl;
 	outStream << "showProgressBar=true" << std::endl;
 	outStream.close();

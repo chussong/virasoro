@@ -27,10 +27,9 @@ ifdef MATHDIR
 	CFLAGS += -DWSTP
 endif
 GMP=/usr/local/lib/libgmp.a
-GMPXX=/usr/local/lib/libgmpxx.a
 MPFR=/usr/local/lib/libmpfr.a
 MPC=/usr/local/lib/libmpc.a
-LDFLAGS=-lpthread $(MPC) $(MPFR) $(GMPXX) $(GMP)
+LDFLAGS=-lpthread $(MPC) $(MPFR) $(GMP)
 VLDFLAGS=
 ifeq ($(UNAME),Linux)
 	WLDFLAGS=-L$(WSTPDIR) -lWSTP64i4 -lm -lrt -lstdc++ -ldl -luuid
@@ -50,7 +49,7 @@ _VOBJECTS=$(VSOURCES:.cpp=.o)
 VOBJECTS=$(patsubst %,$(ODIR)/%,$(_VOBJECTS))
 _WOBJECTS=vwstp.o vwstptm.o
 WOBJECTS=$(patsubst %,$(ODIR)/%,$(_WOBJECTS))
-_DEPS=mpfc_class.h cpqmn.h hmn.h runfile.h
+_DEPS=mpreal.h mpcomplex.h cpqmn.h hmn.h runfile.h
 DEPS=$(patsubst %,$(IDIR)/%,$(_DEPS))
 _VDEPS=virasoro.h
 VDEPS=$(patsubst %,$(IDIR)/%,$(_VDEPS))
