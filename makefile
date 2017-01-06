@@ -36,6 +36,8 @@ ifeq ($(UNAME),Linux)
 	WLDFLAGS=-L$(WSTPDIR) -lWSTP64i4 -lm -lrt -lstdc++ -ldl -luuid
 endif
 ifeq ($(UNAME),Darwin)
+	CFLAGS+=-I/usr/local/include
+	LDFLAGS+=-L/usr/local/lib
 	WLDFLAGS=-L$(WSTPDIR) -lWSTPi4 -lc++ -framework Foundation
 endif
 SOURCES=runfile.cpp
