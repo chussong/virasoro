@@ -18,10 +18,11 @@ DegenBlock12::usage = "DegenBlock12[c_,hL_,hh_,r_,tL_] gives the exact degenerat
 DegenBlock21::usage = "DegenBlock21[c_,hL_,hh_,r_,tL_] gives the exact degenerate h_21 vacuum block at time tL.";
 
 (*For reading results from virasoro batch runs*)
-VRun::usage = "VRun[c, hl, hh, hp, maxOrder] or VRun[{c, hl, hh, hp, maxOrder}] computes the coefficients for the given parameter set(s) and returns them as a list of lists using the same format as VRead."
-VRunFromFile::usage = "VRunFromFile[filename] or simply VRun[filename] invokes a C++ run from the named runfile and returns the results.";
+VRun::usage = "VRun[c_, hl_, hh_, hp_, maxOrder_] or VRun[{c, hl, hh, hp, maxOrder}] computes the coefficients for the given parameter set(s) and returns them as a list of lists using the same format as VRead."
+VRunFromFile::usage = "VRunFromFile[filename_] or simply VRun[filename_] invokes a C++ run from the named runfile and returns the results.";
 VLengthCheck::usage = "VLengthCheck[filename_] gives the length of the result vector filename.";
 VRead::usage = "VRead[filename_] gives the run results as a vector of vectors of numbers, ready to be used in Mathematica.";
+VWrite::usage = "VWrite[results_,filename_] writes a results to a file with the given filename.";
 VPlot::usage = "VPlot[results_,startingRun_,runStep_,r_(,Option\[Rule]Value)] plots all runs in the VRead output results, using radius r. runStep>1 allows you to skip runs.
 
 Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. EndTime\[Rule]40. Options are StartTime, EndTime, PointsPerTL, and Compare. Setting Compare\[Rule]\"Semi\" compares to semiclassical vacuum block; other possibilities are \"12\" and \"21\" which compare to exact degenerate blocks.";
@@ -101,6 +102,16 @@ results[[2i]]=ToExpression@ReadLine[resultFile];
 Close[filename];
 Return[results];
 ];
+VWrite[results_, rawFilename_]:=Module[{filename, resultFile},
+If[StringCount[rawFilename, "/"] == 0, filename = NotebookDirectory[]<>ToString@rawFilename, filename = ToString@rawFilename];
+resultFile=OpenWrite[filename,PageWidth->Infinity];
+Do[
+WriteString[resultFile,NumberForm[results[[i]], ExponentFunction->(Null&)]];
+WriteString[resultFile,"\n"];
+,{i,1,Length@results}];
+Close[resultFile];
+Return[];
+];
 Options[VPlot]={StartTime->0.1, EndTime->30, Compare->{}, PointsPerTL->1};
 VPlot[results_,startingRun_,runStep_,r_,OptionsPattern[]]:=Module[{c,hl,hh,hp,startTime,endTime, compareVec, plotVector, plotLegends},
 startTime=OptionValue[StartTime];
@@ -129,7 +140,7 @@ plotLegends=Append["Exact Degenerate \!\(\*SubscriptBox[\(h\), \(21\)]\)"]@plotL
 ];
 (*Print[plotVector/.tL\[Rule]1//N];
 Print[Abs@SemiClassical[c,hl,hh,r,1]];*)
-Print[LogPlot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->"Block in Lorentzian time",AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->OptionValue[PointsPerTL]*Ceiling[endTime-startTime]]];
+Print[LogPlot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->"Block in Lorentzian time",AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]];
 ,{i,startingRun,Length@results/2,runStep}];
 ];
 End[]
