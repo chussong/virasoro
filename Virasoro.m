@@ -3,10 +3,10 @@
 BeginPackage["Virasoro`"]
 
 (*For simple computations*)
-h::usage = " h[m_,n_] gives degenerate Virasoro operator dimension h_mn.";
-\[Lambda]sq::usage = "\[Lambda]sq[p_,q_] gives square of internal \[Lambda]_pq.";
-\[Lambda]::usage = "\[Lambda][p_,q_] gives internal \[Lambda]_pq.";
-Bsq::usage = "Bsq[c_] gives b^2 corresponding to the given c.";
+Geth::usage = "Geth[m_,n_] gives degenerate Virasoro operator dimension h_mn.";
+Get\[Lambda]sq::usage = "Get\[Lambda]sq[p_,q_] gives square of internal \[Lambda]_pq.";
+Get\[Lambda]::usage = "Get\[Lambda][p_,q_] gives internal \[Lambda]_pq.";
+GetBsq::usage = "GetBsq[c_] gives b^2 corresponding to the given c.";
 GetC::usage = "GetC[bsq_] gives c corresponding to the given b^2.";
 
 (*For plotting in Lorentzian time*)
@@ -26,12 +26,13 @@ VWrite::usage = "VWrite[results_,filename_] writes a results to a file with the 
 VPlot::usage = "VPlot[results_,startingRun_,runStep_,r_(,Option\[Rule]Value)] plots all runs in the VRead output results, using radius r. runStep>1 allows you to skip runs.
 
 Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. EndTime\[Rule]40. Options are PlotScale (\"Linear\", \"SemiLog\", or \"LogLog\"), StartTime, EndTime, PointsPerTL, and Compare. Setting Compare\[Rule]\"Semi\" compares to semiclassical vacuum block; other possibilities are \"12\" and \"21\" which compare to exact degenerate blocks.";
+VConv::usage = "VConv[results_,r_,tL_] gives a plot showing how adding more terms to results_ improves the convergence the convergence of at particular radius r_ and Lorentzian time tL_.";
 
-Begin["Private`"]
-h[m_,n_]:=b^2*(1-n^2)/4+(1-m^2)/(4*b^2)+(1-m*n)/2;
-\[Lambda]sq[p_,q_]:=4*h[p,q]-(b+1/b)^2;
-\[Lambda][p_,q_]:=Sqrt[\[Lambda]sq[p,q]];
-Bsq[c_]:=(-13+c+Sqrt[25-26c+c^2])/12;
+Begin["VirasoroInternal`"]
+Geth[m_,n_]:=b^2*(1-n^2)/4+(1-m^2)/(4*b^2)+(1-m*n)/2;
+Get\[Lambda]sq[p_,q_]:=4*h[p,q]-(b+1/b)^2;
+Get\[Lambda][p_,q_]:=Sqrt[Get\[Lambda]sq[p,q]];
+GetBsq[c_]:=(-13+c+Sqrt[25-26c+c^2])/12;
 GetC[bsq_]:=13+6*(bsq+1/bsq);
 
 EKMono[r_,tL_]:=EllipticK[1-r*Exp[-I*tL]]-2*I*(1+Floor[(-tL-\[Pi])/(2\[Pi])]) EllipticK[r*Exp[-I*tL]];
@@ -44,17 +45,19 @@ z=1-r*E^(-I tL);
 SemiClassical[c_,hL_, hH_,r_,tL_]:=Module[{\[Alpha]},(r^hL E^(-I hL (tL+3\[Pi])))((\[Alpha]^(2 hL) r^((\[Alpha]-1)hL) E^(-I tL(\[Alpha]-1)hL))/(1-r^\[Alpha] E^(-I tL \[Alpha]))^(2hL))/.\[Alpha]->Sqrt[1-(24hH)/c]
 ];
 DegenBlock12[c_,hL_,hh_,r_,tL_]:=Module[{a1,b1,c1,z,bsq},
-bsq=Bsq[c];
+bsq=GetBsq[c];
 1/(1-r*Exp[-I tL])^(2hL) r^b1 Exp[-I b1 tL/2]((Gamma[a1+b1-c1] Gamma[c1])/(Gamma[a1] Gamma[b1]) r^(-a1-b1+c1) Exp[-I (-tL a1-tL b1+tL c1)] Hypergeometric2F1[-a1+c1,-b1+c1,1-a1-b1+c1,r E^(-I tL)] +(Gamma[-a1-b1+c1] Gamma[c1])/(Gamma[c1-a1] Gamma[c1-b1]) Hypergeometric2F1[a1,b1,a1+b1-c1+1,r E^(-I tL)] )/.{a1->1+1/bsq,b1->(1+bsq+Sqrt[1+bsq^2+bsq *(2-4 hh)])/bsq,c1->2+2/bsq}/.z->1-r E^(-I tL)
 ];
 DegenBlock21[c_,hL_,hh_,r_,tL_]:=Module[{a1,b1,c1,z,bsq},
-bsq=Bsq[c];
+bsq=GetBsq[c];
 1/(1-r Exp[-I tL])^(2hL) r^b1 Exp[-I b1 tL/2]((Gamma[a1+b1-c1] Gamma[c1])/(Gamma[a1] Gamma[b1]) r^(-a1-b1+c1) Exp[-I (-tL a1-tL b1+tL c1)] Hypergeometric2F1[-a1+c1,-b1+c1,1-a1-b1+c1,r E^(-I tL)] +(Gamma[-a1-b1+c1] Gamma[c1])/(Gamma[c1-a1] Gamma[c1-b1]) Hypergeometric2F1[a1,b1,a1+b1-c1+1,r E^(-I tL)] )/.{a1->1+bsq,b1->(1+1/bsq+Sqrt[1+bsq^(-2)+1/bsq *(2-4 hh)])*bsq,c1->2+2*bsq}/.z->1-r E^(-I tL)
 ];
 
 VRun::paramError = "Enter 5 parameters, either separately or as a vector.";
+VRun::noVWSTP = "VWSTP not found. It must be in the same directory as Virasoro.m and must be marked as executable.";
 VRun[c_,hl_,hh_,hp_,maxOrder_] := Module[{link,params,results},
 link = Install[NotebookDirectory[]<>"vwstp"];
+If[link==$Failed,Failure["C++NotFound",<|"MessageTemplate":>VRun::noVWSTP|>]];
 params = ToString/@N[{c,hl,hh,hp,maxOrder},768];
 Do[If[StringContainsQ["I"]@params[[i]],
 params[[i]] = StringInsert[params[[i]],"(",1];
@@ -70,6 +73,7 @@ VRunFromFile[filename_]:=Module[{link,results},
 If[FindFile[NotebookDirectory[]<>filename] == $Failed,
 Failure["FileNotFound", <|"MessageTemplate":>VRunFromFile::notFound|>]];
 link = Install[NotebookDirectory[]<>"vwstp"];
+If[link==$Failed,Failure["C++NotFound",<|"MessageTemplate":>VRun::noVWSTP|>]];
 results = Global`VPassFilename[NotebookDirectory[]<>filename];
 Uninstall[link];
 Return[results];
@@ -112,6 +116,14 @@ WriteString[resultFile,"\n"];
 Close[resultFile];
 Return[];
 ];
+VMakePlotLabel[results_,runNumber_]:=Module[{c,hl,hh,hp,label},
+c=results[[2runNumber-1]][[1]];
+hl=results[[2runNumber-1]][[2]];
+hh=results[[2runNumber-1]][[3]];
+hp=results[[2runNumber-1]][[4]];
+label="c="<>StringTake[ToString@c,Min[5,StringLength[ToString@c]]]<>"    \!\(\*SubscriptBox[\(h\), \(l\)]\)="<>StringTake[ToString@hl,Min[5,StringLength[ToString@hl]]]<>"    \!\(\*SubscriptBox[\(h\), \(h\)]\)="<>StringTake[ToString@hh,Min[5,StringLength[ToString@hh]]]<>"    \!\(\*SubscriptBox[\(h\), \(p\)]\)="<>StringTake[ToString@hp,Min[5,StringLength[ToString@hp]]];
+Return[label];
+];
 Options[VPlot]={PlotScale->"LogLog", StartTime->0.1, EndTime->30, Compare->{}, PointsPerTL->1};
 VPlot[results_,startingRun_,runStep_,r_,OptionsPattern[]]:=Module[{c,hl,hh,hp,startTime,endTime, compareVec, plotVector, plotLegends},
 startTime=OptionValue[StartTime];
@@ -122,7 +134,7 @@ c=results[[2i-1]][[1]];
 hl=results[[2i-1]][[2]];
 hh=results[[2i-1]][[3]];
 hp=results[[2i-1]][[4]];
-Print[ListLogLogPlot[{results[[2*i]],-results[[2*i]]},PlotLabel->"c="<>StringTake[ToString@c,Min[5,StringLength[ToString@c]]]<>"    \!\(\*SubscriptBox[\(h\), \(l\)]\)="<>StringTake[ToString@hl,Min[5,StringLength[ToString@hl]]]<>"    \!\(\*SubscriptBox[\(h\), \(h\)]\)="<>StringTake[ToString@hh,Min[5,StringLength[ToString@hh]]]<>"    \!\(\*SubscriptBox[\(h\), \(p\)]\)="<>StringTake[ToString@hp,Min[5,StringLength[ToString@hp]]],PlotMarkers->".",PlotStyle->{Lighter@Blue,Lighter@Red},PlotLegends->{"Blue > 0","Red < 0"},DataRange->{0,2*Length@results[[2*i]]}]];
+Print[ListLogLogPlot[{results[[2*i]],-results[[2*i]]},PlotLabel->VMakePlotLabel[results,i],PlotMarkers->".",PlotStyle->{Lighter@Blue,Lighter@Red},PlotLegends->{"Blue > 0","Red < 0"},DataRange->{0,2*Length@results[[2*i]]}]];
 (*Print[ListPlot[LogFluct[results[[2*i]]],PlotLabel\[Rule]"Fluctuations about smoothed average log", PlotMarkers\[Rule]".",ColorFunction\[Rule]Coloring,ColorFunctionScaling\[Rule]False,DataRange\[Rule]{0,2*Length@results[[2*i]]}]];*)
 plotVector := {Abs@VofT[results[[2*i]],c,hl,hh,hp,r,tL,2*Length@results[[2*i]]-2]};
 plotLegends := {"Computed"};
@@ -144,6 +156,12 @@ If[StringMatchQ[OptionValue[PlotScale],"Linear"],Print[Plot[Evaluate[plotVector]
 If[StringMatchQ[OptionValue[PlotScale],"SemiLog"]||StringMatchQ[OptionValue[PlotScale],"LogLinear"],Print[LogPlot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->"Block in Lorentzian time",AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]]];
 If[StringMatchQ[OptionValue[PlotScale],"LogLog"],Print[LogLogPlot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->"Block in Lorentzian time",AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]]];
 ,{i,startingRun,Length@results/2,runStep}];
+];
+Options[VConv]={StartingRun->1, RunStep->1, EndingRun->0};
+VConv[results_,r_,tL_,OptionsPattern[]]:=Module[{plotLabel,q},
+Do[
+Print[DiscretePlot[Table[q^k,{k,0,2*Floor[i/2],2}].Take[results[[entry]],Floor[i/2]+1]/.q->qVal[r,tL]//Abs,{i,Length[results[[entry]]]/5,2*Length[results[[entry]]],2},PlotRange->Full,AxesLabel->{"Max Order","H(r="<>ToString@r<>",tL="<>ToString@tL<>")"},Filling->None,PlotLabel->VMakePlotLabel[results,entry/2]]];
+,{entry,2*OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,2*OptionValue[EndingRun],Length@results],2*OptionValue[RunStep]}];
 ];
 End[]
 
