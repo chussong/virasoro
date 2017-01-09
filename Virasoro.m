@@ -25,7 +25,7 @@ VRead::usage = "VRead[filename_] gives the run results as a vector of vectors of
 VWrite::usage = "VWrite[results_,filename_] writes a results to a file with the given filename.";
 VPlot::usage = "VPlot[results_,startingRun_,runStep_,r_(,Option\[Rule]Value)] plots all runs in the VRead output results, using radius r. runStep>1 allows you to skip runs.
 
-Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. EndTime\[Rule]40. Options are StartTime, EndTime, PointsPerTL, and Compare. Setting Compare\[Rule]\"Semi\" compares to semiclassical vacuum block; other possibilities are \"12\" and \"21\" which compare to exact degenerate blocks.";
+Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. EndTime\[Rule]40. Options are PlotScale (\"Linear\", \"SemiLog\", or \"LogLog\"), StartTime, EndTime, PointsPerTL, and Compare. Setting Compare\[Rule]\"Semi\" compares to semiclassical vacuum block; other possibilities are \"12\" and \"21\" which compare to exact degenerate blocks.";
 
 Begin["Private`"]
 h[m_,n_]:=b^2*(1-n^2)/4+(1-m^2)/(4*b^2)+(1-m*n)/2;
@@ -112,7 +112,7 @@ WriteString[resultFile,"\n"];
 Close[resultFile];
 Return[];
 ];
-Options[VPlot]={StartTime->0.1, EndTime->30, Compare->{}, PointsPerTL->1};
+Options[VPlot]={PlotScale->"LogLog", StartTime->0.1, EndTime->30, Compare->{}, PointsPerTL->1};
 VPlot[results_,startingRun_,runStep_,r_,OptionsPattern[]]:=Module[{c,hl,hh,hp,startTime,endTime, compareVec, plotVector, plotLegends},
 startTime=OptionValue[StartTime];
 endTime=OptionValue[EndTime];
@@ -140,7 +140,9 @@ plotLegends=Append["Exact Degenerate \!\(\*SubscriptBox[\(h\), \(21\)]\)"]@plotL
 ];
 (*Print[plotVector/.tL\[Rule]1//N];
 Print[Abs@SemiClassical[c,hl,hh,r,1]];*)
-Print[LogPlot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->"Block in Lorentzian time",AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]];
+If[StringMatchQ[OptionValue[PlotScale],"Linear"],Print[Plot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->"Block in Lorentzian time",AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]]];
+If[StringMatchQ[OptionValue[PlotScale],"SemiLog"]||StringMatchQ[OptionValue[PlotScale],"LogLinear"],Print[LogPlot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->"Block in Lorentzian time",AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]]];
+If[StringMatchQ[OptionValue[PlotScale],"LogLog"],Print[LogLogPlot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->"Block in Lorentzian time",AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]]];
 ,{i,startingRun,Length@results/2,runStep}];
 ];
 End[]
