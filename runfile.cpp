@@ -105,7 +105,7 @@ int Runfile_c::ReadRunfile(){
 		return -2;
 	}
 	size_t leftPos, rightPos;
-	std::vector<mpcomplex> currentRun;
+	std::vector<mpfr::mpcomplex> currentRun;
 	int currentMO;
 	for(unsigned int i = 1; i <= lines.size(); ++i){
 //		std::cout << "About to parse the following line:" << std::endl;
@@ -176,12 +176,12 @@ int Runfile_c::Expand(){
 // param=0 is c/b/b^2; param=1 is hl; param=2 is hh; param=3 is hp
 int Runfile_c::ExpandBraces(const int param){
 	std::vector<std::string> newLines;
-	std::tuple<mpcomplex, mpcomplex, mpcomplex> parsedBraces;
-	mpcomplex currentValue;
+	std::tuple<mpfr::mpcomplex, mpfr::mpcomplex, mpfr::mpcomplex> parsedBraces;
+	mpfr::mpcomplex currentValue;
 	std::string currentParam, insideBraces, firstHalf, secondHalf;
 	size_t paramLeftPos, paramRightPos, leftPos, rightPos;
 	std::tuple<size_t, size_t> paramLocation;
-	mpcomplex value;
+	mpfr::mpcomplex value;
 	for(unsigned int i = 1; i <= lines.size(); ++i){
 		paramLocation = FindNthParameter(lines[i-1], param);
 		paramLeftPos = std::get<0>(paramLocation);
@@ -217,7 +217,7 @@ int Runfile_c::ExpandBraces(const int param){
 	return 0;
 }
 
-std::tuple<mpcomplex, mpcomplex, mpcomplex> Runfile_c::ParseBraces(std::string insideBraces){
+std::tuple<mpfr::mpcomplex, mpfr::mpcomplex, mpfr::mpcomplex> Runfile_c::ParseBraces(std::string insideBraces){
 	std::size_t numStart, numEnd;
 
 	numStart = insideBraces.find_first_of("(0123456789-+.ch");
@@ -226,7 +226,7 @@ std::tuple<mpcomplex, mpcomplex, mpcomplex> Runfile_c::ParseBraces(std::string i
 	} else {
 		numEnd = insideBraces.find_first_of(" ,;", numStart+1)-1;
 	}
-	mpcomplex lowerBound(insideBraces.substr(numStart, numEnd-numStart+1));
+	mpfr::mpcomplex lowerBound(insideBraces.substr(numStart, numEnd-numStart+1));
 //	std::cout << "Lower bound is " << to_string(lowerBound, 4) << " parsed from " << insideBraces.substr(numStart, numEnd-numStart+1) << std::endl;
 
 	numStart = insideBraces.find_first_of("(0123456789-+.ch", numEnd+2);
@@ -235,7 +235,7 @@ std::tuple<mpcomplex, mpcomplex, mpcomplex> Runfile_c::ParseBraces(std::string i
 	} else {
 		numEnd = insideBraces.find_first_of(" ,;", numStart+1)-1;
 	}
-	mpcomplex upperBound(insideBraces.substr(numStart, numEnd-numStart+1));
+	mpfr::mpcomplex upperBound(insideBraces.substr(numStart, numEnd-numStart+1));
 //	std::cout << "Upper bound is " << to_string(upperBound, 4) << " parsed from " << insideBraces.substr(numStart, numEnd-numStart+1) << std::endl;
 
 	numStart = insideBraces.find_first_of("(0123456789-+.ch", numEnd+2);
@@ -244,7 +244,7 @@ std::tuple<mpcomplex, mpcomplex, mpcomplex> Runfile_c::ParseBraces(std::string i
 	} else {
 		numEnd = insideBraces.find_first_of(" ,;", numStart+1)-1;
 	}
-	mpcomplex increment(insideBraces.substr(numStart, numEnd-numStart+1));
+	mpfr::mpcomplex increment(insideBraces.substr(numStart, numEnd-numStart+1));
 //	std::cout << "Increment is " << to_string(increment, 4) << " parsed from " << insideBraces.substr(numStart, numEnd-numStart+1).c_str() << std::endl;
 
 	return std::make_tuple(lowerBound, upperBound, increment);
@@ -285,7 +285,7 @@ int Runfile_c::ExpandRelativeEqns(const int param){
 	std::string currentParam, newParam, firstHalf, secondHalf;
 	size_t paramLeftPos, paramRightPos, leftPos, rightPos, splitPos;
 	std::tuple<size_t,size_t> paramLocation;
-	mpcomplex value;
+	mpfr::mpcomplex value;
 	bool madeChange = true;
 	for(unsigned int i = 1; i <= lines.size(); ++i){
 		paramLocation = FindNthParameter(lines[i-1], param);
@@ -319,8 +319,8 @@ int Runfile_c::ExpandRelativeEqns(const int param){
 	return changesMade;
 }
 
-std::tuple<mpcomplex, int> Runfile_c::ParseRelativeEqn(std::string equation, std::string relTo){
-	mpcomplex modifier = 0;
+std::tuple<mpfr::mpcomplex, int> Runfile_c::ParseRelativeEqn(std::string equation, std::string relTo){
+	mpfr::mpcomplex modifier = 0;
 	int type = -100;
 	std::size_t hit;
 	if((hit = equation.find(relTo)) != std::string::npos){
@@ -366,10 +366,10 @@ std::tuple<mpcomplex, int> Runfile_c::ParseRelativeEqn(std::string equation, std
 	return std::make_tuple(modifier, type);
 }
 
-mpcomplex Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
-	mpcomplex output = 0;
-	mpcomplex baseMPF;
-	std::tuple<mpcomplex, int> parsedEqn;
+mpfr::mpcomplex Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
+	mpfr::mpcomplex output = 0;
+	mpfr::mpcomplex baseMPF;
+	std::tuple<mpfr::mpcomplex, int> parsedEqn;
 	if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "c")) < 0){
 		if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "hl")) < 0){
 			if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "hh")) < 0){
@@ -377,7 +377,7 @@ mpcomplex Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
 			}
 		}
 	}
-	mpcomplex modifier = std::get<0>(parsedEqn);
+	mpfr::mpcomplex modifier = std::get<0>(parsedEqn);
 	int type = std::get<1>(parsedEqn);
 	switch(type){
 		case 10:	// c + n
@@ -474,7 +474,7 @@ std::string Runfile_c::FindBaseNumber(std::string sourceString, const int paramN
 	return sourceString.substr(baseStart, baseEnd - baseStart);
 }
 
-int Runfile_c::RunCompare(std::vector<mpcomplex> run1, std::vector<mpcomplex> run2){
+int Runfile_c::RunCompare(std::vector<mpfr::mpcomplex> run1, std::vector<mpfr::mpcomplex> run2){
 /*	std::cout << "Comparing these two runs:" << std::endl;
 	for(unsigned int i = 1; i <= run1.size(); ++i) std::cout << run1[i-1] << " ";
 	std::cout << std::endl;
@@ -559,7 +559,7 @@ int Runfile_c::Execute(std::string options){
 				FindCoefficients<mpfr::mpreal>(realRunVector, maxOrders[run-1], outputName, bGiven);
 				realRunVector.clear();
 			} else {
-				FindCoefficients<mpcomplex>(runs[run-1], maxOrders[run-1], outputName, bGiven);
+				FindCoefficients<mpfr::mpcomplex>(runs[run-1], maxOrders[run-1], outputName, bGiven);
 			}
 			if(run < runs.size()) std::cout << ",";
 		}
@@ -588,7 +588,7 @@ int Runfile_c::Execute(std::string options){
 				FindCoefficients<mpfr::mpreal>(realRunVector, maxOrders[run-1], outputName, bGiven);
 				realRunVector.clear();
 			} else {
-				FindCoefficients<mpcomplex>(runs[run-1], maxOrders[run-1], outputName, bGiven);
+				FindCoefficients<mpfr::mpcomplex>(runs[run-1], maxOrders[run-1], outputName, bGiven);
 			}
 			if(runs.size() > 1) ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
 		}

@@ -31,13 +31,19 @@ MPFR=/usr/local/lib/libmpfr.a
 MPC=/usr/local/lib/libmpc.a
 LDFLAGS=-lpthread $(MPC) $(MPFR) $(GMP)
 VLDFLAGS=
-ifeq ($(UNAME),Linux)
-	WLDFLAGS=-L$(WSTPDIR) -lWSTP64i4 -lm -lrt -lstdc++ -ldl -luuid
-endif
 ifeq ($(UNAME),Darwin)
 	CFLAGS+=-I/usr/local/include
 	LDFLAGS+=-L/usr/local/lib
-	WLDFLAGS=-L$(WSTPDIR) -lWSTPi4 -lc++ -framework Foundation
+endif
+ifdef MATHDIR
+ifeq ($(UNAME),Linux)
+	WSTP=$(WSTPDIR)/libWSTP64i4.a
+	WLDFLAGS=$(WSTP) -lm -lrt -lstdc++ -ldl -luuid
+endif
+ifeq ($(UNAME),Darwin)
+	WSTP=$(WSTPDIR)/libWSTPi4.a
+	WLDFLAGS=$(WSTP) -lc++ -framework Foundation
+endif
 endif
 SOURCES=runfile.cpp
 VSOURCES=virasoro.cpp
@@ -56,11 +62,11 @@ VDEPS=$(patsubst %,$(IDIR)/%,$(_VDEPS))
 WDEPS=vwstp.tm
 CFG=config.txt
 EXECUTABLE=virasoro
-WSTP=vwstp
+VWSTP=vwstp
 ALLRECIPE= $(SOURCES) $(DEPS) $(EXECUTABLE) $(CFG)
 
 ifdef MATHDIR
-	ALLRECIPE += $(WSTP)
+	ALLRECIPE += $(VWSTP)
 	LDFLAGS += $(WLDFLAGS)
 endif
 
@@ -69,7 +75,7 @@ all: $(ALLRECIPE)
 $(EXECUTABLE): $(OBJECTS) $(VOBJECTS) $(CFG)
 	$(CXX) $(OBJECTS) $(VOBJECTS) $(LDFLAGS) $(VLDFLAGS) -o $@
 
-$(WSTP): $(OBJECTS) $(WOBJECTS)
+$(VWSTP): $(OBJECTS) $(WOBJECTS)
 	$(CXX) $(OBJECTS) $(WOBJECTS) $(LDFLAGS) -o $@
 
 $(ODIR)/virasoro.o: $(VSOURCES) $(DEPS) $(VDEPS) | $(ODIR)
@@ -99,7 +105,7 @@ $(CFG): virasoro.cpp
 
 .PHONY: clean, virasoro.o, vwstp.o, runfile.o
 clean :
-	-rm -f $(EXECUTABLE) $(WSTP) $(OBJECTS) $(VOBJECTS) $(WOBJECTS) vwstptm.c
+	-rm -f $(EXECUTABLE) $(VWSTP) $(OBJECTS) $(VOBJECTS) $(WOBJECTS) vwstptm.c
 virasoro.o :
 	make obj/virasoro.o
 vwstp.o :

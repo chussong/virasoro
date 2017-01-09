@@ -24,12 +24,12 @@ class Runfile_c{
 	std::vector<std::string> lines;
 
 	int maxThreads = 8;				// Maximum number of simultaneous threads
-	int precision = 768;			// Precision of mpfr::mpreal and mpcomplex in bits
+	int precision = 768;			// Precision of mpfr::mpreal and mpfr::mpcomplex in bits
 	mpfr::mpreal tolerance = 1e-10;		// Smaller than this is taken to be 0 for comparisons
 	bool showProgressBar = true;	// Show progress bar during FillHmn()
 
 	public:
-		std::vector<std::vector<mpcomplex>> runs;
+		std::vector<std::vector<mpfr::mpcomplex>> runs;
 		std::vector<int> maxOrders;
 
 		Runfile_c();
@@ -58,15 +58,15 @@ class Runfile_c{
 
 		int Expand();
 		int ExpandBraces(const int param);
-		std::tuple<mpcomplex, mpcomplex, mpcomplex> ParseBraces(std::string insideBraces);
+		std::tuple<mpfr::mpcomplex, mpfr::mpcomplex, mpfr::mpcomplex> ParseBraces(std::string insideBraces);
 		std::tuple<size_t, size_t> FindNthParameter(const std::string line, const int param);
 
 		int ExpandRelativeEqns(const int param);
-		std::tuple<mpcomplex, int> ParseRelativeEqn(std::string equation, std::string relTo);
-		mpcomplex RelativeMPF(std::string firstHalf, std::string equation);
+		std::tuple<mpfr::mpcomplex, int> ParseRelativeEqn(std::string equation, std::string relTo);
+		mpfr::mpcomplex RelativeMPF(std::string firstHalf, std::string equation);
 		std::string FindBaseNumber(std::string sourceString, const int paramNumber);
 
-		int RunCompare(std::vector<mpcomplex> run1, std::vector<mpcomplex> run2);
+		int RunCompare(std::vector<mpfr::mpcomplex> run1, std::vector<mpfr::mpcomplex> run2);
 
 		std::string NameOutputFile();
 
@@ -90,7 +90,7 @@ class Runfile_c{
 			}
 			T bsq, invBsq, llsq, lhsq, temp1, temp2;
 			if(bGiven == 1){
-				bsq = runVector[0]*runVector[0];
+				bsq = runVector[0];
 				bsq *= runVector[0];
 				invBsq = 1/bsq;
 				runVector[0] = 13 + 6*(bsq + invBsq);

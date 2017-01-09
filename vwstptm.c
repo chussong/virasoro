@@ -1,5 +1,5 @@
 /*
- * This file automatically produced by /usr/local/Wolfram/Mathematica/11.0/SystemFiles/Links/WSTP/DeveloperKit/Linux/CompilerAdditions/wsprep from:
+ * This file automatically produced by /usr/local/Wolfram/Mathematica/10.2/SystemFiles/Links/WSTP/DeveloperKit/Linux/CompilerAdditions/wsprep from:
  *	vwstp.tm
  * mprep Revision 18 Copyright (c) Wolfram Research, Inc. 1990-2013
  */

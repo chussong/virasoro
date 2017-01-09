@@ -5,6 +5,7 @@
 #include <mpc.h>
 #include "mpreal.h"
 
+namespace mpfr{
 class mpcomplex{
 
 	public:
@@ -493,18 +494,14 @@ inline std::string mpcomplex::to_string(int digits, int base) const{
 }
 
 inline mpfr::mpreal mpcomplex::realPart(){
-	mpfr_t realPart;
-	mpfr_init(realPart);
-	mpc_real(realPart, value, (mpfr_rnd_t)this->rnd_mode);
-	mpfr::mpreal ret(realPart);
-	return ret;
+	mpfr::mpreal realPart;
+	mpc_real(realPart.mpfr_ptr(), value, (mpfr_rnd_t)this->rnd_mode);
+	return realPart;
 }
 inline mpfr::mpreal mpcomplex::imPart(){
-	mpfr_t imPart;
-	mpfr_init(imPart);
-	mpc_imag(imPart, value, (mpfr_rnd_t)this->rnd_mode);
-	mpfr::mpreal ret(imPart);
-	return ret;
+	mpfr::mpreal imPart;
+	mpc_imag(imPart.mpfr_ptr(), value, (mpfr_rnd_t)this->rnd_mode);
+	return imPart;
 }
 
 inline bool mpcomplex::isReal(){
@@ -537,11 +534,9 @@ inline const mpcomplex sqrt(const mpcomplex& x){
 }
 
 inline const mpfr::mpreal abs(const mpcomplex& v){
-	mpfr_t abs;
-	mpfr_init(abs);
-	mpc_abs(abs, v.value, (mpfr_rnd_t)v.rnd_mode);
-	mpfr::mpreal ret(abs);
-	return ret;
+	mpfr::mpreal abs;
+	mpc_abs(abs.mpfr_ptr(), v.value, (mpfr_rnd_t)v.rnd_mode);
+	return abs;
 }
 
 inline const std::string to_string(const mpcomplex& v, int digits = 0){
@@ -550,4 +545,5 @@ inline const std::string to_string(const mpcomplex& v, int digits = 0){
 
 inline void swap(mpcomplex& a, mpcomplex& b){	mpc_swap(a.value, b.value);	}
 
+}
 #endif
