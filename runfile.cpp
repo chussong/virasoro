@@ -456,7 +456,6 @@ mpfr::mpcomplex Runfile_c::RelativeMPF(std::string firstHalf, std::string equati
 	return output;
 }
 
-// NOTE: FOR SOME REASON THIS SEEMS TO FAIL FOR BASENUMBERS WITH DECIMAL POINTS
 std::string Runfile_c::FindBaseNumber(std::string sourceString, const int paramNumber){
 	std::size_t baseStart, baseEnd;
 	baseStart = 0;
@@ -472,7 +471,6 @@ std::string Runfile_c::FindBaseNumber(std::string sourceString, const int paramN
 	} else {
 		baseEnd = sourceString.find_first_of(" ,;");
 	}
-	std::cout << "Using this base number: " << sourceString.substr(baseStart, baseEnd - baseStart);
 	return sourceString.substr(baseStart, baseEnd - baseStart);
 }
 

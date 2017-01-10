@@ -38,7 +38,7 @@ endif
 ifdef MATHDIR
 ifeq ($(UNAME),Linux)
 	WSTP=$(WSTPDIR)/libWSTP64i4.a
-	WLDFLAGS=$(WSTP) -lm -lrt -lstdc++ -ldl -luuid
+	WLDFLAGS=$(WSTP) -lm -lrt -lstdc++ -ldl -luuid -no-pie
 endif
 ifeq ($(UNAME),Darwin)
 	WSTP=$(WSTPDIR)/libWSTPi4.a

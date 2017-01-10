@@ -218,24 +218,12 @@ inline mpcomplex& mpcomplex::operator=(const unsigned long v){
 }
 
 inline mpcomplex& mpcomplex::operator=(const char* s){
-	mpc_t t;
-	mpc_init2(t, mpcomplex::default_rnd_mode);
-
-	if(0 == mpc_set_str(t, s, 10, mpcomplex::default_rnd_mode)){
-		mpc_set(value, t, mpcomplex::default_rnd_mode);
-	}
-	mpc_clear(t);
+	mpc_set_str(value, s, 10, rnd_mode);
 	return *this;
 }
 
 inline mpcomplex& mpcomplex::operator=(const std::string& s){
-	mpc_t t;
-	mpc_init2(t, mpcomplex::default_rnd_mode);
-
-	if(0 == mpc_set_str(t, s.c_str(), 10, mpcomplex::default_rnd_mode)){
-		mpc_set(value, t, mpcomplex::default_rnd_mode);
-	}
-	mpc_clear(t);
+	mpc_set_str(value, s.c_str(), 10, rnd_mode);
 	return *this;
 }
 

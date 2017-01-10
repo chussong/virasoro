@@ -23,10 +23,15 @@ VRunFromFile::usage = "VRunFromFile[filename_] or simply VRun[filename_] invokes
 VLengthCheck::usage = "VLengthCheck[filename_] gives the length of the result vector filename.";
 VRead::usage = "VRead[filename_] gives the run results as a vector of vectors of numbers, ready to be used in Mathematica.";
 VWrite::usage = "VWrite[results_,filename_] writes a results to a file with the given filename.";
-VPlot::usage = "VPlot[results_,startingRun_,runStep_,r_(,Option\[Rule]Value)] plots all runs in the VRead output results, using radius r. runStep>1 allows you to skip runs.
+VPlot::usage = "VPlot[results_(,Option\[Rule]Value)] plots all runs in the VRead output results, using radius r. runStep>1 allows you to skip runs.
 
-Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. EndTime\[Rule]40. Options are PlotScale (\"Linear\", \"SemiLog\", or \"LogLog\"), StartTime, EndTime, PointsPerTL, and Compare. Setting Compare\[Rule]\"Semi\" compares to semiclassical vacuum block; other possibilities are \"12\" and \"21\" which compare to exact degenerate blocks.";
-VConv::usage = "VConv[results_,r_,tL_] gives a plot showing how adding more terms to results_ improves the convergence the convergence of at particular radius r_ and Lorentzian time tL_.";
+Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. EndTime\[Rule]40. Options are PlotScale (\"Linear\", \"SemiLog\", or \"LogLog\"), StartTime, EndTime, PointsPerTL, StartingRun, EndingRun, RunStep, and Compare. Setting Compare\[Rule]\"Semi\" compares to semiclassical vacuum block; other possibilities are \"12\" and \"21\" which compare to exact degenerate blocks.";
+VConvByOrder::usage = "VConvByOrder[results_,tL_(,Option\[Rule]Value)] gives plots showing how adding more terms to each run in results_ improves the convergence at particular radius r_ and Lorentzian time tL_.
+
+Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. StartingRun\[Rule]10. Options are StartingRun, RunStep, and EndingRun.";
+VConvByTL::usage = "VConvByTL[results_(,Option\[Rule]Value)] gives plots showing how the convergence of the last few orders of each run in results_ varies with tL at a given r_.
+
+Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. StartingRun\[Rule]10. Options are StartingRun, RunStep, EndingRun, StartTime, and EndTime.";
 
 Begin["VirasoroInternal`"]
 Geth[m_,n_]:=b^2*(1-n^2)/4+(1-m^2)/(4*b^2)+(1-m*n)/2;
@@ -124,8 +129,8 @@ hp=results[[2runNumber-1]][[4]];
 label="c="<>StringTake[ToString@c,Min[5,StringLength[ToString@c]]]<>"    \!\(\*SubscriptBox[\(h\), \(l\)]\)="<>StringTake[ToString@hl,Min[5,StringLength[ToString@hl]]]<>"    \!\(\*SubscriptBox[\(h\), \(h\)]\)="<>StringTake[ToString@hh,Min[5,StringLength[ToString@hh]]]<>"    \!\(\*SubscriptBox[\(h\), \(p\)]\)="<>StringTake[ToString@hp,Min[5,StringLength[ToString@hp]]];
 Return[label];
 ];
-Options[VPlot]={PlotScale->"LogLog", StartTime->0.1, EndTime->30, Compare->{}, PointsPerTL->1};
-VPlot[results_,startingRun_,runStep_,r_,OptionsPattern[]]:=Module[{c,hl,hh,hp,startTime,endTime, compareVec, plotVector, plotLegends},
+Options[VPlot]={StartingRun->1, EndingRun->0, RunStep->1, r->0.99, PlotScale->"LogLog", StartTime->0.1, EndTime->30, Compare->{}, PointsPerTL->1};
+VPlot[results_,OptionsPattern[]]:=Module[{c,hl,hh,hp,startTime,endTime, compareVec, plotVector, plotLegends},
 startTime=OptionValue[StartTime];
 endTime=OptionValue[EndTime];
 If[VectorQ[OptionValue[Compare]],compareVec = OptionValue[Compare], compareVec = {OptionValue[Compare]}];
@@ -136,18 +141,18 @@ hh=results[[2i-1]][[3]];
 hp=results[[2i-1]][[4]];
 Print[ListLogLogPlot[{results[[2*i]],-results[[2*i]]},PlotLabel->VMakePlotLabel[results,i],PlotMarkers->".",PlotStyle->{Lighter@Blue,Lighter@Red},PlotLegends->{"Blue > 0","Red < 0"},DataRange->{0,2*Length@results[[2*i]]}]];
 (*Print[ListPlot[LogFluct[results[[2*i]]],PlotLabel\[Rule]"Fluctuations about smoothed average log", PlotMarkers\[Rule]".",ColorFunction\[Rule]Coloring,ColorFunctionScaling\[Rule]False,DataRange\[Rule]{0,2*Length@results[[2*i]]}]];*)
-plotVector := {Abs@VofT[results[[2*i]],c,hl,hh,hp,r,tL,2*Length@results[[2*i]]-2]};
+plotVector := {Abs@VofT[results[[2*i]],c,hl,hh,hp,OptionValue[r],tL,2*Length@results[[2*i]]-2]};
 plotLegends := {"Computed"};
 If[MemberQ[compareVec, "Semi"],
-plotVector=Append[Abs@SemiClassical[c,hl,hh,r,tL]]@plotVector;
+plotVector=Append[Abs@SemiClassical[c,hl,hh,OptionValue[r],tL]]@plotVector;
 plotLegends=Append["Semiclassical"]@plotLegends;
 ];
 If[MemberQ[compareVec, "12"],
-plotVector=Append[{Abs@DegenBlock12[c,hl,hh,r,tL]}]@plotVector;
+plotVector=Append[{Abs@DegenBlock12[c,hl,hh,OptionValue[r],tL]}]@plotVector;
 plotLegends=Append["Exact Degenerate \!\(\*SubscriptBox[\(h\), \(12\)]\)"]@plotLegends;
 ];
 If[MemberQ[compareVec, "21"],
-plotVector=Append[{Abs@DegenBlock21[c,hl,hh,r,tL]}]@plotVector;
+plotVector=Append[{Abs@DegenBlock21[c,hl,hh,OptionValue[r],tL]}]@plotVector;
 plotLegends=Append["Exact Degenerate \!\(\*SubscriptBox[\(h\), \(21\)]\)"]@plotLegends;
 ];
 (*Print[plotVector/.tL\[Rule]1//N];
@@ -155,12 +160,18 @@ Print[Abs@SemiClassical[c,hl,hh,r,1]];*)
 If[StringMatchQ[OptionValue[PlotScale],"Linear"],Print[Plot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->"Block in Lorentzian time",AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]]];
 If[StringMatchQ[OptionValue[PlotScale],"SemiLog"]||StringMatchQ[OptionValue[PlotScale],"LogLinear"],Print[LogPlot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->"Block in Lorentzian time",AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]]];
 If[StringMatchQ[OptionValue[PlotScale],"LogLog"],Print[LogLogPlot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->"Block in Lorentzian time",AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]]];
-,{i,startingRun,Length@results/2,runStep}];
+,{i,OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,OptionValue[EndingRun],Length@results/2],OptionValue[RunStep]}];
 ];
-Options[VConv]={StartingRun->1, RunStep->1, EndingRun->0};
-VConv[results_,r_,tL_,OptionsPattern[]]:=Module[{plotLabel,q},
+Options[VConvByOrder]={r->0.99, StartingRun->1, RunStep->1, EndingRun->0};
+VConvByOrder[results_,tL_,OptionsPattern[]]:=Module[{plotLabel,q},
 Do[
-Print[DiscretePlot[Table[q^k,{k,0,2*Floor[i/2],2}].Take[results[[entry]],Floor[i/2]+1]/.q->qVal[r,tL]//Abs,{i,Length[results[[entry]]]/5,2*Length[results[[entry]]],2},PlotRange->Full,AxesLabel->{"Max Order","H(r="<>ToString@r<>",tL="<>ToString@tL<>")"},Filling->None,PlotLabel->VMakePlotLabel[results,entry/2]]];
+Print[DiscretePlot[Table[q^k,{k,0,2*Floor[i/2],2}].Take[results[[entry]],Floor[i/2]+1]/.q->qVal[OptionValue[r],tL]//Abs,{i,Length[results[[entry]]]/5,2*Length[results[[entry]]],2},PlotRange->Full,AxesLabel->{"Max Order","H(r="<>ToString@OptionValue[r]<>",tL="<>ToString@tL<>")"},Filling->None,PlotLabel->VMakePlotLabel[results,entry/2]]];
+,{entry,2*OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,2*OptionValue[EndingRun],Length@results],2*OptionValue[RunStep]}];
+];
+Options[VConvByTL]={StartingRun->1, RunStep->1, EndingRun->0,StartTime->0.1,EndTime->50,r->0.99};
+VConvByTL[results_,OptionsPattern[]]:=Module[{plotLabel,q},
+Do[
+Print[Plot[(Table[q^k,{k,0,2*Length@results[[entry]]-2,2}].results[[entry]])/(Table[q^k,{k,0,2*Max[Length@results[[entry]]-10,1]-2,2}].Take[results[[entry]],Max[Length@results[[entry]]-10,1]])/.q->qVal[OptionValue[r],tL]//Abs,{tL,OptionValue[StartTime],OptionValue[EndTime]},PlotRange->Full,AxesLabel->{"tL","H(r="<>ToString@OptionValue[r]<>")"},PlotLabel->VMakePlotLabel[results,entry/2]]];
 ,{entry,2*OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,2*OptionValue[EndingRun],Length@results],2*OptionValue[RunStep]}];
 ];
 End[]
