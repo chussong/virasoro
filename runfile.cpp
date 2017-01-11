@@ -253,8 +253,8 @@ std::tuple<mpfr::mpcomplex, mpfr::mpcomplex, mpfr::mpcomplex> Runfile_c::ParseBr
 std::tuple<size_t, size_t> Runfile_c::FindNthParameter(const std::string line, const int param){
 //	std::cout << "Finding parameter #" << param << " from the following line: " << line << std::endl;
 	size_t splitPos;
-	size_t leftPos = 0;
-	size_t rightPos = 0;
+	size_t leftPos;
+	size_t rightPos = -1;
 	int paramsFound = 0;
 	std::vector<size_t> paramLocations;
 	paramLocations.push_back(0);
