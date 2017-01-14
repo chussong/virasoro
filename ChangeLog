@@ -1,0 +1,13 @@
+2017-01-13	Charles Hussong	<chussong@jhu.edu>
+
+	* Switched to GNU Autoconf for some reason.
+	* ./configure tries to find Mathematica and builds VWSTP if it's found.
+	--disable-wstp will stop build of VWSTP even if Mathematica is present.
+	* --enable-dev turns on the extra compiler warnings, -Werror, and -g.
+
+	* Programs are now installable -- virasoro in /usr/local/bin, vwstp in
+	/usr/local/libexec, and Virasoro.m in ~/.Mathematica/Applications.
+	* Accordingly, Virasoro.m can now be loaded with Needs["Virasoro`"].
+	* Virasoro.m now looks for vwstp in /usr/local/libexec/ if it's not in the local directory.
+
+	* Several new functions for Virasoro.m.

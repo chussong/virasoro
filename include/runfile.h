@@ -7,13 +7,14 @@
 #include <string>
 #include <vector>
 #include <tuple>
-#ifdef WSTP
+#ifdef HAVE_WSTP_
 #include "wstp.h"
 #endif
 #include "mpreal.h"
 #include "mpcomplex.h"
 #include "cpqmn.h"
 #include "hmn.h"
+//#include "config.h" will add this one autoconf is set up
 
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -138,7 +139,7 @@ class Runfile_c{
 				FillH(H, &Hmn, &Cpqmn, runVector[i-1], mnLocation, mnMultiplicity, maxOrder);
 				if(outputName.empty() || outputName == "__CONSOLE") DisplayH(H, runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
 				if(outputName != "__CONSOLE" && outputName != "__WSTP") WriteH(H, runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder, outputName);
-#ifdef WSTP
+#ifdef HAVE_WSTP_
 				if(outputName == "__WSTP") WSTPOut(H, runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
 #endif
 			}
@@ -265,7 +266,7 @@ class Runfile_c{
 			outputFile << "}" << std::endl;
 			outputFile.close();
 		}
-#ifdef WSTP
+#ifdef HAVE_WSTP_
 		template<class T>
 		void WSTPOut(const T* H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
 			WSPutFunction(stdlink, "List", 5);

@@ -22,7 +22,7 @@ mpfr::mpreal tolerance = 1e-10;
 bool showProgressBar = false;
 
 int main(int argc, char* argv[]){
-	ReadDefaults("config.txt");
+	ReadDefaults(std::string(getenv("HOME"))+"/.config/virasoro_defaults.txt");
 	mpfr::mpreal::set_default_prec(precision);
 	mpfr::mpreal::set_default_rnd(MPFR_RNDZ);
 	mpfr::mpcomplex::set_default_prec(precision);

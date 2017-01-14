@@ -61,9 +61,10 @@ bsq=GetBsq[c];
 ];
 
 VRun::paramError = "Enter 5 parameters, either separately or as a vector.";
-VRun::noVWSTP = "VWSTP not found. It must be in the same directory as Virasoro.m and must be marked as executable.";
+VRun::noVWSTP = "VWSTP not found. It must either be installed in /usr/local/bin or be in the same directory as Virasoro.m and must be marked as executable.";
 VRun[c_,hl_,hh_,hp_,maxOrder_] := Module[{link,params,results},
-link = Install[NotebookDirectory[]<>"vwstp"];
+link = Install["/usr/local/libexec/vwstp"];
+If[link==$Failed,link = Install[NotebookDirectory[]<>"vwstp"]];
 If[link==$Failed,Failure["C++NotFound",<|"MessageTemplate":>VRun::noVWSTP|>]];
 params = ToString/@N[{c,hl,hh,hp,maxOrder},768];
 Do[If[StringContainsQ["I"]@params[[i]],
@@ -79,7 +80,8 @@ VRunFromFile::notFound = "The argument given was not a vector of parameters or v
 VRunFromFile[filename_]:=Module[{link,results},
 If[FindFile[NotebookDirectory[]<>filename] == $Failed,
 Failure["FileNotFound", <|"MessageTemplate":>VRunFromFile::notFound|>]];
-link = Install[NotebookDirectory[]<>"vwstp"];
+link = Install["/usr/local/libexec/vwstp"];
+If[link==$Failed,link = Install[NotebookDirectory[]<>"vwstp"]];
 If[link==$Failed,Failure["C++NotFound",<|"MessageTemplate":>VRun::noVWSTP|>]];
 results = Global`VPassFilename[NotebookDirectory[]<>filename];
 Uninstall[link];
@@ -107,8 +109,8 @@ entries=VLengthCheck[filename];
 results=ConstantArray[0,entries];
 resultFile=OpenRead[filename,BinaryFormat->True];
 Do[
-results[[2i-1]]=ToExpression@ReadLine[resultFile];
-results[[2i]]=ToExpression@ReadLine[resultFile];
+results[[2i-1]]=ToExpression@StringReplace["e"->"*10^"]@ReadLine[resultFile];
+results[[2i]]=ToExpression@StringReplace["e"->"*10^"]@ReadLine[resultFile];
 ,{i,1,entries/2}];
 Close[filename];
 Return[results];
@@ -138,8 +140,8 @@ c=results[[2i-1]][[1]];
 hl=results[[2i-1]][[2]];
 hh=results[[2i-1]][[3]];
 hp=results[[2i-1]][[4]];
-Print[ListLogLogPlot[{results[[2*i]],-results[[2*i]]},PlotLabel->VMakePlotLabel[results,i],PlotMarkers->".",PlotStyle->{Lighter@Blue,Lighter@Red},PlotLegends->{"Blue > 0","Red < 0"},DataRange->{0,2*Length@results[[2*i]]}]];
-(*Print[ListPlot[LogFluct[results[[2*i]]],PlotLabel\[Rule]"Fluctuations about smoothed average log", PlotMarkers\[Rule]".",ColorFunction\[Rule]Coloring,ColorFunctionScaling\[Rule]False,DataRange\[Rule]{0,2*Length@results[[2*i]]}]];*)
+Print[ListLogLogPlot[{results[[2*i]],-results[[2*i]]},PlotLabel->VMakePlotLabel[results,i],PlotMarkers->"\[FilledSmallCircle]",PlotStyle->{Lighter@Blue,Lighter@Red},PlotLegends->{"Blue > 0","Red < 0"},DataRange->{0,2*Length@results[[2*i]]}]];
+(*Print[ListPlot[LogFluct[results[[2*i]]],PlotLabel\[Rule]"Fluctuations about smoothed average log", PlotMarkers\[Rule]"\[FilledSmallCircle]",ColorFunction\[Rule]Coloring,ColorFunctionScaling\[Rule]False,DataRange\[Rule]{0,2*Length@results[[2*i]]}]];*)
 ,{i,OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,OptionValue[EndingRun],Length@results/2],OptionValue[RunStep]}];
 ];
 Options[VPlot]={StartingRun->1, EndingRun->0, RunStep->1, r->0.99, PlotScale->"LogLog", StartTime->0.1, EndTime->30, Compare->{}, PointsPerTL->1};
@@ -176,7 +178,7 @@ If[StringMatchQ[OptionValue[PlotScale],"LogLog"],Print[LogLogPlot[Evaluate[plotV
 Options[VConvByOrder]={r->0.99, StartingRun->1, RunStep->1, EndingRun->0};
 VConvByOrder[results_,tL_,OptionsPattern[]]:=Module[{plotLabel,q},
 Do[
-Print[DiscretePlot[Table[q^k,{k,0,2*Floor[i/2],2}].Take[results[[entry]],Floor[i/2]+1]/.q->qVal[OptionValue[r],tL]//Abs,{i,Length[results[[entry]]]/5,2*Length[results[[entry]]],2},PlotRange->Full,AxesLabel->{"Max Order","H(r="<>ToString@OptionValue[r]<>",tL="<>ToString@tL<>")"},Filling->None,PlotLabel->VMakePlotLabel[results,entry/2]]];
+Print[DiscretePlot[Table[q^k,{k,0,2*Floor[i/2],2}].Take[results[[entry]],Floor[i/2]+1]/.q->qVal[OptionValue[r],tL]//Abs,{i,Length[results[[entry]]]/5,2*Length[results[[entry]]],2},PlotRange->Full,AxesLabel->{"Max Order","H(r="<>ToString@OptionValue[r]<>",tL="<>ToString@tL<>")"},Filling->None,PlotMarkers->"\[FilledSmallCircle]",PlotLabel->VMakePlotLabel[results,entry/2]]];
 ,{entry,2*OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,2*OptionValue[EndingRun],Length@results],2*OptionValue[RunStep]}];
 ];
 Options[VConvByTL]={StartingRun->1, RunStep->1, EndingRun->0,StartTime->0.1,EndTime->50,r->0.99};

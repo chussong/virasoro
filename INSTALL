@@ -1,0 +1,6 @@
+Just type the following. If it doesn't work, email chussong@jhu.edu:
+./configure
+make
+sudo make install
+
+./configure can be followed by --disable-wstp to disable building for Mathematica or --enable-dev for extra warnings and errors.

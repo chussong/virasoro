@@ -14,7 +14,7 @@ This work makes extensive use of [GNU MP](https://gmplib.org/), its floating-poi
 
 ## Installation
 
-To compile, type "make" into a terminal in this directory. You will need GCC (Linux) or clang (Mac) and the following dependencies installed in this order:  
+To compile, get a terminal in this directory and type ./configure, then make, then sudo make install. See the file called INSTALL for build options. You will need working C and C++ compilers as well as the following libraries installed in this order:  
 0. Mac users will need to run xcode-select --install to get the Command Line Tools.  
 1. GMP arbitrary-precision math library from [here](https://gmplib.org).  
 2. GNU MPFR from [here](http://www.mpfr.org).  
@@ -24,10 +24,10 @@ Prebuilt versions of these are available for some systems (they're on the Ubuntu
 ## Usage
 
 There are two ways to invoke runs. For a single run, simply pass the parameters c, hl, hh, hp, and qmax. For example, to get a run with c=30, hl=1, hh=3, hp=0, qmax=1000, you would type:  
-./virasoro 30 1 3 0 1000  
+virasoro 30 1 3 0 1000  
 
 To do multiple runs at once, you can input a "runfile". Instead of five parameters, you give one: the name of the file. For example:  
-./virasoro testruns.txt  
+virasoro testruns.txt  
 will tell the program to read testruns.txt and perform all the runs shown in it. A runfile should be plain text, with one run per line. For example, a runfile containing the following two lines:  
 30 1 3 0 1000  
 35 1 3 0 1000  
@@ -40,7 +40,7 @@ It's also possible to specify parameters in terms of others, which is quite usef
 {26,34,0.2} c/25 c/11 0 1000  
 This is still not very robust, so you have to be careful: the parameters must be immediately followed or preceded by an explicit operation, so c/25 and 25\*c are legal but c / 25 and 25c are not. Parameters can also only be defined relative to those which appear to their left, so hh can be set to 2.3\*hl but hl can not be set to hh/2.3. +, -, \*, and / are supported, as well as a parameter just sitting by itself, e.g. hl.  
 Complex parameters can be entered as (realPart imPart), e.g. 1 + i is (1 1). **If you want to invoke runs using parentheses or brackets from the command line, they must be included in quotation marks, like so:**  
-./virasoro "{10,20,2}" "(1 1)" 2\*hl 0 1000  
+virasoro "{10,20,2}" "(1 1)" 2\*hl 0 1000  
 
 There are a couple of parameter restrictions to be aware of. First, if c is between 1 and 25, the computation will have to be done using complex numbers, which is about 8 times slower. Second, if b^2 or 1/b^2 is a rational number with relatively small numerator or denominator, it will cause the internal Hmn and/or Amn to diverge. If such a c is detected, the maxOrder will automatically be adjusted down to the highest safe value.  
 
@@ -57,7 +57,7 @@ There are six options available, which can be placed either before or after the 
 | -b | first provided value is \[b\] instead of c |
 | -bb | first provided value is \[b^2\] instead of c |
 
-There is also a configuration file, config.txt, which contains the default values of these options so you can change them there as well. The command line options override the entries in config.txt. The entries mean the following:
+There is also a configuration file, created at ~/.config/virasoro\_defaults.txt, which contains the default values of these options so you can change them there as well. The command line options override the entries in virasoro\_defaults.txt. The entries mean the following:
 
 | Option | Description |
 | ------ | ----------- |
@@ -68,7 +68,11 @@ There is also a configuration file, config.txt, which contains the default value
 
 ## Mathematica
 
-To call this function from Mathematica, load the library Virasoro.m like in the provided vwstp\_test.nb and call VRun, like one of the following:  
+To call this function from Mathematica, load the package Virasoro.m by calling Needs["Virasoro`"] and call VRun, like one of the following:  
 results = VRun[30, 1, 3, 0, 1000];  
 results = VRun[runfile.txt];  
-This will fill results with a Mathematica vector of vectors containing parameters used (in odd entries) and coefficients (in even entries). This can then be plotted with VPlot[results, 1, 1, 0.99]; for explanations of the parameters to VPlot, call ?VPlot.  
+If VWSTP was built and installed correctly, this will fill "results" with a Mathematica vector of vectors containing parameters used (in odd entries) and coefficients (in even entries). This can then be plotted with VPlot[results]; for explanations of the many options for VPlot, call ?VPlot.  
+
+You can also read in the results of runs invoked from the command line using VRead["filename"], which will give the same output as if they were invoked with VRun. If you do runs within Mathematica and want to keep the results, call VWrite[results, "filename"] to save them as filename. Other useful functions in Virasoro.m are VPlotCoeffs, VConvByOrder, and VConvByTL; once you've run Needs["Virasoro`"], descriptions of these functions are all available from ?FunctionName.  
+
+If you would like to automatically load Virasoro when Mathematica starts, add a line containing Needs["Virasoro`"] to ~/.Mathematica/Kernel/init.m. Warning: running this takes a few seconds, so you probably don't want to do it. To stop the automatic loading, simply delete the line from init.m.  

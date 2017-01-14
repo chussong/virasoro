@@ -1,5 +1,5 @@
 #include "virasoro.h"
-#ifdef WSTP
+#ifdef HAVE_WSTP_
 WSLINK stdlink = 0;
 #endif
 
@@ -12,8 +12,12 @@ int precision;
 mpfr::mpreal tolerance;
 bool showProgressBar;
 
+constexpr int DEFAULT_THREADS = 8;
+constexpr int DEFAULT_PREC = 768;
+constexpr double DEFAULT_TOLERANCE = 1e-10;
+
 int main(int argc, char** argv){
-	ReadDefaults("config.txt");
+	ReadDefaults(std::string(getenv("HOME"))+"/.config/virasoro_defaults.txt");
 	std::vector<std::string> args = CollectArgs(argc, argv);
 	std::string options = ParseOptions(args);
 	mpfr::mpreal::set_default_prec(precision);
@@ -49,6 +53,7 @@ void ReadDefaults(std::string filename){
 	std::ifstream inStream;
 	inStream.open(filename, std::ifstream::in);
 	if((inStream.rdstate() & std::ifstream::failbit) != 0){
+		std::cout << "Creating configuration file at ~/.config/virasoro_defaults.txt" << std::endl;
 		CreateConfigFile(filename);
 		inStream.open(filename, std::ifstream::in);
 	}
@@ -59,17 +64,21 @@ void ReadDefaults(std::string filename){
 		if(currentLine.empty()) break;
 		lines.push_back(currentLine);
 	}
+	std::cout << "Reading default configuration from ~/.config/virasoro.defaults.txt" << std::endl;
 	for(unsigned int i = 1; i <= lines.size(); ++i){
 		if(lines[i-1].size() >= 12 && lines[i-1].substr(0,10).compare("maxThreads") == 0){
 			maxThreads = std::stoi(lines[i-1].substr(11));
+			if(maxThreads <= 0) maxThreads = DEFAULT_THREADS;
 			continue;
 		}
 		if(lines[i-1].size() >= 11 && lines[i-1].substr(0,9).compare("precision") == 0){
 			precision = std::stoi(lines[i-1].substr(10));
+			if(precision <= 0) precision = DEFAULT_PREC;
 			continue;
 		}
 		if(lines[i-1].size() >= 11 && lines[i-1].substr(0,9).compare("tolerance") == 0){
 			tolerance = lines[i-1].substr(10).c_str();
+			if(tolerance <= 0) tolerance = DEFAULT_TOLERANCE;
 			continue;
 		}
 		if(lines[i-1].size() >= 17 && lines[i-1].substr(0,15).compare("showProgressBar") == 0){
@@ -86,11 +95,11 @@ void ReadDefaults(std::string filename){
 
 void CreateConfigFile(std::string filename){
 	std::ofstream outStream;
-	outStream.open(filename, std::ofstream::out);
+	outStream.open(filename);
 	outStream << "[default parameters]" << std::endl;
-	outStream << "maxThreads=8" << std::endl;
-	outStream << "precision=768" << std::endl;
-	outStream << "tolerance=1e-20" << std::endl;
+	outStream << "maxThreads=" << DEFAULT_THREADS << std::endl;
+	outStream << "precision=" << DEFAULT_PREC << std::endl;
+	outStream << "tolerance=" << DEFAULT_TOLERANCE << std::endl;
 	outStream << "showProgressBar=true" << std::endl;
 	outStream.close();
 	return;
