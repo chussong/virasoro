@@ -12,10 +12,6 @@ extern "C"{
 void Startup(Runfile_c runfile);
 void ReadDefaults(std::string filename);
 
-mpc_rnd_t mpfr::mpcomplex::default_rnd_mode = MPC_RNDZZ;
-mpfr_prec_t mpfr::mpcomplex::default_prec = 64;
-mpfr::mpreal mpfr::mpcomplex::tolerance = 1e-10;
-
 int maxThreads = 8;
 int precision = 768;
 mpfr::mpreal tolerance = 1e-10;
@@ -25,9 +21,6 @@ int main(int argc, char* argv[]){
 	ReadDefaults(std::string(getenv("HOME"))+"/.config/virasoro_defaults.txt");
 	mpfr::mpreal::set_default_prec(precision);
 	mpfr::mpreal::set_default_rnd(MPFR_RNDZ);
-	mpfr::mpcomplex::set_default_prec(precision);
-	mpfr::mpcomplex::set_default_rnd_mode(MPC_RNDZZ);
-	mpfr::mpcomplex::set_tolerance(tolerance);
 	return WSMain(argc, argv);
 }
 

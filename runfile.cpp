@@ -200,7 +200,7 @@ int Runfile_c::ExpandBraces(const int param){
 				parsedBraces = ParseBraces(insideBraces);
 //				if(std::get<0>(parsedBraces).realPart() => std::get<1>(parsedBraces).realPart() || std::get<2>(parsedBraces).realPart() <= 0) return -2;
 //				std::cout << "Parsed " << currentParam << " into the following lines:" << std::endl;
-				for(currentValue = std::get<0>(parsedBraces); currentValue.realPart() <= std::get<1>(parsedBraces).realPart(); currentValue += std::get<2>(parsedBraces)){
+				for(currentValue = std::get<0>(parsedBraces); mpfr::real(currentValue) <= mpfr::real(std::get<1>(parsedBraces)); currentValue += std::get<2>(parsedBraces)){
 					newLines.push_back(firstHalf + to_string(currentValue, -1) + secondHalf);
 //					std::cout << firstHalf + to_string(currentValue, -1) + secondHalf << std::endl;
 				}
@@ -548,14 +548,14 @@ int Runfile_c::Execute(std::string options){
 		for(unsigned int run = 1; run <= runs.size(); ++run){
 			allReal = true;
 			for(unsigned int i = 1; i <= runs[run-1].size(); ++i){
-				if(!runs[run-1][i-1].isReal()){
+				if(!mpfr::isEqualFuzzy(mpfr::imag(runs[run-1][i-1]),0)){
 					allReal = false;
 					break;
 				}
 			}
-			if(bGiven == 0 && runs[run-1][0].realPart() < 25 && runs[run-1][0].realPart() > 1) allReal = false;
+			if(bGiven == 0 && mpfr::real(runs[run-1][0]) < 25 && mpfr::real(runs[run-1][0]) > 1) allReal = false;
 			if(allReal){
-				for(unsigned int i = 1; i <= runs[run-1].size(); ++i) realRunVector.push_back(runs[run-1][i-1].realPart());
+				for(unsigned int i = 1; i <= runs[run-1].size(); ++i) realRunVector.push_back(mpfr::real(runs[run-1][i-1]));
 				FindCoefficients<mpfr::mpreal>(realRunVector, maxOrders[run-1], outputName, bGiven);
 				realRunVector.clear();
 			} else {
@@ -577,14 +577,14 @@ int Runfile_c::Execute(std::string options){
 			std::cout << "Beginning run " << run << " of " << runs.size() << "." << std::endl;
 			allReal = true;
 			for(unsigned int i = 1; i <= runs[run-1].size(); ++i){
-				if(!runs[run-1][i-1].isReal()){
+				if(!mpfr::isEqualFuzzy(mpfr::imag(runs[run-1][i-1]),0)){
 					allReal = false;
 					break;
 				}
 			}
-			if(bGiven == 0 && runs[run-1][0].realPart() < 25 && runs[run-1][0].realPart() > 1) allReal = false;
+			if(bGiven == 0 && mpfr::real(runs[run-1][0]) < 25 && mpfr::real(runs[run-1][0]) > 1) allReal = false;
 			if(allReal){
-				for(unsigned int i = 1; i <= runs[run-1].size(); ++i) realRunVector.push_back(runs[run-1][i-1].realPart());
+				for(unsigned int i = 1; i <= runs[run-1].size(); ++i) realRunVector.push_back(mpfr::real(runs[run-1][i-1]));
 				FindCoefficients<mpfr::mpreal>(realRunVector, maxOrders[run-1], outputName, bGiven);
 				realRunVector.clear();
 			} else {
@@ -667,4 +667,83 @@ std::string to_string(const mpfr::mpreal N, int digits){
 	std::size_t ePos = output.find('e');
 	if(ePos < std::string::npos) output = output.replace(ePos, 1, "*10^");
 	return output;
+}
+
+std::string to_string(const mpfr::mpcomplex N, int digits, int base){
+	char* cstr = mpc_get_str(base, std::max(digits,0), N.mpc_srcptr(), MPC_RNDNN);
+	std::string output(cstr);
+	mpc_free_str(cstr);
+	if(digits < 0){
+		return output;
+	}
+	size_t splitLoc = output.find(" ");
+	std::string halves[2];
+	halves[0] = output.substr(1, splitLoc-1);
+	halves[1] = output.substr(splitLoc+1, output.size()-splitLoc-2);
+	mpfr::mpreal mpfHalf;
+	for(int i = 1; i <= 2; ++i){
+		if(halves[i-1] == "+0" || halves[i-1] == "-0"){
+			halves[i-1].clear();
+		} else {
+			if(halves[i-1][0] == '-'){
+				mpfHalf = halves[i-1].substr(1);
+			} else {
+				mpfHalf = halves[i-1];
+			}
+			if(mpfr::isEqualFuzzy(mpfHalf,0)) halves[i-1].clear();
+		}
+	}
+	size_t eLoc, eEnd;
+	for(int i = 1; i <= 2; ++i){
+		if(halves[i-1].empty()) continue;
+		if((eLoc=halves[i-1].find("e")) < std::string::npos){
+			eEnd = halves[i-1].find_first_of(" )", eLoc+3);
+			int exp = std::stoi(halves[i-1].substr(eLoc+1, eEnd-eLoc-1));
+			if(digits == 0 || std::abs(exp) < digits){
+				halves[i-1].erase(eLoc, eEnd-eLoc);
+				if(exp > 0){
+					if(halves[i-1][0] == '-'){
+						halves[i-1].erase(2, 1);
+						halves[i-1].insert(exp+2, ".");
+					} else {
+						halves[i-1].erase(1, 1);
+						halves[i-1].insert(exp+1, ".");
+					}
+				} else {
+					if(halves[i-1][0] == '-'){
+						halves[i-1].erase(2, 1);
+						halves[i-1].insert(1, "0.");
+						halves[i-1].insert(3, -1-exp, '0');
+					} else {
+						halves[i-1].erase(1, 1);
+						halves[i-1].insert(0, "0.");
+						halves[i-1].insert(2, -1-exp, '0');
+					}
+				}
+			} else {
+				if(halves[i-1][eLoc+1] == '+'){
+					halves[i-1].replace(eLoc, 2, "*10^");
+				} else {
+					halves[i-1].replace(eLoc, 1, "*10^");
+				}
+			}
+		}
+		eEnd = halves[i-1].find_last_not_of("0");
+		if(halves[i-1][eEnd] == '.') halves[i-1].erase(eEnd);
+	}
+	if(halves[0].empty()){
+		if(halves[1].empty()){
+			return "0";
+		} else {
+			halves[1].append("*I");
+			return halves[1];
+		}
+	} else {
+		if(halves[1].empty()){
+			return halves[0];
+		} else {
+			if(halves[1][0] == '-') return halves[0] + "-" + halves[1].substr(1) + "*I";
+			return halves[0] + "+" + halves[1] + "*I";
+		}
+	}
 }

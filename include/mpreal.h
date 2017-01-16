@@ -3097,9 +3097,9 @@ namespace std
         // Approximate formula for decimal digits is: digits10 = floor(log10(2) * digits). See bits2digits() for more details.
 
         static const std::float_round_style round_style = round_to_nearest;
-        static const int digits       = 53;
-        static const int digits10     = 15;
-        static const int max_digits10 = 16;
+        static const int digits       = 768;
+        static const int digits10     = 231;
+        static const int max_digits10 = 232;
 #endif
     };
 

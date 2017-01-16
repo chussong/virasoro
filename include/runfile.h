@@ -19,6 +19,7 @@
 typedef std::chrono::high_resolution_clock Clock;
 
 std::string to_string(const mpfr::mpreal N, int digits);
+std::string to_string(const mpfr::mpcomplex N, int digits, int base = 10);
 
 class Runfile_c{
 	std::string filename;

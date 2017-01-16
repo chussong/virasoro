@@ -3,10 +3,6 @@
 WSLINK stdlink = 0;
 #endif
 
-mpc_rnd_t mpfr::mpcomplex::default_rnd_mode = MPC_RNDZZ;
-mpfr_prec_t mpfr::mpcomplex::default_prec = 64;
-mpfr::mpreal mpfr::mpcomplex::tolerance = 1e-10;
-
 int maxThreads;
 int precision;
 mpfr::mpreal tolerance;
@@ -22,9 +18,6 @@ int main(int argc, char** argv){
 	std::string options = ParseOptions(args);
 	mpfr::mpreal::set_default_prec(precision);
 	mpfr::mpreal::set_default_rnd(MPFR_RNDZ);
-	mpfr::mpcomplex::set_default_prec(precision);
-	mpfr::mpcomplex::set_default_rnd_mode(MPC_RNDZZ);
-	mpfr::mpcomplex::set_tolerance(tolerance);
 	int exitCode;
 	Runfile_c runfile;
 	if(args.size() == 1){
