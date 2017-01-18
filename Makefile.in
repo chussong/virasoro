@@ -106,12 +106,14 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libexecdir)" \
 	"$(DESTDIR)$(pkgdatadir)"
 PROGRAMS = $(bin_PROGRAMS) $(libexec_PROGRAMS)
-am_virasoro_OBJECTS = virasoro.$(OBJEXT) runfile.$(OBJEXT)
+am_virasoro_OBJECTS = main.$(OBJEXT) virasoro.$(OBJEXT) \
+	runfile.$(OBJEXT)
 virasoro_OBJECTS = $(am_virasoro_OBJECTS)
 am__DEPENDENCIES_1 =
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 virasoro_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_vwstp_OBJECTS = vwstp-vwstp.$(OBJEXT) vwstp-runfile.$(OBJEXT)
+am_vwstp_OBJECTS = vwstp-vwstp.$(OBJEXT) vwstp-virasoro.$(OBJEXT) \
+	vwstp-runfile.$(OBJEXT)
 nodist_vwstp_OBJECTS = vwstp-vwstptm.$(OBJEXT)
 vwstp_OBJECTS = $(am_vwstp_OBJECTS) $(nodist_vwstp_OBJECTS)
 vwstp_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -353,9 +355,9 @@ AUTOMAKE_OPTIONS =
 libexec_PROGRAMS = $(VWSTP)
 LDADD = $(AM_LDADD) @staticlibs@
 IDIR = include/
-virasoro_SOURCES = virasoro.cpp runfile.cpp $(IDIR)virasoro.h $(IDIR)runfile.h $(IDIR)hmn.h $(IDIR)cpqmn.h $(IDIR)mpreal.h $(IDIR)mpcomplex.h
+virasoro_SOURCES = main.cpp virasoro.cpp runfile.cpp $(IDIR)virasoro.h $(IDIR)runfile.h $(IDIR)hmn.h $(IDIR)cpqmn.h $(IDIR)mpreal.h $(IDIR)mpcomplex.h
 virasoro_LDADD = $(LDADD)
-vwstp_SOURCES = vwstp.cpp runfile.cpp $(IDIR)runfile.h $(IDIR)hmn.h $(IDIR)cpqmn.h $(IDIR)mpreal.h $(IDIR)mpcomplex.h
+vwstp_SOURCES = vwstp.cpp virasoro.cpp runfile.cpp $(IDIR)virasoro.h $(IDIR)runfile.h $(IDIR)hmn.h $(IDIR)cpqmn.h $(IDIR)mpreal.h $(IDIR)mpcomplex.h
 nodist_vwstp_SOURCES = vwstptm.c
 vwstp_CFLAGS = $(AM_CFLAGS) @wstpflags@
 vwstp_CXXFLAGS = $(AM_CXXFLAGS) @wstpflags@
@@ -517,9 +519,11 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/runfile.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/virasoro.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vwstp-runfile.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vwstp-virasoro.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vwstp-vwstp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vwstp-vwstptm.Po@am__quote@
 
@@ -578,6 +582,20 @@ vwstp-vwstp.obj: vwstp.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='vwstp.cpp' object='vwstp-vwstp.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(vwstp_CPPFLAGS) $(CPPFLAGS) $(vwstp_CXXFLAGS) $(CXXFLAGS) -c -o vwstp-vwstp.obj `if test -f 'vwstp.cpp'; then $(CYGPATH_W) 'vwstp.cpp'; else $(CYGPATH_W) '$(srcdir)/vwstp.cpp'; fi`
+
+vwstp-virasoro.o: virasoro.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(vwstp_CPPFLAGS) $(CPPFLAGS) $(vwstp_CXXFLAGS) $(CXXFLAGS) -MT vwstp-virasoro.o -MD -MP -MF $(DEPDIR)/vwstp-virasoro.Tpo -c -o vwstp-virasoro.o `test -f 'virasoro.cpp' || echo '$(srcdir)/'`virasoro.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/vwstp-virasoro.Tpo $(DEPDIR)/vwstp-virasoro.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='virasoro.cpp' object='vwstp-virasoro.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(vwstp_CPPFLAGS) $(CPPFLAGS) $(vwstp_CXXFLAGS) $(CXXFLAGS) -c -o vwstp-virasoro.o `test -f 'virasoro.cpp' || echo '$(srcdir)/'`virasoro.cpp
+
+vwstp-virasoro.obj: virasoro.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(vwstp_CPPFLAGS) $(CPPFLAGS) $(vwstp_CXXFLAGS) $(CXXFLAGS) -MT vwstp-virasoro.obj -MD -MP -MF $(DEPDIR)/vwstp-virasoro.Tpo -c -o vwstp-virasoro.obj `if test -f 'virasoro.cpp'; then $(CYGPATH_W) 'virasoro.cpp'; else $(CYGPATH_W) '$(srcdir)/virasoro.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/vwstp-virasoro.Tpo $(DEPDIR)/vwstp-virasoro.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='virasoro.cpp' object='vwstp-virasoro.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(vwstp_CPPFLAGS) $(CPPFLAGS) $(vwstp_CXXFLAGS) $(CXXFLAGS) -c -o vwstp-virasoro.obj `if test -f 'virasoro.cpp'; then $(CYGPATH_W) 'virasoro.cpp'; else $(CYGPATH_W) '$(srcdir)/virasoro.cpp'; fi`
 
 vwstp-runfile.o: runfile.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(vwstp_CPPFLAGS) $(CPPFLAGS) $(vwstp_CXXFLAGS) $(CXXFLAGS) -MT vwstp-runfile.o -MD -MP -MF $(DEPDIR)/vwstp-runfile.Tpo -c -o vwstp-runfile.o `test -f 'runfile.cpp' || echo '$(srcdir)/'`runfile.cpp

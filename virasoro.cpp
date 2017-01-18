@@ -1,7 +1,4 @@
 #include "virasoro.h"
-#ifdef HAVE_WSTP_
-WSLINK stdlink = 0;
-#endif
 
 int maxThreads;
 int precision;
@@ -12,10 +9,11 @@ constexpr int DEFAULT_THREADS = 8;
 constexpr int DEFAULT_PREC = 768;
 constexpr double DEFAULT_TOLERANCE = 1e-10;
 
-int main(int argc, char** argv){
-	ReadDefaults(std::string(getenv("HOME"))+"/.config/virasoro_defaults.txt");
+int core(int argc, char** argv, const bool wolfram){
+	ReadDefaults(std::string(getenv("HOME"))+"/.config/virasoro_defaults.txt", wolfram);
 	std::vector<std::string> args = CollectArgs(argc, argv);
 	std::string options = ParseOptions(args);
+	if(wolfram) options.append("w");
 	mpfr::mpreal::set_default_prec(precision);
 	mpfr::mpreal::set_default_rnd(MPFR_RNDZ);
 	int exitCode;
@@ -30,6 +28,13 @@ int main(int argc, char** argv){
 	runfile.SetTolerance(tolerance);
 	runfile.SetProgressBar(showProgressBar);
 	runfile.ReadRunfile();
+#ifdef HAVE_WSTP_
+	if(args[0] == "vwstp_file"){
+		WSPutFunction(stdlink, "Map", 2);
+		WSPutSymbol(stdlink, "ToExpression");
+		WSPutFunction(stdlink, "List", 2*runfile.NumberOfRuns());
+	}
+#endif
 	exitCode = runfile.Execute(options);
 	return exitCode;
 }
@@ -42,11 +47,11 @@ std::vector<std::string> CollectArgs(int argc, char** argv){
 	return args;
 }
 
-void ReadDefaults(std::string filename){
+void ReadDefaults(const std::string filename, const bool quiet){
 	std::ifstream inStream;
 	inStream.open(filename, std::ifstream::in);
 	if((inStream.rdstate() & std::ifstream::failbit) != 0){
-		std::cout << "Creating configuration file at ~/.config/virasoro_defaults.txt" << std::endl;
+		if(!quiet)std::cout << "Creating configuration file at ~/.config/virasoro_defaults.txt" << std::endl;
 		CreateConfigFile(filename);
 		inStream.open(filename, std::ifstream::in);
 	}
@@ -57,7 +62,7 @@ void ReadDefaults(std::string filename){
 		if(currentLine.empty()) break;
 		lines.push_back(currentLine);
 	}
-	std::cout << "Reading default configuration from ~/.config/virasoro.defaults.txt" << std::endl;
+	if(!quiet)std::cout << "Reading default configuration from ~/.config/virasoro_defaults.txt" << std::endl;
 	for(unsigned int i = 1; i <= lines.size(); ++i){
 		if(lines[i-1].size() >= 12 && lines[i-1].substr(0,10).compare("maxThreads") == 0){
 			maxThreads = std::stoi(lines[i-1].substr(11));
@@ -86,7 +91,7 @@ void ReadDefaults(std::string filename){
 	return;
 }
 
-void CreateConfigFile(std::string filename){
+void CreateConfigFile(const std::string filename){
 	std::ofstream outStream;
 	outStream.open(filename);
 	outStream << "[default parameters]" << std::endl;

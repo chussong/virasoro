@@ -4765,6 +4765,7 @@ $as_echo "#define HAVE_WSTP 1" >>confdefs.h
 
 else
 	VWSTP=""
+	object_files="$object_files main.o"
 fi
  if test $wstp = 1; then
   MAKE_VWSTP_TRUE=

@@ -83,6 +83,7 @@ if test $wstp == 1; then
 	AC_SUBST([pkgdatadir], [$HOME/.Mathematica/Applications])
 else
 	VWSTP=""
+	object_files="$object_files main.o"
 fi
 AM_CONDITIONAL([MAKE_VWSTP], [test $wstp = 1])
 

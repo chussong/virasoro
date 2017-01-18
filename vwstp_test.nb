@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[      9377,        180]
-NotebookOptionsPosition[      9138,        167]
-NotebookOutlinePosition[      9478,        182]
-CellTagsIndexPosition[      9435,        179]
+NotebookDataLength[      8967,        171]
+NotebookOptionsPosition[      8728,        158]
+NotebookOutlinePosition[      9068,        173]
+CellTagsIndexPosition[      9025,        170]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -22,41 +22,30 @@ Cell[BoxData[
  RowBox[{
   RowBox[{"(*", 
    RowBox[{
-    RowBox[{
-    "This", " ", "notebook", " ", "should", " ", "do", " ", "several", " ", 
-     "relatively", " ", "quick", " ", "runs", " ", 
-     RowBox[{"(", 
-      RowBox[{"O", 
-       RowBox[{"(", "minutes", ")"}]}], ")"}], " ", "and", " ", "then", " ", 
-     "plot", " ", "the", " ", "results", " ", 
-     RowBox[{"below", ".", " ", "The"}], " ", "plots", " ", "should", " ", 
-     "alternate", " ", "between", " ", "log", " ", "plots", " ", "of", " ", 
-     "coefficients", " ", "and", " ", "Lorentzian"}], "-", 
-    RowBox[{"time", " ", "approximations", " ", "of", " ", "block", " ", 
-     RowBox[{
-     "behavior", ".", "\[IndentingNewLine]", "\[IndentingNewLine]", "This"}], 
-     " ", "file", " ", "must", " ", "be", " ", "in", " ", "the", " ", "same", 
-     " ", "directory", " ", "as", " ", 
-     RowBox[{"testruns", ".", "txt"}], " ", 
-     RowBox[{"Virasoro", ".", "m"}], " ", "and", " ", "vwstp", " ", "to", " ",
-      "work", " ", "as", " ", 
-     RowBox[{"written", ".", " ", "The"}], " ", "paths", " ", "below", " ", 
-     "can", " ", "be", " ", "changed", " ", "freely", " ", "without", " ", 
-     "ruining", " ", "anything", " ", "as", " ", "long", " ", "as", " ", 
-     RowBox[{"Virasoro", ".", "m"}], " ", "and", " ", "vwstp", " ", "are", 
-     " ", "in", " ", "the", " ", "same", " ", "directory", " ", "as", " ", 
-     "each", " ", 
-     RowBox[{"other", ".", "\"\<\>"}]}]}], "*)"}], "\[IndentingNewLine]", 
+   "This", " ", "notebook", " ", "should", " ", "do", " ", "several", " ", 
+    "relatively", " ", "quick", " ", "runs", " ", 
+    RowBox[{"(", 
+     RowBox[{"O", 
+      RowBox[{"(", "minutes", ")"}]}], ")"}], " ", "and", " ", "then", " ", 
+    "plot", " ", "the", " ", "results", " ", 
+    RowBox[{"below", ".", " ", "There"}], " ", "should", " ", "be", " ", 
+    "two", " ", "plots", " ", "showing", " ", "convergence", " ", "and", " ", 
+    "then", " ", "a", " ", "series", " ", "of", " ", "plots", " ", "showing", 
+    " ", "behavior", " ", "in", " ", "Lorentzian", " ", 
+    RowBox[{"time", ".", " ", "Some"}], " ", "results", " ", "should", " ", 
+    "also", " ", "be", " ", "written", " ", "to", " ", "the", " ", "file", 
+    " ", 
+    RowBox[{"testruns_results", ".", "txt"}], " ", "which", " ", "could", " ",
+     "be", " ", "read", " ", "in", " ", "again", " ", "with", " ", 
+    RowBox[{"VRead", "."}]}], "*)"}], "\[IndentingNewLine]", 
   "\[IndentingNewLine]", 
   RowBox[{
    RowBox[{
     RowBox[{"ClearAll", "[", "\"\<Global`*\>\"", "]"}], ";"}], 
    "\[IndentingNewLine]", 
    RowBox[{
-    RowBox[{"Get", "[", 
-     RowBox[{
-      RowBox[{"NotebookDirectory", "[", "]"}], "<>", "\"\<Virasoro.m\>\""}], 
-     "]"}], ";"}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
+    RowBox[{"Needs", "[", "\"\<Virasoro`\>\"", "]"}], ";"}], 
+   "\[IndentingNewLine]", "\[IndentingNewLine]", 
    RowBox[{
     RowBox[{"results1", "=", 
      RowBox[{"VRun", "[", 
@@ -163,10 +152,12 @@ Cell[BoxData[
    3.691966338538164*^9}, {3.691966375235201*^9, 3.691966376632958*^9}, 
    3.691968165169325*^9, {3.692733146879677*^9, 3.692733160662278*^9}, {
    3.692975440578684*^9, 3.692975722450425*^9}, {3.693077445721973*^9, 
-   3.693077530192284*^9}, {3.693077576359507*^9, 3.693077576618074*^9}}]
+   3.693077530192284*^9}, {3.693077576359507*^9, 3.693077576618074*^9}, {
+   3.693683250673884*^9, 3.693683257273056*^9}, {3.693683757090871*^9, 
+   3.693683768474557*^9}, {3.693683831312213*^9, 3.693683872502734*^9}}]
 },
 WindowSize->{808, 909},
-WindowMargins->{{Automatic, 102}, {Automatic, 54}},
+WindowMargins->{{Automatic, 102}, {65, Automatic}},
 FrontEndVersion->"11.0 for Linux x86 (64-bit) (September 21, 2016)",
 StyleDefinitions->"Default.nb"
 ]
@@ -181,7 +172,7 @@ CellTagsIndex->{}
 *)
 (*NotebookFileOutline
 Notebook[{
-Cell[558, 20, 8576, 145, 438, "Input"]
+Cell[558, 20, 8166, 136, 373, "Input"]
 }
 ]
 *)
