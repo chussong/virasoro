@@ -23,7 +23,7 @@ Prebuilt versions of these are available for some systems (they're on the Ubuntu
 
 ## Usage
 
-There are two ways to invoke runs. For a single run, simply pass the parameters c, hl, hh, hp, and qmax. For example, to get a run with c=30, hl=1, hh=3, hp=0, qmax=1000, you would type:  
+You can run this program either from a terminal or Mathematica, and can either do runs one at a time or in a large batch. For a single run, simply pass the parameters c, hl, hh, hp, and qmax. For example, to get a run with c=30, hl=1, hh=3, hp=0, qmax=1000, you would type:  
 virasoro 30 1 3 0 1000  
 
 To do multiple runs at once, you can input a "runfile". Instead of five parameters, you give one: the name of the file. For example:  
@@ -62,9 +62,9 @@ There is also a configuration file, created at ~/.config/virasoro\_defaults.txt,
 | Option | Description |
 | ------ | ----------- |
 | maxThreads | Maximum number of threads to use in the slow part of the calculation. Default 8, appropriate for a 4-core system. |
-| precision | Number of bits of precision used to represent all numbers interally. Default is 512, which is good enough to get most parameter ranges to order 1000. |
-| tolerance | This is the level below which numbers will be treated as zero when checking, for example, if a complex number is purely real. Default 10^-20, though that's probably aggressive. |
-| showProgressBar | Shows a progress bar for the slow part of the calculation. Automatically suppressed if -m is given in run commands. Default true, set to false if you don't like it or really need those precious milliseconds. |
+| precision | Number of bits of precision used to represent all numbers interally. Default is 768, which is good enough to get most parameter ranges to order 1000. |
+| tolerance | This is the level below which numbers will be treated as zero when writing output (full precision is always kept internally). Default is 10^-100. |
+| showProgressBar | Shows a progress bar for the slow part of the calculation. Automatically suppressed if -m is given in run commands. This defaults to true; set it to false if you don't like it or really need those precious milliseconds. |
 
 ## Mathematica
 
