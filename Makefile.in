@@ -292,6 +292,7 @@ PATH_SEPARATOR = @PATH_SEPARATOR@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+USERNAME = @USERNAME@
 VERSION = @VERSION@
 VWSTP = @VWSTP@
 WSPREP = @WSPREP@
@@ -363,7 +364,7 @@ vwstp_CFLAGS = $(AM_CFLAGS) @wstpflags@
 vwstp_CXXFLAGS = $(AM_CXXFLAGS) @wstpflags@
 vwstp_CPPFLAGS = -DHAVE_WSTP_
 vwstp_LDADD = $(LDADD) @wstpextralibs@
-PKGDIR = @pkgdir@
+PKGDIR = @pkgdatadir@
 @MAKE_VWSTP_TRUE@pkgdata_DATA = Virasoro.m
 @MAKE_VWSTP_TRUE@BUILT_SOURCES = vwstptm.c
 @MAKE_VWSTP_TRUE@CLEANFILES = vwstptm.c
@@ -895,6 +896,7 @@ maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
+@MAKE_VWSTP_FALSE@install-data-hook:
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-libexecPROGRAMS \
@@ -920,7 +922,8 @@ info: info-am
 info-am:
 
 install-data-am: install-pkgdataDATA
-
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
 install-dvi: install-dvi-am
 
 install-dvi-am:
@@ -969,7 +972,7 @@ ps-am:
 uninstall-am: uninstall-binPROGRAMS uninstall-libexecPROGRAMS \
 	uninstall-pkgdataDATA
 
-.MAKE: all check install install-am install-strip
+.MAKE: all check install install-am install-data-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--refresh check check-am clean \
 	clean-binPROGRAMS clean-cscope clean-generic \
@@ -979,21 +982,24 @@ uninstall-am: uninstall-binPROGRAMS uninstall-libexecPROGRAMS \
 	distclean-generic distclean-hdr distclean-tags distcleancheck \
 	distdir distuninstallcheck dvi dvi-am html html-am info \
 	info-am install install-am install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-libexecPROGRAMS install-man \
-	install-pdf install-pdf-am install-pkgdataDATA install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
-	ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-libexecPROGRAMS \
+	install-data-am install-data-hook install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-libexecPROGRAMS \
+	install-man install-pdf install-pdf-am install-pkgdataDATA \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-binPROGRAMS uninstall-libexecPROGRAMS \
 	uninstall-pkgdataDATA
 
 .PRECIOUS: Makefile
 
 @MAKE_VWSTP_TRUE@vwstptm.c: vwstp.tm
 @MAKE_VWSTP_TRUE@	$(WSPREP) $? -o $@
+
+@MAKE_VWSTP_TRUE@install-data-hook:
+@MAKE_VWSTP_TRUE@	chown $(USERNAME) $(PKGDIR)/Virasoro.m
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

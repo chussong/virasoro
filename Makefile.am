@@ -12,7 +12,7 @@ vwstp_CFLAGS = $(AM_CFLAGS) @wstpflags@
 vwstp_CXXFLAGS = $(AM_CXXFLAGS) @wstpflags@
 vwstp_CPPFLAGS = -DHAVE_WSTP_
 vwstp_LDADD = $(LDADD) @wstpextralibs@
-PKGDIR = @pkgdir@
+PKGDIR = @pkgdatadir@
 
 if MAKE_VWSTP
 pkgdata_DATA = Virasoro.m
@@ -20,4 +20,7 @@ BUILT_SOURCES = vwstptm.c
 CLEANFILES = vwstptm.c
 vwstptm.c: vwstp.tm
 	$(WSPREP) $? -o $@
+
+install-data-hook:
+	chown $(USERNAME) $(PKGDIR)/Virasoro.m
 endif

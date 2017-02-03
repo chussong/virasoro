@@ -19,19 +19,19 @@
 typedef std::chrono::high_resolution_clock Clock;
 
 std::string to_string(const mpfr::mpreal N, int digits);
-std::string to_string(const mpfr::mpcomplex N, int digits, int base = 10);
+std::string to_string(const std::complex<mpfr::mpreal> N, int digits, int base = 10);
 
 class Runfile_c{
 	std::string filename;
 	std::vector<std::string> lines;
 
 	int maxThreads = 8;				// Maximum number of simultaneous threads
-	int precision = 768;			// Precision of mpfr::mpreal and mpfr::mpcomplex in bits
+	int precision = 768;			// Precision of mpfr::mpreal and std::complex<mpfr::mpreal> in bits
 	mpfr::mpreal tolerance = 1e-10;		// Smaller than this is taken to be 0 for comparisons
 	bool showProgressBar = true;	// Show progress bar during FillHmn()
 
 	public:
-		std::vector<std::vector<mpfr::mpcomplex>> runs;
+		std::vector<std::vector<std::complex<mpfr::mpreal>>> runs;
 		std::vector<int> maxOrders;
 
 		Runfile_c();
@@ -60,15 +60,15 @@ class Runfile_c{
 
 		int Expand();
 		int ExpandBraces(const int param);
-		std::tuple<mpfr::mpcomplex, mpfr::mpcomplex, mpfr::mpcomplex> ParseBraces(std::string insideBraces);
+		std::tuple<std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>> ParseBraces(std::string insideBraces);
 		std::tuple<size_t, size_t> FindNthParameter(const std::string line, const int param);
 
 		int ExpandRelativeEqns(const int param);
-		std::tuple<mpfr::mpcomplex, int> ParseRelativeEqn(std::string equation, std::string relTo);
-		mpfr::mpcomplex RelativeMPF(std::string firstHalf, std::string equation);
+		std::tuple<std::complex<mpfr::mpreal>, int> ParseRelativeEqn(std::string equation, std::string relTo);
+		std::complex<mpfr::mpreal> RelativeMPF(std::string firstHalf, std::string equation);
 		std::string FindBaseNumber(std::string sourceString, const int paramNumber);
 
-		int RunCompare(std::vector<mpfr::mpcomplex> run1, std::vector<mpfr::mpcomplex> run2);
+		int RunCompare(std::vector<std::complex<mpfr::mpreal>> run1, std::vector<std::complex<mpfr::mpreal>> run2);
 
 		std::string NameOutputFile();
 
@@ -95,12 +95,12 @@ class Runfile_c{
 				bsq = runVector[0];
 				bsq *= runVector[0];
 				invBsq = 1/bsq;
-				runVector[0] = 13 + 6*(bsq + invBsq);
+				runVector[0] = static_cast<std::complex<mpfr::mpreal>>(13) + 6*(bsq + invBsq);
 			}
 			if(bGiven == 2){
 				bsq = runVector[0];
 				invBsq = 1/bsq;
-				runVector[0] = 13 + 6*(bsq + invBsq);
+				runVector[0] = static_cast<std::complex<mpfr::mpreal>>(13) + 6*(bsq + invBsq);
 			}
 			ConvertInputs(bsq, invBsq, llsq, lhsq, runVector[0], runVector[1], runVector[2], temp1, temp2);
 
@@ -161,7 +161,7 @@ class Runfile_c{
 				for(int pos = mnLocation[pq-1]; pos < mnLocation[pq-1] + mnMultiplicity[pq-1]; ++pos){
 					for(int mn = pq; mn <= maxOrder-2; mn+=2){
 						for(int scanPos = mnLocation[mn-1]; scanPos < mnLocation[mn-1] + mnMultiplicity[mn-1]; ++scanPos){
-							if(abs(Cpqmn->hpmn[pos-1] + pq - Cpqmn->hpmn[scanPos-1]) < tolerance && maxOrder > std::max(mn-2,pq-2)) maxOrder = std::max(mn-2, pq-2);
+							if(mpfr::abs(Cpqmn->hpmn[pos-1] + pq - Cpqmn->hpmn[scanPos-1]) < tolerance && maxOrder > std::max(mn-2,pq-2)) maxOrder = std::max(mn-2, pq-2);
 						}
 					}
 					if(Cpqmn->Amn[pos-1] == 0 && maxOrder > pq-2){
@@ -192,7 +192,7 @@ class Runfile_c{
 			temp2 = c*26;
 			temp1 -= temp2;
 			temp1 += 25;
-			temp1 = sqrt(temp1);
+			temp1 = mpfr::sqrt(temp1);
 			temp1 = c - temp1;
 			temp1 -= 13;
 			bsq = temp1/12;

@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[      8967,        171]
-NotebookOptionsPosition[      8728,        158]
-NotebookOutlinePosition[      9068,        173]
-CellTagsIndexPosition[      9025,        170]
+NotebookDataLength[     12433,        267]
+NotebookOptionsPosition[     11741,        239]
+NotebookOutlinePosition[     12081,        254]
+CellTagsIndexPosition[     12038,        251]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -154,10 +154,91 @@ Cell[BoxData[
    3.692975440578684*^9, 3.692975722450425*^9}, {3.693077445721973*^9, 
    3.693077530192284*^9}, {3.693077576359507*^9, 3.693077576618074*^9}, {
    3.693683250673884*^9, 3.693683257273056*^9}, {3.693683757090871*^9, 
-   3.693683768474557*^9}, {3.693683831312213*^9, 3.693683872502734*^9}}]
+   3.693683768474557*^9}, {3.693683831312213*^9, 3.693683872502734*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"Needs", "[", "\"\<Virasoro`\>\"", "]"}], ";"}]], "Input",
+ CellChangeTimes->{{3.695060662183806*^9, 3.695060668140965*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"res1", " ", "=", " ", 
+   RowBox[{"VRun", "[", 
+    RowBox[{
+    "1.0001", ",", " ", "0.0625", ",", " ", "0.0625", ",", " ", "0", ",", " ",
+      "20"}], "]"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.695060672442013*^9, 3.695060727348884*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"res1", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}], 
+  "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}]], "Input",
+ CellChangeTimes->{{3.6950607299459343`*^9, 3.695060736798587*^9}}],
+
+Cell[BoxData["1.\
+000099999999999999999999999999999999999999999999999999999999999999999999999999\
+999999999999999999999999999999999999999999999999999999999999999999999999999999\
+9999999999999999999999999999999999999999999999999999999999999999999999999988`\
+500."], "Output",
+ CellChangeTimes->{{3.695060733126096*^9, 3.695060745677185*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"res2", "=", 
+   RowBox[{"VRun", "[", 
+    RowBox[{
+    "1.0001", ",", " ", "0.0625", ",", " ", "0.0625", ",", " ", "0", ",", " ",
+      "20"}], "]"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.695060777605109*^9, 3.695060782289014*^9}}],
+
+Cell[BoxData[
+ TemplateBox[{
+  "LinkObject","linkd",
+   "\"Unable to communicate with closed link \
+\\!\\(\\*RowBox[{\\\"LinkObject\\\", \\\"[\\\", \
+RowBox[{\\\"\\\\\\\"'/usr/local/libexec/vwstp'\\\\\\\"\\\", \\\",\\\", \\\"72\
+\\\", \\\",\\\", \\\"4\\\"}], \\\"]\\\"}]\\).\"",2,2,1,32605570492730266461,
+   "Local"},
+  "MessageTemplate"]], "Message", "MSG",
+ CellChangeTimes->{3.69506114905687*^9, 3.69506151005504*^9, 
+  3.695061617054427*^9, 3.695064597055698*^9, 3.6950647491440973`*^9, 
+  3.695064808054777*^9, 3.695064940004387*^9, 3.695065210042555*^9}],
+
+Cell[BoxData[
+ TemplateBox[{
+  "LinkObject","linkn",
+   "\"Argument \\!\\(\\*RowBox[{\\\"LinkObject\\\", \\\"[\\\", RowBox[{\\\"\\\
+\\\\\"'/usr/local/libexec/vwstp'\\\\\\\"\\\", \\\",\\\", \\\"72\\\", \
+\\\",\\\", \\\"4\\\"}], \\\"]\\\"}]\\) in \\!\\(\\*RowBox[{\\\"LinkClose\\\", \
+\\\"[\\\", RowBox[{\\\"LinkObject\\\", \\\"[\\\", \
+RowBox[{\\\"\\\\\\\"'/usr/local/libexec/vwstp'\\\\\\\"\\\", \\\",\\\", \\\"72\
+\\\", \\\",\\\", \\\"4\\\"}], \\\"]\\\"}], \\\"]\\\"}]\\) has an invalid \
+LinkObject number; the link may be closed.\"",2,2,2,32605570492730266461,
+   "Local"},
+  "MessageTemplate"]], "Message", "MSG",
+ CellChangeTimes->{3.69506114905687*^9, 3.69506151005504*^9, 
+  3.695061617054427*^9, 3.695064597055698*^9, 3.6950647491440973`*^9, 
+  3.695064808054777*^9, 3.695064940004387*^9, 3.695065210062969*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["res2"], "Input",
+ CellChangeTimes->{{3.6950610643054028`*^9, 3.695061064972604*^9}}],
+
+Cell[BoxData["$Failed"], "Output",
+ CellChangeTimes->{3.695061065394024*^9, 3.695061125973467*^9, 
+  3.6950649429957647`*^9}]
+}, Open  ]]
 },
 WindowSize->{808, 909},
-WindowMargins->{{Automatic, 102}, {65, Automatic}},
+WindowMargins->{{363, Automatic}, {55, Automatic}},
 FrontEndVersion->"11.0 for Linux x86 (64-bit) (September 21, 2016)",
 StyleDefinitions->"Default.nb"
 ]
@@ -172,7 +253,22 @@ CellTagsIndex->{}
 *)
 (*NotebookFileOutline
 Notebook[{
-Cell[558, 20, 8166, 136, 373, "Input"]
+Cell[558, 20, 8166, 136, 373, "Input"],
+Cell[8727, 158, 158, 3, 34, "Input"],
+Cell[8888, 163, 280, 7, 34, "Input"],
+Cell[CellGroupData[{
+Cell[9193, 174, 234, 4, 32, "Input"],
+Cell[9430, 180, 340, 5, 165, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[9807, 190, 270, 7, 34, "Input"],
+Cell[10080, 199, 561, 11, 23, "Message"],
+Cell[10644, 212, 818, 14, 41, "Message"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[11499, 231, 98, 1, 32, "Input"],
+Cell[11600, 234, 125, 2, 32, "Output"]
+}, Open  ]]
 }
 ]
 *)

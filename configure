@@ -633,6 +633,7 @@ AM_CXXFLAGS
 AM_CFLAGS
 MAKE_VWSTP_FALSE
 MAKE_VWSTP_TRUE
+USERNAME
 pkgdatadir
 VWSTP
 EGREP
@@ -4762,6 +4763,8 @@ $as_echo "#define HAVE_WSTP 1" >>confdefs.h
 	object_files="$object_files vwstp.o"
 	wsprep=$wstpdir/wsprep
 	pkgdatadir=$HOME/.Mathematica/Applications
+
+	USERNAME=$USER
 
 else
 	VWSTP=""

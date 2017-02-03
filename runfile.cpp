@@ -1,5 +1,7 @@
 #include "runfile.h"
 
+#define STATICTOLERANCE 10e-100
+
 Runfile_c::Runfile_c(){}
 Runfile_c::Runfile_c(const Runfile_c& other): filename(other.filename), lines(other.lines), maxThreads(other.maxThreads), precision(other.precision), tolerance(other.tolerance), showProgressBar(other.showProgressBar){}
 Runfile_c::Runfile_c(Runfile_c&& other): Runfile_c(){	swap(*this, other);	}
@@ -105,7 +107,7 @@ int Runfile_c::ReadRunfile(){
 		return -2;
 	}
 	size_t leftPos, rightPos;
-	std::vector<mpfr::mpcomplex> currentRun;
+	std::vector<std::complex<mpfr::mpreal>> currentRun;
 	int currentMO;
 	for(unsigned int i = 1; i <= lines.size(); ++i){
 //		std::cout << "About to parse the following line:" << std::endl;
@@ -176,12 +178,12 @@ int Runfile_c::Expand(){
 // param=0 is c/b/b^2; param=1 is hl; param=2 is hh; param=3 is hp
 int Runfile_c::ExpandBraces(const int param){
 	std::vector<std::string> newLines;
-	std::tuple<mpfr::mpcomplex, mpfr::mpcomplex, mpfr::mpcomplex> parsedBraces;
-	mpfr::mpcomplex currentValue;
+	std::tuple<std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>> parsedBraces;
+	std::complex<mpfr::mpreal> currentValue;
 	std::string currentParam, insideBraces, firstHalf, secondHalf;
 	size_t paramLeftPos, paramRightPos, leftPos, rightPos;
 	std::tuple<size_t, size_t> paramLocation;
-	mpfr::mpcomplex value;
+	std::complex<mpfr::mpreal> value;
 	for(unsigned int i = 1; i <= lines.size(); ++i){
 		paramLocation = FindNthParameter(lines[i-1], param);
 		paramLeftPos = std::get<0>(paramLocation);
@@ -200,7 +202,7 @@ int Runfile_c::ExpandBraces(const int param){
 				parsedBraces = ParseBraces(insideBraces);
 //				if(std::get<0>(parsedBraces).realPart() => std::get<1>(parsedBraces).realPart() || std::get<2>(parsedBraces).realPart() <= 0) return -2;
 //				std::cout << "Parsed " << currentParam << " into the following lines:" << std::endl;
-				for(currentValue = std::get<0>(parsedBraces); mpfr::real(currentValue) <= mpfr::real(std::get<1>(parsedBraces)); currentValue += std::get<2>(parsedBraces)){
+				for(currentValue = std::get<0>(parsedBraces); currentValue.real() <= std::get<1>(parsedBraces).real(); currentValue += std::get<2>(parsedBraces)){
 					newLines.push_back(firstHalf + to_string(currentValue, -1) + secondHalf);
 //					std::cout << firstHalf + to_string(currentValue, -1) + secondHalf << std::endl;
 				}
@@ -217,7 +219,7 @@ int Runfile_c::ExpandBraces(const int param){
 	return 0;
 }
 
-std::tuple<mpfr::mpcomplex, mpfr::mpcomplex, mpfr::mpcomplex> Runfile_c::ParseBraces(std::string insideBraces){
+std::tuple<std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>> Runfile_c::ParseBraces(std::string insideBraces){
 	std::size_t numStart, numEnd;
 
 	numStart = insideBraces.find_first_of("(0123456789-+.ch");
@@ -226,7 +228,7 @@ std::tuple<mpfr::mpcomplex, mpfr::mpcomplex, mpfr::mpcomplex> Runfile_c::ParseBr
 	} else {
 		numEnd = insideBraces.find_first_of(" ,;", numStart+1)-1;
 	}
-	mpfr::mpcomplex lowerBound(insideBraces.substr(numStart, numEnd-numStart+1));
+	std::complex<mpfr::mpreal> lowerBound(insideBraces.substr(numStart, numEnd-numStart+1));
 //	std::cout << "Lower bound is " << to_string(lowerBound, 4) << " parsed from " << insideBraces.substr(numStart, numEnd-numStart+1) << std::endl;
 
 	numStart = insideBraces.find_first_of("(0123456789-+.ch", numEnd+2);
@@ -235,7 +237,7 @@ std::tuple<mpfr::mpcomplex, mpfr::mpcomplex, mpfr::mpcomplex> Runfile_c::ParseBr
 	} else {
 		numEnd = insideBraces.find_first_of(" ,;", numStart+1)-1;
 	}
-	mpfr::mpcomplex upperBound(insideBraces.substr(numStart, numEnd-numStart+1));
+	std::complex<mpfr::mpreal> upperBound(insideBraces.substr(numStart, numEnd-numStart+1));
 //	std::cout << "Upper bound is " << to_string(upperBound, 4) << " parsed from " << insideBraces.substr(numStart, numEnd-numStart+1) << std::endl;
 
 	numStart = insideBraces.find_first_of("(0123456789-+.ch", numEnd+2);
@@ -244,7 +246,7 @@ std::tuple<mpfr::mpcomplex, mpfr::mpcomplex, mpfr::mpcomplex> Runfile_c::ParseBr
 	} else {
 		numEnd = insideBraces.find_first_of(" ,;", numStart+1)-1;
 	}
-	mpfr::mpcomplex increment(insideBraces.substr(numStart, numEnd-numStart+1));
+	std::complex<mpfr::mpreal> increment(insideBraces.substr(numStart, numEnd-numStart+1));
 //	std::cout << "Increment is " << to_string(increment, 4) << " parsed from " << insideBraces.substr(numStart, numEnd-numStart+1).c_str() << std::endl;
 
 	return std::make_tuple(lowerBound, upperBound, increment);
@@ -285,7 +287,7 @@ int Runfile_c::ExpandRelativeEqns(const int param){
 	std::string currentParam, newParam, firstHalf, secondHalf;
 	size_t paramLeftPos, paramRightPos, leftPos, rightPos, splitPos;
 	std::tuple<size_t,size_t> paramLocation;
-	mpfr::mpcomplex value;
+	std::complex<mpfr::mpreal> value;
 	bool madeChange = true;
 	for(unsigned int i = 1; i <= lines.size(); ++i){
 		paramLocation = FindNthParameter(lines[i-1], param);
@@ -319,8 +321,8 @@ int Runfile_c::ExpandRelativeEqns(const int param){
 	return changesMade;
 }
 
-std::tuple<mpfr::mpcomplex, int> Runfile_c::ParseRelativeEqn(std::string equation, std::string relTo){
-	mpfr::mpcomplex modifier = 0;
+std::tuple<std::complex<mpfr::mpreal>, int> Runfile_c::ParseRelativeEqn(std::string equation, std::string relTo){
+	std::complex<mpfr::mpreal> modifier(0);
 	int type = -100;
 	std::size_t hit;
 	if((hit = equation.find(relTo)) != std::string::npos){
@@ -366,18 +368,18 @@ std::tuple<mpfr::mpcomplex, int> Runfile_c::ParseRelativeEqn(std::string equatio
 	return std::make_tuple(modifier, type);
 }
 
-mpfr::mpcomplex Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
-	mpfr::mpcomplex output = 0;
-	mpfr::mpcomplex baseMPF;
-	std::tuple<mpfr::mpcomplex, int> parsedEqn;
+std::complex<mpfr::mpreal> Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
+	std::complex<mpfr::mpreal> output(0);
+	std::complex<mpfr::mpreal> baseMPF;
+	std::tuple<std::complex<mpfr::mpreal>, int> parsedEqn;
 	if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "c")) < 0){
 		if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "hl")) < 0){
 			if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "hh")) < 0){
-				return 0;
+				return std::complex<mpfr::mpreal>(0);
 			}
 		}
 	}
-	mpfr::mpcomplex modifier = std::get<0>(parsedEqn);
+	std::complex<mpfr::mpreal> modifier = std::get<0>(parsedEqn);
 	int type = std::get<1>(parsedEqn);
 	switch(type){
 		case 10:	// c + n
@@ -474,7 +476,7 @@ std::string Runfile_c::FindBaseNumber(std::string sourceString, const int paramN
 	return sourceString.substr(baseStart, baseEnd - baseStart);
 }
 
-int Runfile_c::RunCompare(std::vector<mpfr::mpcomplex> run1, std::vector<mpfr::mpcomplex> run2){
+int Runfile_c::RunCompare(std::vector<std::complex<mpfr::mpreal>> run1, std::vector<std::complex<mpfr::mpreal>> run2){
 /*	std::cout << "Comparing these two runs:" << std::endl;
 	for(unsigned int i = 1; i <= run1.size(); ++i) std::cout << run1[i-1] << " ";
 	std::cout << std::endl;
@@ -548,18 +550,18 @@ int Runfile_c::Execute(std::string options){
 		for(unsigned int run = 1; run <= runs.size(); ++run){
 			allReal = true;
 			for(unsigned int i = 1; i <= runs[run-1].size(); ++i){
-				if(!mpfr::isEqualFuzzy(mpfr::imag(runs[run-1][i-1]),0)){
+				if(runs[run-1][i-1].imag() > tolerance){
 					allReal = false;
 					break;
 				}
 			}
-			if(bGiven == 0 && mpfr::real(runs[run-1][0]) < 25 && mpfr::real(runs[run-1][0]) > 1) allReal = false;
+			if(bGiven == 0 && runs[run-1][0].real() < 25 && runs[run-1][0].real() > 1) allReal = false;
 			if(allReal){
-				for(unsigned int i = 1; i <= runs[run-1].size(); ++i) realRunVector.push_back(mpfr::real(runs[run-1][i-1]));
+				for(unsigned int i = 1; i <= runs[run-1].size(); ++i) realRunVector.push_back(runs[run-1][i-1].real());
 				FindCoefficients<mpfr::mpreal>(realRunVector, maxOrders[run-1], outputName, bGiven);
 				realRunVector.clear();
 			} else {
-				FindCoefficients<mpfr::mpcomplex>(runs[run-1], maxOrders[run-1], outputName, bGiven);
+				FindCoefficients<std::complex<mpfr::mpreal>>(runs[run-1], maxOrders[run-1], outputName, bGiven);
 			}
 			if(run < runs.size()) std::cout << ",";
 		}
@@ -577,18 +579,18 @@ int Runfile_c::Execute(std::string options){
 			std::cout << "Beginning run " << run << " of " << runs.size() << "." << std::endl;
 			allReal = true;
 			for(unsigned int i = 1; i <= runs[run-1].size(); ++i){
-				if(!mpfr::isEqualFuzzy(mpfr::imag(runs[run-1][i-1]),0)){
+				if(runs[run-1][i-1].imag() > tolerance){
 					allReal = false;
 					break;
 				}
 			}
-			if(bGiven == 0 && mpfr::real(runs[run-1][0]) < 25 && mpfr::real(runs[run-1][0]) > 1) allReal = false;
+			if(bGiven == 0 && runs[run-1][0].real() < 25 && runs[run-1][0].real() > 1) allReal = false;
 			if(allReal){
-				for(unsigned int i = 1; i <= runs[run-1].size(); ++i) realRunVector.push_back(mpfr::real(runs[run-1][i-1]));
+				for(unsigned int i = 1; i <= runs[run-1].size(); ++i) realRunVector.push_back(runs[run-1][i-1].real());
 				FindCoefficients<mpfr::mpreal>(realRunVector, maxOrders[run-1], outputName, bGiven);
 				realRunVector.clear();
 			} else {
-				FindCoefficients<mpfr::mpcomplex>(runs[run-1], maxOrders[run-1], outputName, bGiven);
+				FindCoefficients<std::complex<mpfr::mpreal>>(runs[run-1], maxOrders[run-1], outputName, bGiven);
 			}
 			if(runs.size() > 1) ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
 		}
@@ -669,7 +671,7 @@ std::string to_string(const mpfr::mpreal N, int digits){
 	return output;
 }
 
-std::string to_string(const mpfr::mpcomplex N, int digits, int base){
+std::string to_string(const std::complex<mpfr::mpreal> N, int digits, int base){
 	char* cstr = mpc_get_str(base, std::max(digits,0), N.mpc_srcptr(), MPC_RNDNN);
 	std::string output(cstr);
 	mpc_free_str(cstr);
@@ -690,7 +692,7 @@ std::string to_string(const mpfr::mpcomplex N, int digits, int base){
 			} else {
 				mpfHalf = halves[i-1];
 			}
-			if(mpfr::isEqualFuzzy(mpfHalf,0)) halves[i-1].clear();
+			if(mpfHalf < STATICTOLERANCE) halves[i-1].clear();
 		}
 	}
 	size_t eLoc, eEnd;

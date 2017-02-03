@@ -12,8 +12,10 @@ GetC::usage = "GetC[bsq_] gives c corresponding to the given b^2.";
 (*For plotting in Lorentzian time*)
 EKMono::usage = "EKMono[r_,tL_] gives the EllipticK[z] for these parameters accounting for the monodromy.";
 qVal::usage = "qVal[r_,tL] gives the q value corresponding to the given Lorentzian time tL using radius r.";
-VofT::usage = "QtoT[coeVec_,c_,hL_,hH_,hp_,r_,tL_,maxOrder_] gives the Lorentzian Virasoro block approximated by coeVec at Lorentzian time tL.";
+VofZ::usage = "VofZ[z_,coeVec_,c_,hL_,hH_,maxOrder_] gives the block V at coordinate z.";
+VofT::usage = "VofT[coeVec_,c_,hL_,hH_,hp_,r_,tL_,maxOrder_] gives the Lorentzian Virasoro block approximated by coeVec at Lorentzian time tL.";
 SemiClassical::usage = "SemiClassical[c_,hL_,hH_,r_,tL_] gives the value of the semiclassical approximation of the vacuum block at Lorentzian time tL.";
+SemiOfZ::usage = "SemiOfZ[c_,hL_,hH_,z_] gives the value of the semiclassical vacuum block at z_.";
 DegenBlock12::usage = "DegenBlock12[c_,hL_,hh_,r_,tL_] gives the exact degenerate h_12 vacuum block at time tL.";
 DegenBlock21::usage = "DegenBlock21[c_,hL_,hh_,r_,tL_] gives the exact degenerate h_21 vacuum block at time tL.";
 
@@ -34,6 +36,7 @@ Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. StartingR
 VConvByTL::usage = "VConvByTL[results_(,Option\[Rule]Value)] gives plots showing how the convergence of the last few orders of each run in results_ varies with tL at a given r_.
 
 Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. StartingRun\[Rule]10. Options are StartingRun, RunStep, EndingRun, StartTime, and EndTime.";
+VZMap::usage = "VZMap[results_] shows a contour plot of V in the complex z plane.";
 
 Begin["VirasoroInternal`"]
 Gethmn[m_,n_,b_]:=b^2*(1-n^2)/4+(1-m^2)/(4*b^2)+(1-m*n)/2;
@@ -44,6 +47,10 @@ GetC[bsq_]:=13+6*(bsq+1/bsq);
 
 EKMono[r_,tL_]:=EllipticK[1-r*Exp[-I*tL]]-2*I*(1+Floor[(-tL-\[Pi])/(2\[Pi])]) EllipticK[r*Exp[-I*tL]];
 qVal[r_,tL_]:=Exp[-\[Pi]*EllipticK[r*Exp[-I*tL]]/EKMono[r,tL]];
+VofZ[z_,coeVec_,c_,hL_,hH_,hp_,maxOrder_]:=Module[{q,V},
+V=(16 q)^(hp-(c-1)/24) z^((c-1)/24-2hL) (1-z)^((c-1)/24-hH-hL) EllipticTheta[3,0,q]^((c-1)/2-8(hH+hL)) (Table[q^i,{i,0,maxOrder,2}].Take[coeVec,1+Floor[maxOrder/2]])/.q->EllipticNomeQ[z];
+Return[V];
+];
 VofT[coeVec_,c_,hL_,hH_,hp_,r_,tL_,maxOrder_]:=Module[{z,q},
 q=qVal[r,tL];
 z=1-r*E^(-I tL);
@@ -51,6 +58,7 @@ z=1-r*E^(-I tL);
 ];
 SemiClassical[c_,hL_, hH_,r_,tL_]:=Module[{\[Alpha]},(r^hL E^(-I hL (tL+3\[Pi])))((\[Alpha]^(2 hL) r^((\[Alpha]-1)hL) E^(-I tL(\[Alpha]-1)hL))/(1-r^\[Alpha] E^(-I tL \[Alpha]))^(2hL))/.\[Alpha]->Sqrt[1-(24hH)/c]
 ];
+SemiOfZ[c_,hL_,hH_,z_]:=Module[{\[Alpha]},Exp[((\[Alpha]-1)Log[1-z]-2Log[(1-(1-z)^\[Alpha])/\[Alpha]])hL]/.\[Alpha]->Sqrt[1-24 hH/c]];
 DegenBlock12[c_,hL_,hh_,r_,tL_]:=Module[{a1,b1,c1,z,bsq},
 bsq=GetBsq[c];
 1/(1-r*Exp[-I tL])^(2hL) r^b1 Exp[-I b1 tL/2]((Gamma[a1+b1-c1] Gamma[c1])/(Gamma[a1] Gamma[b1]) r^(-a1-b1+c1) Exp[-I (-tL a1-tL b1+tL c1)] Hypergeometric2F1[-a1+c1,-b1+c1,1-a1-b1+c1,r E^(-I tL)] +(Gamma[-a1-b1+c1] Gamma[c1])/(Gamma[c1-a1] Gamma[c1-b1]) Hypergeometric2F1[a1,b1,a1+b1-c1+1,r E^(-I tL)] )/.{a1->1+1/bsq,b1->(1+bsq+Sqrt[1+bsq^2+bsq *(2-4 hh)])/bsq,c1->2+2/bsq}/.z->1-r E^(-I tL)
@@ -134,7 +142,7 @@ label="c="<>StringTake[ToString@c,Min[5,StringLength[ToString@c]]]<>"    \!\(\*S
 Return[label];
 ];
 Options[VPlotCoeffs]={StartingRun->1, EndingRun->0, RunStep->1};
-VPlotCoeffs[results_,n_:0,OptionsPattern[]]:=Module[{c,hl,hh,hp},
+VPlotCoeffs[results_,OptionsPattern[]]:=Module[{c,hl,hh,hp},
 Do[If[Length@results[[2*i]]<10,Continue[]];
 c=results[[2i-1]][[1]];
 hl=results[[2i-1]][[2]];
@@ -142,10 +150,10 @@ hh=results[[2i-1]][[3]];
 hp=results[[2i-1]][[4]];
 Print[ListLogLogPlot[{results[[2*i]],-results[[2*i]]},PlotLabel->VMakePlotLabel[results,i],PlotMarkers->"\[FilledSmallCircle]",PlotStyle->{Lighter@Blue,Lighter@Red},PlotLegends->{"Blue > 0","Red < 0"},DataRange->{0,2*Length@results[[2*i]]}]];
 (*Print[ListPlot[LogFluct[results[[2*i]]],PlotLabel\[Rule]"Fluctuations about smoothed average log", PlotMarkers\[Rule]"\[FilledSmallCircle]",ColorFunction\[Rule]Coloring,ColorFunctionScaling\[Rule]False,DataRange\[Rule]{0,2*Length@results[[2*i]]}]];*)
-,{i,If[n!=0,n,OptionValue[StartingRun]],If[n!=0,n,If[OptionValue[EndingRun]!=0,OptionValue[EndingRun],Length@results/2]],OptionValue[RunStep]}];
+,{i,OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,OptionValue[EndingRun],Length@results/2],OptionValue[RunStep]}];
 ];
 Options[VPlot]={StartingRun->1, EndingRun->0, RunStep->1, r->0.99, PlotScale->"LogLog", StartTime->0.1, EndTime->30, Compare->{}, PointsPerTL->1};
-VPlot[results_,n_:0,OptionsPattern[]]:=Module[{c,hl,hh,hp,startTime,endTime, compareVec, plotVector, plotLegends},
+VPlot[results_,OptionsPattern[]]:=Module[{c,hl,hh,hp,startTime,endTime, compareVec, plotVector, plotLegends,plotType},
 startTime=OptionValue[StartTime];
 endTime=OptionValue[EndTime];
 If[VectorQ[OptionValue[Compare]],compareVec = OptionValue[Compare], compareVec = {OptionValue[Compare]}];
@@ -170,10 +178,11 @@ plotLegends=Append["Exact Degenerate \!\(\*SubscriptBox[\(h\), \(21\)]\)"]@plotL
 ];
 (*Print[plotVector/.tL\[Rule]1//N];
 Print[Abs@SemiClassical[c,hl,hh,r,1]];*)
-If[StringMatchQ[OptionValue[PlotScale],"Linear"],Print[Plot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->VMakePlotLabel[results,i],AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]]];
-If[StringMatchQ[OptionValue[PlotScale],"SemiLog"]||StringMatchQ[OptionValue[PlotScale],"LogLinear"],Print[LogPlot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->VMakePlotLabel[results,i],AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]]];
-If[StringMatchQ[OptionValue[PlotScale],"LogLog"],Print[LogLogPlot[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->VMakePlotLabel[results,i],AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]]];
-,{i,If[n!=0,n,OptionValue[StartingRun]],If[n!=0,n,If[OptionValue[EndingRun]!=0,OptionValue[EndingRun],Length@results/2]],OptionValue[RunStep]}];
+If[StringMatchQ[OptionValue[PlotScale],"Linear"],plotType=Plot];
+If[StringMatchQ[OptionValue[PlotScale],"SemiLog"]||StringMatchQ[OptionValue[PlotScale],"LogLinear"],plotType=LogPlot];
+If[StringMatchQ[OptionValue[PlotScale],"LogLog"],plotType=LogLogPlot];
+Print[plotType[Evaluate[plotVector],{tL,startTime,endTime},PlotRange->All,PlotLegends->plotLegends,PlotLabel->VMakePlotLabel[results,i],AxesLabel->{"\!\(\*SubscriptBox[\(t\), \(L\)]\)","V(\!\(\*SubscriptBox[\(t\), \(L\)]\))"},PlotPoints->Max[OptionValue[PointsPerTL]*Ceiling[endTime-startTime],50]]];;
+,{i,OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,OptionValue[EndingRun],Length@results/2],OptionValue[RunStep]}];
 ];
 Options[VConvByOrder]={r->0.99, StartingRun->1, RunStep->1, EndingRun->0};
 VConvByOrder[results_,tL_,OptionsPattern[]]:=Module[{plotLabel,q},
@@ -185,6 +194,20 @@ Options[VConvByTL]={StartingRun->1, RunStep->1, EndingRun->0,StartTime->0.1,EndT
 VConvByTL[results_,OptionsPattern[]]:=Module[{plotLabel,q},
 Do[
 Print[Plot[(Table[q^k,{k,0,2*Length@results[[entry]]-2,2}].results[[entry]])/(Table[q^k,{k,0,2*Max[Length@results[[entry]]-10,1]-2,2}].Take[results[[entry]],Max[Length@results[[entry]]-10,1]])/.q->qVal[OptionValue[r],tL]//Abs,{tL,OptionValue[StartTime],OptionValue[EndTime]},PlotRange->Full,AxesLabel->{"tL","H(r="<>ToString@OptionValue[r]<>")"},PlotLabel->VMakePlotLabel[results,entry/2]]];
+,{entry,2*OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,2*OptionValue[EndingRun],Length@results],2*OptionValue[RunStep]}];
+];
+Options[VZMap]={StartingRun->1,RunStep->1,EndingRun->0,Compare->"",x->{0,10},y->{-5,5}};
+VZMap[results_,OptionsPattern[]]:=Module[{compareVec,plotFunc,plot,xBounds,yBounds},
+If[(Length@OptionValue[x])==2,xBounds=OptionValue[x],xBounds={0,10}];
+If[(Length@OptionValue[y])==2,yBounds=OptionValue[y],yBounds={-5,5}];
+If[VectorQ[OptionValue[Compare]],compareVec = OptionValue[Compare], compareVec = {OptionValue[Compare]}];
+If[MemberQ[compareVec, "Semi"],
+plotFunc[x_,y_,entry_]:=Log@Abs@(VofZ[x+I*y,results[[entry]],results[[entry-1]][[1]],results[[entry-1]][[2]],results[[entry-1]][[3]],results[[entry-1]][[4]],results[[entry-1]][[5]]]/SemiOfZ[results[[entry-1]][[1]],results[[entry-1]][[2]],results[[entry-1]][[3]],x+I*y]),
+plotFunc[x_,y_,entry_]:=Log@Abs@VofZ[x+I*y,results[[entry]],results[[entry-1]][[1]],results[[entry-1]][[2]],results[[entry-1]][[3]],results[[entry-1]][[4]],results[[entry-1]][[5]]]
+];
+Do[
+plot=ContourPlot[plotFunc[x,y,entry],{x,0,10},{y,-5,5},PlotLabel->VMakePlotLabel[results,entry/2],PlotLegends->BarLegend[Automatic,LegendMarkerSize->180,LegendFunction->"Frame",LegendMargins->5,LegendLabel->"Log@Abs@V(z)"]];
+Print[plot];
 ,{entry,2*OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,2*OptionValue[EndingRun],Length@results],2*OptionValue[RunStep]}];
 ];
 End[]

@@ -7,7 +7,7 @@ bool showProgressBar;
 
 constexpr int DEFAULT_THREADS = 8;
 constexpr int DEFAULT_PREC = 768;
-constexpr double DEFAULT_TOLERANCE = 1e-10;
+constexpr double DEFAULT_TOLERANCE = 1e-100;
 
 int core(int argc, char** argv, const bool wolfram){
 	ReadDefaults(std::string(getenv("HOME"))+"/.config/virasoro_defaults.txt", wolfram);
@@ -29,7 +29,7 @@ int core(int argc, char** argv, const bool wolfram){
 	runfile.SetProgressBar(showProgressBar);
 	runfile.ReadRunfile();
 #ifdef HAVE_WSTP_
-	if(args[0] == "vwstp_file"){
+	if(wolfram){
 		WSPutFunction(stdlink, "Map", 2);
 		WSPutSymbol(stdlink, "ToExpression");
 		WSPutFunction(stdlink, "List", 2*runfile.NumberOfRuns());

@@ -81,6 +81,7 @@ if test $wstp == 1; then
 	object_files="$object_files vwstp.o"
 	wsprep=$wstpdir/wsprep
 	AC_SUBST([pkgdatadir], [$HOME/.Mathematica/Applications])
+	AC_SUBST([USERNAME], [$USER])
 else
 	VWSTP=""
 	object_files="$object_files main.o"
