@@ -634,8 +634,8 @@ AM_CFLAGS
 MAKE_VWSTP_FALSE
 MAKE_VWSTP_TRUE
 USERNAME
-pkgdatadir
 VWSTP
+pkgdatadir
 EGREP
 GREP
 CXXCPP
@@ -4698,13 +4698,15 @@ $as_echo "$as_me: Mathematica found via environment variable." >&6;}
 			wstpdir=$MATHEMATICA_HOME/SystemFiles/Links/WSTP/DeveloperKit/Linux/CompilerAdditions
 			wstplib=$wstpdir/libWSTP64i4.a
 			wstpextralibs="$wstplib -lm -lrt -lstdc++ -ldl -luuid -no-pie"
+			pkgdatadir=$HOME/.Mathematica/Applications
+
 		else
 			wstp=0
 		fi
 		;;
 	darwin*)
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: Building for Mac." >&5
-$as_echo "$as_me: Building for Mac." >&6;}
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: Building for Mac OS." >&5
+$as_echo "$as_me: Building for Mac OS." >&6;}
 		build_mac=yes
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for /Applications/Mathematica.app/Contents/SystemFiles/Links/WSTP/DeveloperKit/MacOSX-x86-64/CompilerAdditions/wsprep" >&5
 $as_echo_n "checking for /Applications/Mathematica.app/Contents/SystemFiles/Links/WSTP/DeveloperKit/MacOSX-x86-64/CompilerAdditions/wsprep... " >&6; }
@@ -4734,6 +4736,8 @@ $as_echo "$as_me: Mathematica found in the expected location." >&6;}
 			wstpdir=/Applications/Mathematica.app/Contents/SystemFiles/Links/WSTP/DeveloperKit/MacOSX-x86-64/CompilerAdditions
 			wstplib=$wstpdir/libWSTPi4.a
 			wstpextralibs="$wstplib -lc++ -framework Foundation"
+			pkgdatadir=$HOME/Library/Mathematica/Applications
+
 		fi
 		;;
 	*)
@@ -4762,8 +4766,6 @@ $as_echo "#define HAVE_WSTP 1" >>confdefs.h
 	wstpflags="-Wno-unused-parameter -I$wstpdir"
 	object_files="$object_files vwstp.o"
 	wsprep=$wstpdir/wsprep
-	pkgdatadir=$HOME/.Mathematica/Applications
-
 	USERNAME=$USER
 
 else

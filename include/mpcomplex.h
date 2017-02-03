@@ -48,9 +48,6 @@
 #ifndef __MPCOMPLEX_H__
 #define __MPCOMPLEX_H__
 
-#include <complex.h>
-#include <complex>
-
 #include "mpreal.h"
 #include <mpc.h>
 
@@ -58,69 +55,71 @@
     #define mpc_is_initialized(x)      (0 != (x)->re->_mpfr_d || 0 != (x)->im->_mpfr_d)
 #endif
 
+#define defround (mpc_rnd_t)MPC_RND(mpreal::get_default_rnd(), mpreal::get_default_rnd())
+
 // forward declarations in order to put math functions in mpfr namespace where mpreal is
 namespace mpfr{
 	using std::complex;
-	const mpreal          abs  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-	const mpreal          real (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-	const mpreal          imag (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+	const mpreal          abs  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+	const mpreal          real (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+	const mpreal          imag (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
 
-    const complex<mpreal> exp  (const complex<mpreal>& v, mpc_rnd_t rnd_mode); 
-    const complex<mpreal> log  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> log10(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    const complex<mpreal> exp  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround); 
+    const complex<mpreal> log  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> log10(const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
 
-    const complex<mpreal> pow (const complex<mpreal>& a, const complex<mpreal>& b, mpc_rnd_t rnd_mode);
-    const complex<mpreal> pow (const mpreal& a, const complex<mpreal>& b, mpc_rnd_t rnd_mode);
-    const complex<mpreal> pow (const complex<mpreal>& a, const mpreal& b, mpc_rnd_t rnd_mode);
-    const complex<mpreal> pow (const complex<mpreal>& a, const unsigned long int b, mpc_rnd_t rnd_mode);
-    const complex<mpreal> pow (const complex<mpreal>& a, const unsigned int b, mpc_rnd_t rnd_mode);
-    const complex<mpreal> pow (const complex<mpreal>& a, const long int b, mpc_rnd_t rnd_mode);
-    const complex<mpreal> pow (const complex<mpreal>& a, const int b, mpc_rnd_t rnd_mode);
-    const complex<mpreal> pow (const unsigned long int a, const complex<mpreal>& b, mpc_rnd_t rnd_mode);
-    const complex<mpreal> pow (const unsigned long int a, const unsigned long int b, mpc_rnd_t rnd_mode);
-    const complex<mpreal> sqr (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> sqrt(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> sqrtcomp(const mpreal& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> sqrt(const unsigned long int v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> sqrt(const unsigned int v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> sqrt(const long int v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> sqrt(const int v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> sqrt(const long double v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> sqrt(const double v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> root(const complex<mpreal>& v, unsigned long int k, mpc_rnd_t rnd_mode);
+    const complex<mpreal> pow (const complex<mpreal>& a, const complex<mpreal>& b, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> pow (const mpreal& a, const complex<mpreal>& b, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> pow (const complex<mpreal>& a, const mpreal& b, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> pow (const complex<mpreal>& a, const unsigned long int b, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> pow (const complex<mpreal>& a, const unsigned int b, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> pow (const complex<mpreal>& a, const long int b, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> pow (const complex<mpreal>& a, const int b, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> pow (const unsigned long int a, const complex<mpreal>& b, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> pow (const unsigned long int a, const unsigned long int b, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> sqr (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> sqrt(const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> sqrtcomp(const mpreal& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> sqrt(const unsigned long int v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> sqrt(const unsigned int v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> sqrt(const long int v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> sqrt(const int v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> sqrt(const long double v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> sqrt(const double v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> root(const complex<mpreal>& v, unsigned long int k, mpc_rnd_t rnd_mode = defround);
 
-    inline const complex<mpreal> mul_2ui(const complex<mpreal>& v, unsigned long int k, mpc_rnd_t rnd_mode);
-    inline const complex<mpreal> mul_2si(const complex<mpreal>& v, long int k, mpc_rnd_t rnd_mode);
-    inline const complex<mpreal> div_2ui(const complex<mpreal>& v, unsigned long int k, mpc_rnd_t rnd_mode);
-    inline const complex<mpreal> div_2si(const complex<mpreal>& v, long int k, mpc_rnd_t rnd_mode);
+    inline const complex<mpreal> mul_2ui(const complex<mpreal>& v, unsigned long int k, mpc_rnd_t rnd_mode = defround);
+    inline const complex<mpreal> mul_2si(const complex<mpreal>& v, long int k, mpc_rnd_t rnd_mode = defround);
+    inline const complex<mpreal> div_2ui(const complex<mpreal>& v, unsigned long int k, mpc_rnd_t rnd_mode = defround);
+    inline const complex<mpreal> div_2si(const complex<mpreal>& v, long int k, mpc_rnd_t rnd_mode = defround);
     
-    const complex<mpreal> sin(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> cos(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> tan(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> sec(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> csc(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> cot(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    int sin_cos(complex<mpreal>& s, complex<mpreal>& c, const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    const complex<mpreal> sin(const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> cos(const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> tan(const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> sec(const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> csc(const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> cot(const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    int sin_cos(complex<mpreal>& s, complex<mpreal>& c, const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
 
-    const complex<mpreal> asin  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> acos  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> atan  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> acot  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> asec  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> acsc  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    const complex<mpreal> asin  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> acos  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> atan  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> acot  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> asec  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> acsc  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
 
-    const complex<mpreal> sinh  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> cosh  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> tanh  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> sech  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> csch  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> coth  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> asinh (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> acosh (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> atanh (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> acoth (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> asech (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
-    const complex<mpreal> acsch (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    const complex<mpreal> sinh  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> cosh  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> tanh  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> sech  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> csch  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> coth  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> asinh (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> acosh (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> atanh (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> acoth (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> asech (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
+    const complex<mpreal> acsch (const complex<mpreal>& v, mpc_rnd_t rnd_mode = defround);
 
     const complex<mpreal> mpc_urandom (gmp_randstate_t& state);     // use gmp_randinit_default() to init state, gmp_randclear() to clear
 
@@ -153,8 +152,20 @@ public:
     template<class X> explicit complex<mpreal>(const X re, mp_prec_t prec = get_default_prec(), mpc_rnd_t rnd_mode = get_default_rnd());
     template<class X> complex<mpreal>(const X re, const X im, mp_prec_t prec = get_default_prec(), mpc_rnd_t rnd_mode = get_default_rnd());
     template<class X> explicit complex<mpreal>(const std::complex<X> u, mp_prec_t prec = get_default_prec(), mpc_rnd_t mode = get_default_rnd());
+
+#ifdef _COMPLEX_H
     explicit complex<mpreal>(const double _Complex u, mp_prec_t prec = get_default_prec(), mpc_rnd_t mode = get_default_rnd());
     explicit complex<mpreal>(const long double _Complex u, mp_prec_t prec = get_default_prec(), mpc_rnd_t mode = get_default_rnd());
+    complex<mpreal>& operator=(const double _Complex v);
+    complex<mpreal>& operator=(const long double _Complex v);
+
+    _Complex float              toCFloat    (mpc_rnd_t mode = MPC_RNDNN)    const;
+    _Complex double             toCDouble   (mpc_rnd_t mode = MPC_RNDNN)    const;
+    _Complex long double        toCLDouble  (mpc_rnd_t mode = MPC_RNDNN)    const;
+    explicit operator _Complex float             () const { return toCFloat();               }
+    explicit operator _Complex double            () const { return toCDouble();              }
+    explicit operator _Complex long double       () const { return toCLDouble();             }
+#endif
     
     explicit complex<mpreal>(const char* s,             mp_prec_t prec = complex<mpreal>::get_default_prec(), int base = 10, mpc_rnd_t mode = complex<mpreal>::get_default_rnd());
     explicit complex<mpreal>(const std::string& s,      mp_prec_t prec = complex<mpreal>::get_default_prec(), int base = 10, mpc_rnd_t mode = complex<mpreal>::get_default_rnd());
@@ -178,8 +189,6 @@ public:
     template<class X> complex<mpreal>& operator=(const X v);
     template<class X> complex<mpreal>& real(const X v);
     template<class X> complex<mpreal>& imag(const X v);
-    complex<mpreal>& operator=(const double _Complex v);
-    complex<mpreal>& operator=(const long double _Complex v);
     complex<mpreal>& operator=(const char* s);
     complex<mpreal>& real(const char* s);
     complex<mpreal>& imag(const char* s);
@@ -219,11 +228,10 @@ public:
     complex<mpreal>& operator-=(const long int u);
     complex<mpreal>& operator-=(const int u);
     const complex<mpreal> operator-() const;
-    friend const complex<mpreal> operator-(const unsigned long int b, const complex<mpreal>& a);
-    friend const complex<mpreal> operator-(const unsigned int b,      const complex<mpreal>& a);
-    friend const complex<mpreal> operator-(const long int b,          const complex<mpreal>& a);
-    friend const complex<mpreal> operator-(const int b,               const complex<mpreal>& a);
-    friend const complex<mpreal> operator-(const double b,            const complex<mpreal>& a);
+    friend complex<mpreal> operator-(const mpreal b           ,  const complex<mpreal>& a);
+    friend complex<mpreal> operator-(const unsigned long int b,  const complex<mpreal>& a);
+    friend complex<mpreal> operator-(const unsigned int b,       const complex<mpreal>& a);
+    friend complex<mpreal> operator-(const unsigned short int b, const complex<mpreal>& a);
     complex<mpreal>& operator-- ();    
     const complex<mpreal>  operator-- (int);
 
@@ -244,11 +252,10 @@ public:
     complex<mpreal>& operator/=(const unsigned int v);
     complex<mpreal>& operator/=(const long int v);
     complex<mpreal>& operator/=(const int v);
-    friend const complex<mpreal> operator/(const unsigned long int b, const complex<mpreal>& a);
-    friend const complex<mpreal> operator/(const unsigned int b,      const complex<mpreal>& a);
-    friend const complex<mpreal> operator/(const long int b,          const complex<mpreal>& a);
-    friend const complex<mpreal> operator/(const int b,               const complex<mpreal>& a);
-    friend const complex<mpreal> operator/(const double b,            const complex<mpreal>& a);
+    friend complex<mpreal> operator/(const mpreal b           ,  const complex<mpreal>& a);
+    friend complex<mpreal> operator/(const unsigned long int b,  const complex<mpreal>& a);
+    friend complex<mpreal> operator/(const unsigned int b,       const complex<mpreal>& a);
+    friend complex<mpreal> operator/(const unsigned short int b, const complex<mpreal>& a);
 
     //<<= Fast Multiplication by 2^u
     complex<mpreal>& operator<<=(const unsigned long int u);
@@ -263,19 +270,13 @@ public:
     complex<mpreal>& operator>>=(const int u);
 
     // Type Conversion operators
-    _Complex float              toCFloat    (mpc_rnd_t mode = MPC_RNDNN)    const;
     std::complex<float>         toFloat     (mpc_rnd_t mode = MPC_RNDNN)    const;
-    _Complex double             toCDouble   (mpc_rnd_t mode = MPC_RNDNN)    const;
     std::complex<double>        toDouble    (mpc_rnd_t mode = MPC_RNDNN)    const;
-    _Complex long double        toCLDouble  (mpc_rnd_t mode = MPC_RNDNN)    const;
     std::complex<long double>   toLDouble   (mpc_rnd_t mode = MPC_RNDNN)    const;
 
 #if defined (MPREAL_HAVE_EXPLICIT_CONVERTERS)
-    explicit operator _Complex float             () const { return toCFloat();               }
     explicit operator std::complex<float>        () const { return toFloat();                }
-    explicit operator _Complex double            () const { return toCDouble();              }
     explicit operator std::complex<double>       () const { return toDouble();               }
-    explicit operator _Complex long double       () const { return toCLDouble();             }
     explicit operator std::complex<long double>  () const { return toLDouble();              }
 #endif
 
@@ -338,64 +339,64 @@ public:
     friend const complex<mpreal> atanh (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
 */
     // Math Functions
-	friend const mpreal          mpfr::abs  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-	friend const mpreal          mpfr::real (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-	friend const mpreal          mpfr::imag (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::exp  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd()); 
-    friend const complex<mpreal> mpfr::log  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::log10(const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
+	friend const mpreal          mpfr::abs  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+	friend const mpreal          mpfr::real (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+	friend const mpreal          mpfr::imag (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::exp  (const complex<mpreal>& v, mpc_rnd_t rnd_mode); 
+    friend const complex<mpreal> mpfr::log  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::log10(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
 
-    friend const complex<mpreal> mpfr::pow (const complex<mpreal>& a, const complex<mpreal>& b, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::pow (const mpreal& a, const complex<mpreal>& b, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::pow (const complex<mpreal>& a, const mpreal& b, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::pow (const complex<mpreal>& a, const unsigned long int b, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::pow (const complex<mpreal>& a, const unsigned int b, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::pow (const complex<mpreal>& a, const long int b, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::pow (const complex<mpreal>& a, const int b, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::pow (const unsigned long int a, const complex<mpreal>& b, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::pow (const unsigned long int a, const unsigned long int b, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::sqr (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::sqrt(const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::sqrtcomp(const mpreal& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::sqrt(const unsigned long int v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::sqrt(const unsigned int v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::sqrt(const long int v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::sqrt(const int v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::sqrt(const long double v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::sqrt(const double v, mpc_rnd_t rnd_mode = get_default_rnd());
+    friend const complex<mpreal> mpfr::pow (const complex<mpreal>& a, const complex<mpreal>& b, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::pow (const mpreal& a, const complex<mpreal>& b, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::pow (const complex<mpreal>& a, const mpreal& b, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::pow (const complex<mpreal>& a, const unsigned long int b, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::pow (const complex<mpreal>& a, const unsigned int b, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::pow (const complex<mpreal>& a, const long int b, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::pow (const complex<mpreal>& a, const int b, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::pow (const unsigned long int a, const complex<mpreal>& b, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::pow (const unsigned long int a, const unsigned long int b, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::sqr (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::sqrt(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::sqrtcomp(const mpreal& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::sqrt(const unsigned long int v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::sqrt(const unsigned int v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::sqrt(const long int v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::sqrt(const int v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::sqrt(const long double v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::sqrt(const double v, mpc_rnd_t rnd_mode);
 
-    friend const complex<mpreal> mpfr::mul_2ui(const complex<mpreal>& v, unsigned long int k, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::mul_2si(const complex<mpreal>& v, long int k, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::div_2ui(const complex<mpreal>& v, unsigned long int k, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::div_2si(const complex<mpreal>& v, long int k, mpc_rnd_t rnd_mode = get_default_rnd());
+    friend const complex<mpreal> mpfr::mul_2ui(const complex<mpreal>& v, unsigned long int k, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::mul_2si(const complex<mpreal>& v, long int k, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::div_2ui(const complex<mpreal>& v, unsigned long int k, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::div_2si(const complex<mpreal>& v, long int k, mpc_rnd_t rnd_mode);
     
-    friend const complex<mpreal> mpfr::sin(const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::cos(const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::tan(const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::sec(const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::csc(const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::cot(const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend int mpfr::sin_cos(complex<mpreal>& s, complex<mpreal>& c, const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
+    friend const complex<mpreal> mpfr::sin(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::cos(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::tan(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::sec(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::csc(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::cot(const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend int mpfr::sin_cos(complex<mpreal>& s, complex<mpreal>& c, const complex<mpreal>& v, mpc_rnd_t rnd_mode);
 
-    friend const complex<mpreal> mpfr::asin  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::acos  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::atan  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::acot  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::asec  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::acsc  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
+    friend const complex<mpreal> mpfr::asin  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::acos  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::atan  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::acot  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::asec  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::acsc  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
 
-    friend const complex<mpreal> mpfr::sinh  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::cosh  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::tanh  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::sech  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::csch  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::coth  (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::asinh (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::acosh (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::atanh (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::acoth (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::asech (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
-    friend const complex<mpreal> mpfr::acsch (const complex<mpreal>& v, mpc_rnd_t rnd_mode = get_default_rnd());
+    friend const complex<mpreal> mpfr::sinh  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::cosh  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::tanh  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::sech  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::csch  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::coth  (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::asinh (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::acosh (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::atanh (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::acoth (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::asech (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
+    friend const complex<mpreal> mpfr::acsch (const complex<mpreal>& v, mpc_rnd_t rnd_mode);
 
     friend const complex<mpreal> mpfr::mpc_urandom (gmp_randstate_t& state);     // use gmp_randinit_default() to init state, gmp_randclear() to clear
 
@@ -880,6 +881,7 @@ inline complex<mpreal>::complex(const std::complex<long double> u, mp_prec_t pre
 }
 
 // c-style complex numbers are a special case
+#ifdef _COMPLEX_H
 template<>
 inline complex<mpreal>::complex(const double _Complex u, mp_prec_t prec, mpc_rnd_t mode)
 {
@@ -897,6 +899,7 @@ inline complex<mpreal>::complex(const long double _Complex u, mp_prec_t prec, mp
 
     MPREAL_MSVC_DEBUGVIEW_CODE;
 }
+#endif
 
 inline complex<mpreal>::complex(const char* s, mp_prec_t prec, int base, mpc_rnd_t mode)
 {
@@ -940,46 +943,48 @@ namespace complex_internal{
     template <> struct result_type<double>              {typedef complex<mpreal> type;};    
     template <> struct result_type<unsigned long int>   {typedef complex<mpreal> type;};    
     template <> struct result_type<unsigned int>        {typedef complex<mpreal> type;};    
+    template <> struct result_type<unsigned short int>  {typedef complex<mpreal> type;};    
     template <> struct result_type<long int>            {typedef complex<mpreal> type;};    
     template <> struct result_type<int>                 {typedef complex<mpreal> type;};    
+    template <> struct result_type<short int>           {typedef complex<mpreal> type;};    
     template <> struct result_type<long long>           {typedef complex<mpreal> type;};    
     template <> struct result_type<unsigned long long>  {typedef complex<mpreal> type;};    
 }
 
 // + Addition
 template <typename Rhs> 
-inline const typename complex_internal::result_type<Rhs>::type 
+inline typename complex_internal::result_type<Rhs>::type 
     operator+(const complex<mpreal>& lhs, const Rhs& rhs){ return complex<mpreal>(lhs) += rhs;    }
 
 template <typename Lhs> 
-inline const typename complex_internal::result_type<Lhs>::type 
+inline typename complex_internal::result_type<Lhs>::type 
     operator+(const Lhs& lhs, const complex<mpreal>& rhs){ return complex<mpreal>(rhs) += lhs;    } 
 
 // - Subtraction
 template <typename Rhs> 
-inline const typename complex_internal::result_type<Rhs>::type 
+inline typename complex_internal::result_type<Rhs>::type 
     operator-(const complex<mpreal>& lhs, const Rhs& rhs){ return complex<mpreal>(lhs) -= rhs;    }
 
 template <typename Lhs> 
-inline const typename complex_internal::result_type<Lhs>::type 
+inline typename complex_internal::result_type<Lhs>::type 
     operator-(const Lhs& lhs, const complex<mpreal>& rhs){ return complex<mpreal>(lhs) -= rhs;    }
 
 // * Multiplication
 template <typename Rhs> 
-inline const typename complex_internal::result_type<Rhs>::type 
+inline typename complex_internal::result_type<Rhs>::type 
     operator*(const complex<mpreal>& lhs, const Rhs& rhs){ return complex<mpreal>(lhs) *= rhs;    }
 
 template <typename Lhs> 
-inline const typename complex_internal::result_type<Lhs>::type 
+inline typename complex_internal::result_type<Lhs>::type 
     operator*(const Lhs& lhs, const complex<mpreal>& rhs){ return complex<mpreal>(rhs) *= lhs;    } 
 
 // / Division
 template <typename Rhs> 
-inline const typename complex_internal::result_type<Rhs>::type 
+inline typename complex_internal::result_type<Rhs>::type 
     operator/(const complex<mpreal>& lhs, const Rhs& rhs){ return complex<mpreal>(lhs) /= rhs;    }
 
 template <typename Lhs> 
-inline const typename complex_internal::result_type<Lhs>::type 
+inline typename complex_internal::result_type<Lhs>::type 
     operator/(const Lhs& lhs, const complex<mpreal>& rhs){ return complex<mpreal>(lhs) /= rhs;    }
 
 /*} namespace mpfr {
@@ -1583,6 +1588,7 @@ inline complex<mpreal>& complex<mpreal>::imag(const mpfr_t& v)
     return *this;
 }
 
+#ifdef _COMPLEX_H
 inline complex<mpreal>& complex<mpreal>::operator=(const double _Complex v){
     mpc_set_dc(mpc_ptr(), v, get_default_rnd());
 
@@ -1596,6 +1602,7 @@ inline complex<mpreal>& complex<mpreal>::operator=(const long double _Complex v)
     MPREAL_MSVC_DEBUGVIEW_CODE;
     return *this;
 }
+#endif
 
 inline complex<mpreal>& complex<mpreal>::operator=(const char* s)
 {
@@ -1777,6 +1784,9 @@ inline complex<mpreal> operator+(const complex<mpreal>& a, const complex<mpreal>
     return c;
 }
 
+template<> inline complex<mpreal> operator+(const complex<mpreal>& a, const mpreal& b) { return complex<mpreal>(a) += b; }
+template<> inline complex<mpreal> operator+(const mpreal& a, const complex<mpreal>& b) { return complex<mpreal>(b) += a; }
+
 inline complex<mpreal>& complex<mpreal>::operator++() 
 {
     return *this += 1;
@@ -1876,40 +1886,37 @@ inline complex<mpreal> operator-(const complex<mpreal>& a, const complex<mpreal>
     return c;
 }
 
-inline const complex<mpreal> operator-(const double  b, const complex<mpreal>& a)
+template<> inline complex<mpreal> operator-(const complex<mpreal>& a, const mpreal& b) { return complex<mpreal>(a) -= b; }
+
+template<>
+inline complex<mpreal> operator-(const mpreal& b, const complex<mpreal>& a)
 {
-    complex<mpreal> x(b, mpc_get_prec(a.mpc_ptr()));
-    x -= a;
+    complex<mpreal> x(a, mpc_get_prec(a.mpc_ptr()));
+    mpc_fr_sub(x.mpc_ptr(), b.mpfr_srcptr(), x.mpc_srcptr(), complex<mpreal>::get_default_rnd());
     return x;
 }
 
-inline const complex<mpreal> operator-(const unsigned long int b, const complex<mpreal>& a)
+template<>
+inline complex<mpreal> operator-(const unsigned long int& b, const complex<mpreal>& a)
 {
     complex<mpreal> x(0, mpc_get_prec(a.mpc_ptr()));
     mpc_ui_sub(x.mpc_ptr(), b, a.mpc_srcptr(), complex<mpreal>::get_default_rnd());
     return x;
 }
 
-inline const complex<mpreal> operator-(const unsigned int b, const complex<mpreal>& a)
+template<>
+inline complex<mpreal> operator-(const unsigned int& b, const complex<mpreal>& a)
 {
     complex<mpreal> x(0, mpc_get_prec(a.mpc_ptr()));
     mpc_ui_sub(x.mpc_ptr(), b, a.mpc_srcptr(), complex<mpreal>::get_default_rnd());
     return x;
 }
 
-inline const complex<mpreal> operator-(const long int b, const complex<mpreal>& a)
+template<>
+inline complex<mpreal> operator-(const unsigned short int& b, const complex<mpreal>& a)
 {
     complex<mpreal> x(0, mpc_get_prec(a.mpc_ptr()));
-    mpreal B(b);
-    mpc_fr_sub(x.mpc_ptr(), B.mpfr_srcptr(), a.mpc_srcptr(), complex<mpreal>::get_default_rnd());
-    return x;
-}
-
-inline const complex<mpreal> operator-(const int b, const complex<mpreal>& a)
-{
-    complex<mpreal> x(0, mpc_get_prec(a.mpc_ptr()));
-    mpreal B(b);
-    mpc_fr_sub(x.mpc_ptr(), B.mpfr_srcptr(), a.mpc_srcptr(), complex<mpreal>::get_default_rnd());
+    mpc_ui_sub(x.mpc_ptr(), b, a.mpc_srcptr(), complex<mpreal>::get_default_rnd());
     return x;
 }
 
@@ -1979,6 +1986,9 @@ inline complex<mpreal> operator*(const complex<mpreal>& a, const complex<mpreal>
     return c;
 }
 
+template<> inline complex<mpreal> operator*(const complex<mpreal>& a, const mpreal& b) { return complex<mpreal>(a) *= b; }
+template<> inline complex<mpreal> operator*(const mpreal& a, const complex<mpreal>& b) { return complex<mpreal>(b) *= a; }
+
 //////////////////////////////////////////////////////////////////////////
 // / Division
 inline complex<mpreal>& complex<mpreal>::operator/=(const complex<mpreal>& v)
@@ -2045,38 +2055,37 @@ inline complex<mpreal> operator/(const complex<mpreal>& a, const complex<mpreal>
     return c;
 }
 
-inline const complex<mpreal> operator/(const unsigned long int b, const complex<mpreal>& a)
+template<> inline complex<mpreal> operator/(const complex<mpreal>& a, const mpreal& b) { return complex<mpreal>(a) /= b; }
+
+template<>
+inline complex<mpreal> operator/(const mpreal& b, const complex<mpreal>& a)
+{
+    complex<mpreal> x(a, mpc_get_prec(a.mpc_ptr()));
+    mpc_fr_div(x.mpc_ptr(), b.mpfr_srcptr(), x.mpc_srcptr(), complex<mpreal>::get_default_rnd());
+    return x;
+}
+
+template<>
+inline complex<mpreal> operator/(const unsigned long int& b, const complex<mpreal>& a)
 {
     complex<mpreal> x(0, mpc_get_prec(a.mpc_srcptr()));
     mpc_ui_div(x.mpc_ptr(), b, a.mpc_srcptr(), complex<mpreal>::get_default_rnd());
     return x;
 }
 
-inline const complex<mpreal> operator/(const unsigned int b, const complex<mpreal>& a)
+template<>
+inline complex<mpreal> operator/(const unsigned int& b, const complex<mpreal>& a)
 {
     complex<mpreal> x(0, mpc_get_prec(a.mpc_srcptr()));
     mpc_ui_div(x.mpc_ptr(), b, a.mpc_srcptr(), complex<mpreal>::get_default_rnd());
     return x;
 }
 
-inline const complex<mpreal> operator/(const long int b, const complex<mpreal>& a)
+template<>
+inline complex<mpreal> operator/(const unsigned short int& b, const complex<mpreal>& a)
 {
-    complex<mpreal> x(b, mpc_get_prec(a.mpc_srcptr()), complex<mpreal>::get_default_rnd());
-    x /= a;
-    return x;
-}
-
-inline const complex<mpreal> operator/(const int b, const complex<mpreal>& a)
-{
-    complex<mpreal> x(b, mpc_get_prec(a.mpc_srcptr()), complex<mpreal>::get_default_rnd());
-    x /= a;
-    return x;
-}
-
-inline const complex<mpreal> operator/(const double  b, const complex<mpreal>& a)
-{
-    complex<mpreal> x(b, mpc_get_prec(a.mpc_srcptr()), complex<mpreal>::get_default_rnd());
-    x /= a;
+    complex<mpreal> x(0, mpc_get_prec(a.mpc_srcptr()));
+    mpc_ui_div(x.mpc_ptr(), b, a.mpc_srcptr(), complex<mpreal>::get_default_rnd());
     return x;
 }
 
@@ -2194,6 +2203,7 @@ inline bool operator != (const complex<mpreal>& a, const int b               ){ 
 
 //////////////////////////////////////////////////////////////////////////
 // Type Converters
+#ifdef _COMPLEX_H
 inline _Complex float complex<mpreal>::toCFloat (mpc_rnd_t mode) const
 {
     _Complex float x = (_Complex float) mpc_get_dc(mpc_srcptr(), mode);
@@ -2232,6 +2242,7 @@ inline std::complex<long double> complex<mpreal>::toLDouble (mpc_rnd_t mode) con
     std::complex<long double> nxx = std::complex<long double>(creal(n), cimag(n));
     return nxx;
 }
+#endif
 
 inline ::mpc_ptr     complex<mpreal>::mpc_ptr()             { return mp; }
 inline ::mpc_srcptr  complex<mpreal>::mpc_ptr()    const    { return mp; }
@@ -2932,8 +2943,9 @@ namespace std
 	template<> inline complex<mpreal> polar(const mpreal& r, const mpreal& theta) { return mpfr::polar(r, theta, complex<mpreal>::get_default_rnd()); }
 
 	template<> inline complex<mpreal> pow(const complex<mpreal>& a, const complex<mpreal>& b) { return mpfr::pow(a, b, complex<mpreal>::get_default_rnd()); }
-	template<> inline complex<mpreal> pow(const          mpreal& a, const complex<mpreal>& b) { return mpfr::pow(a, b, complex<mpreal>::get_default_rnd()); }
+	/* OS X clang seems to be missing these two overloads despite 26.4.8
 	template<> inline complex<mpreal> pow(const complex<mpreal>& a, const          mpreal& b) { return mpfr::pow(a, b, complex<mpreal>::get_default_rnd()); }
+	template<> inline complex<mpreal> pow(const          mpreal& a, const complex<mpreal>& b) { return mpfr::pow(a, b, complex<mpreal>::get_default_rnd()); } */
 
 	template<> inline complex<mpreal> sqrt  (const complex<mpreal>& z) { return mpfr::sqrt(z, complex<mpreal>::get_default_rnd()); }
 	template<> inline          mpreal abs   (const complex<mpreal>& z) { return mpfr::abs  (z, complex<mpreal>::get_default_rnd()); }

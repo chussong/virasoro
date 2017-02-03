@@ -46,12 +46,13 @@ case "${host_os}" in
 			wstpdir=$MATHEMATICA_HOME/SystemFiles/Links/WSTP/DeveloperKit/Linux/CompilerAdditions
 			wstplib=$wstpdir/libWSTP64i4.a
 			wstpextralibs="$wstplib -lm -lrt -lstdc++ -ldl -luuid -no-pie"
+			AC_SUBST([pkgdatadir], [$HOME/.Mathematica/Applications])
 		else
 			wstp=0
 		fi
 		;;
 	darwin*)
-		AC_MSG_NOTICE([Building for Mac.])
+		AC_MSG_NOTICE([Building for Mac OS.])
 		build_mac=yes
 		AC_CHECK_FILE(/Applications/Mathematica.app/Contents/SystemFiles/Links/WSTP/DeveloperKit/MacOSX-x86-64/CompilerAdditions/wsprep, [wstp=1], [wstp=0])
 		if test $wstp == 1
@@ -60,6 +61,7 @@ case "${host_os}" in
 			wstpdir=/Applications/Mathematica.app/Contents/SystemFiles/Links/WSTP/DeveloperKit/MacOSX-x86-64/CompilerAdditions
 			wstplib=$wstpdir/libWSTPi4.a
 			wstpextralibs="$wstplib -lc++ -framework Foundation"
+			AC_SUBST([pkgdatadir], [$HOME/Library/Mathematica/Applications])
 		fi
 		;;
 	*)
@@ -80,7 +82,6 @@ if test $wstp == 1; then
 	wstpflags="-Wno-unused-parameter -I$wstpdir"
 	object_files="$object_files vwstp.o"
 	wsprep=$wstpdir/wsprep
-	AC_SUBST([pkgdatadir], [$HOME/.Mathematica/Applications])
 	AC_SUBST([USERNAME], [$USER])
 else
 	VWSTP=""
