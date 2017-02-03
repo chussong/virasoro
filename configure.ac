@@ -9,9 +9,9 @@ AC_ARG_ENABLE([wstp],
 
 dnl Switch to a C++ compiler, and check if it works.
 AC_LANG(C++)
-${CFLAGS="-O3"}
+dnl ${CFLAGS="-O3"}
 AC_PROG_CC
-${CXXFLAGS="-O3"}
+dnl ${CXXFLAGS="-O3"}
 AC_PROG_CXX
 AC_CANONICAL_HOST
 
@@ -26,8 +26,8 @@ mpclib=/usr/local/lib/libmpc.a
 dnl headers should probably be split for the different targets
 headers="mpreal.h mpcomplex.h cpqmn.h hmn.h runfile.h virasoro.h vwstp.h"
 object_files="virasoro.o runfile.o"
-cflags=""
-cxxflags="-std=c++14"
+cflags="-O3"
+cxxflags="-O3 -std=c++14"
 devflags="-Wall -Wextra -pedantic -Werror -g"
 ldadd="-lpthread"
 staticlibs="$mpclib $mpfrlib $gmplib"
@@ -45,7 +45,7 @@ case "${host_os}" in
 			wstp=1
 			wstpdir=$MATHEMATICA_HOME/SystemFiles/Links/WSTP/DeveloperKit/Linux/CompilerAdditions
 			wstplib=$wstpdir/libWSTP64i4.a
-			wstpextralibs="$wstplib -lm -lrt -lstdc++ -ldl -luuid -no-pie"
+			wstpextralibs="$wstplib -lm -lrt -lstdc++ -ldl -luuid"
 			AC_SUBST([pkgdatadir], [$HOME/.Mathematica/Applications])
 		else
 			wstp=0

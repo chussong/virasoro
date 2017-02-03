@@ -2737,7 +2737,6 @@ ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
-${CFLAGS="-O3"}
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -3777,7 +3776,6 @@ else
 fi
 
 
-${CXXFLAGS="-O3"}
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -4677,8 +4675,8 @@ mpclib=/usr/local/lib/libmpc.a
 
 headers="mpreal.h mpcomplex.h cpqmn.h hmn.h runfile.h virasoro.h vwstp.h"
 object_files="virasoro.o runfile.o"
-cflags=""
-cxxflags="-std=c++14"
+cflags="-O3"
+cxxflags="-O3 -std=c++14"
 devflags="-Wall -Wextra -pedantic -Werror -g"
 ldadd="-lpthread"
 staticlibs="$mpclib $mpfrlib $gmplib"
@@ -4697,7 +4695,7 @@ $as_echo "$as_me: Mathematica found via environment variable." >&6;}
 			wstp=1
 			wstpdir=$MATHEMATICA_HOME/SystemFiles/Links/WSTP/DeveloperKit/Linux/CompilerAdditions
 			wstplib=$wstpdir/libWSTP64i4.a
-			wstpextralibs="$wstplib -lm -lrt -lstdc++ -ldl -luuid -no-pie"
+			wstpextralibs="$wstplib -lm -lrt -lstdc++ -ldl -luuid"
 			pkgdatadir=$HOME/.Mathematica/Applications
 
 		else

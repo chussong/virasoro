@@ -2943,9 +2943,15 @@ namespace std
 	template<> inline complex<mpreal> polar(const mpreal& r, const mpreal& theta) { return mpfr::polar(r, theta, complex<mpreal>::get_default_rnd()); }
 
 	template<> inline complex<mpreal> pow(const complex<mpreal>& a, const complex<mpreal>& b) { return mpfr::pow(a, b, complex<mpreal>::get_default_rnd()); }
-	/* OS X clang seems to be missing these two overloads despite 26.4.8
-	template<> inline complex<mpreal> pow(const complex<mpreal>& a, const          mpreal& b) { return mpfr::pow(a, b, complex<mpreal>::get_default_rnd()); }
-	template<> inline complex<mpreal> pow(const          mpreal& a, const complex<mpreal>& b) { return mpfr::pow(a, b, complex<mpreal>::get_default_rnd()); } */
+	// libc++ doesn't have these overloads declared as templates so we can't specialize them
+#ifndef _LIBCPP_COMPLEX
+	template<>
+#endif
+	inline complex<mpreal> pow(const complex<mpreal>& a, const          mpreal& b) { return mpfr::pow(a, b, complex<mpreal>::get_default_rnd()); }
+#ifndef _LIBCPP_COMPLEX
+	template<>
+#endif
+	inline complex<mpreal> pow(const          mpreal& a, const complex<mpreal>& b) { return mpfr::pow(a, b, complex<mpreal>::get_default_rnd()); }
 
 	template<> inline complex<mpreal> sqrt  (const complex<mpreal>& z) { return mpfr::sqrt(z, complex<mpreal>::get_default_rnd()); }
 	template<> inline          mpreal abs   (const complex<mpreal>& z) { return mpfr::abs  (z, complex<mpreal>::get_default_rnd()); }
