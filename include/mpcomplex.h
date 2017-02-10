@@ -1614,14 +1614,11 @@ inline complex<mpreal>& complex<mpreal>::operator=(const char* s)
     // Here we assume base = 10 and we use precision of target variable.
 
     mpc_t t;
-
     mpc_init2(t, mpc_get_prec(mpc_srcptr()));
 
-    if(0 == mpc_set_str(t, s, 10, get_default_rnd()))
-    {
-        mpc_set(mpc_ptr(), t, get_default_rnd()); 
-        MPREAL_MSVC_DEBUGVIEW_CODE;
-    }
+	mpc_set_str(t, s, 10, get_default_rnd());
+	mpc_swap(mpc_ptr(), t); 
+	MPREAL_MSVC_DEBUGVIEW_CODE;
 
     clear(t);
     return *this;
@@ -1631,11 +1628,11 @@ inline complex<mpreal>& complex<mpreal>::real(const char* s)
 {
     mpfr_t t;
     mpfr_init2(t, mpfr_get_prec(mpfr_srcptr()));
-    if(0 == mpfr_set_str(t, s, 10, MPC_RND_RE(get_default_rnd())))
-    {
-        mpfr_set(mpc_re_ptr(), t, MPC_RND_RE(get_default_rnd()));
-        MPREAL_MSVC_DEBUGVIEW_CODE;
-    }
+	
+	mpfr_set_str(t, s, 10, MPC_RND_RE(get_default_rnd()));
+	mpfr_swap(mpc_re_ptr(), t);
+	MPREAL_MSVC_DEBUGVIEW_CODE;
+
     mpfr_clear(t);
     return *this;
 }
@@ -1644,11 +1641,11 @@ inline complex<mpreal>& complex<mpreal>::imag(const char* s)
 {
     mpfr_t t;
     mpfr_init2(t, mpfr_get_prec(mpfr_srcptr()));
-    if(0 == mpfr_set_str(t, s, 10, MPC_RND_IM(get_default_rnd())))
-    {
-        mpfr_set(mpc_im_ptr(), t, MPC_RND_IM(get_default_rnd()));
-        MPREAL_MSVC_DEBUGVIEW_CODE;
-    }
+
+	mpfr_set_str(t, s, 10, MPC_RND_IM(get_default_rnd()));
+	mpfr_swap(mpc_im_ptr(), t);
+	MPREAL_MSVC_DEBUGVIEW_CODE;
+
     mpfr_clear(t);
     return *this;
 }
@@ -1663,14 +1660,11 @@ inline complex<mpreal>& complex<mpreal>::operator=(const std::string& s)
     // Here we assume base = 10 and we use precision of target variable.
 
     mpc_t t;
-
     mpc_init2(t, mpc_get_prec(mpc_srcptr()));
 
-    if(0 == mpc_set_str(t, s.c_str(), 10, get_default_rnd()))
-    {
-        mpc_set(mpc_ptr(), t, get_default_rnd()); 
-        MPREAL_MSVC_DEBUGVIEW_CODE;
-    }
+	mpc_set_str(t, s.c_str(), 10, get_default_rnd());
+	mpc_swap(mpc_ptr(), t); 
+	MPREAL_MSVC_DEBUGVIEW_CODE;
 
     clear(t);
     return *this;
@@ -1680,11 +1674,10 @@ inline complex<mpreal>& complex<mpreal>::real(const std::string& s)
 {
     mpfr_t t;
     mpfr_init2(t, mpfr_get_prec(mpfr_srcptr()));
-    if(0 == mpfr_set_str(t, s.c_str(), 10, MPC_RND_RE(get_default_rnd())))
-    {
-        mpfr_set(mpc_re_ptr(), t, MPC_RND_RE(get_default_rnd()));
-        MPREAL_MSVC_DEBUGVIEW_CODE;
-    }
+	
+	mpfr_set_str(t, s.c_str(), 10, MPC_RND_RE(get_default_rnd()));
+	mpfr_swap(mpc_re_ptr(), t);
+	MPREAL_MSVC_DEBUGVIEW_CODE;
     mpfr_clear(t);
     return *this;
 }
@@ -1693,11 +1686,10 @@ inline complex<mpreal>& complex<mpreal>::imag(const std::string& s)
 {
     mpfr_t t;
     mpfr_init2(t, mpfr_get_prec(mpfr_srcptr()));
-    if(0 == mpfr_set_str(t, s.c_str(), 10, MPC_RND_IM(get_default_rnd())))
-    {
-        mpfr_set(mpc_im_ptr(), t, MPC_RND_IM(get_default_rnd()));
-        MPREAL_MSVC_DEBUGVIEW_CODE;
-    }
+
+	mpfr_set_str(t, s.c_str(), 10, MPC_RND_IM(get_default_rnd()));
+	mpfr_swap(mpc_im_ptr(), t);
+	MPREAL_MSVC_DEBUGVIEW_CODE;
     mpfr_clear(t);
     return *this;
 }
@@ -2189,7 +2181,7 @@ inline const complex<mpreal> operator>>(const complex<mpreal>& v, const int k)
 
 //////////////////////////////////////////////////////////////////////////
 //Relational operators
-template<> inline bool operator == (const complex<mpreal>& a, const complex<mpreal>& b        ){  return (mpc_cmp(a.mpc_srcptr(),b.mpc_srcptr()) != 0 );                   }
+template<> inline bool operator == (const complex<mpreal>& a, const complex<mpreal>& b        ){  return (mpc_cmp(a.mpc_srcptr(),b.mpc_srcptr()) == 0 );                   }
 inline bool operator == (const complex<mpreal>& a, const unsigned long int b ){  return (mpc_cmp_si(a.mpc_srcptr(),b) == 0 );                }
 inline bool operator == (const complex<mpreal>& a, const unsigned int b      ){  return (mpc_cmp_si(a.mpc_srcptr(),b) == 0 );                }
 inline bool operator == (const complex<mpreal>& a, const long int b          ){  return (mpc_cmp_si(a.mpc_srcptr(),b) == 0 );                }

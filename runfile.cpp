@@ -168,6 +168,8 @@ int Runfile_c::ReadRunfile(){
 }
 
 int Runfile_c::Expand(){
+//	std::cout << "Expanding the following lines:" << std::endl;
+//	std::for_each(lines.begin(), lines.end(), [](const std::string& line){std::cout << line << std::endl;});
 	for(int param = 1; param <= 4; ++param){
 		ExpandRelativeEqns(param-1);
 		ExpandBraces(param-1);
@@ -369,6 +371,7 @@ std::tuple<std::complex<mpfr::mpreal>, int> Runfile_c::ParseRelativeEqn(std::str
 }
 
 std::complex<mpfr::mpreal> Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
+//	std::cout << "Running RelativeMPF(" << firstHalf << ", " << equation << ")." << std::endl;
 	std::complex<mpfr::mpreal> output(0);
 	std::complex<mpfr::mpreal> baseMPF;
 	std::tuple<std::complex<mpfr::mpreal>, int> parsedEqn;
@@ -399,7 +402,9 @@ std::complex<mpfr::mpreal> Runfile_c::RelativeMPF(std::string firstHalf, std::st
 					output = baseMPF*modifier;
 					break;
 		case 14:	// c/n
+//					std::cout << "Running FindBaseNumber(" << firstHalf << ", 0);" << std::endl;
 					baseMPF = FindBaseNumber(firstHalf, 0);
+//					std::cout << "Created MPF " << baseMPF << " out of " << FindBaseNumber(firstHalf, 0) << std::endl;
 					output = baseMPF/modifier;
 					break;
 		case 15:	// n/c
