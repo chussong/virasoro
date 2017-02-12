@@ -2,7 +2,7 @@
 #define ACCESS_H_
 #include <vector>
 
-//namespace virasoro {
+namespace virasoro {
 class Access {
 	static int maxOrder;
 	static int numberOfMN;
@@ -23,5 +23,5 @@ class Access {
 		static void Populate(const int maxOrder);
 };
 
-//} namespace virasoro
+} // namespace virasoro
 #endif

@@ -10,7 +10,7 @@ vwstp_SOURCES = vwstp.cpp virasoro.cpp runfile.cpp access.cpp $(IDIR)virasoro.h 
 nodist_vwstp_SOURCES = vwstptm.c
 vwstp_CFLAGS = $(AM_CFLAGS) @wstpflags@
 vwstp_CXXFLAGS = $(AM_CXXFLAGS) @wstpflags@
-vwstp_CPPFLAGS = -DHAVE_WSTP_
+vwstp_CPPFLAGS = -DHAVE_WSTP
 vwstp_LDADD = $(LDADD) @wstpextralibs@
 PKGDIR = @pkgdatadir@
 

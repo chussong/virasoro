@@ -6,7 +6,7 @@
 #include "cpqmn.h"
 #include "access.h"
 
-//namespace virasoro {
+namespace virasoro {
 extern int maxThreads;
 extern int precision;
 extern bool showProgressBar;
@@ -47,7 +47,7 @@ class Hmn_c{
 			Hmn->ThreadFillHmn(startingPos, endingPos, order, temp1, temp2);
 		}
 		
-		static void Fill(Hmn_c<T>& Hmn);
+		static void FillHmn(Hmn_c<T>& Hmn);
 };
 
 template<class T>
@@ -91,7 +91,7 @@ inline void DrawProgressBar(const float progress){
 }
 
 template<class T>
-void Hmn_c<T>::Fill(Hmn_c<T>& Hmn){
+void Hmn_c<T>::FillHmn(Hmn_c<T>& Hmn){
 	const int maxOrder = Hmn.Diag.size()*2;
 	std::vector<std::thread> thread;
 	thread.resize(maxThreads);
@@ -158,5 +158,5 @@ void Hmn_c<T>::FillH(Hmn_c<T>& Hmn, const int order, T temp){
 	}
 	return;
 }
-//} // namespace virasoro
+} // namespace virasoro
 #endif

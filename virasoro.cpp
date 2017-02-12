@@ -1,6 +1,8 @@
 #include "virasoro.h"
 
-// namespace virasoro {
+#define STATICTOLERANCE 10e-100
+
+namespace virasoro {
 
 int maxThreads;
 int precision;
@@ -19,25 +21,29 @@ int core(int argc, char** argv, const bool wolfram){
 	mpfr::mpreal::set_default_prec(precision);
 	mpfr::mpreal::set_default_rnd(MPFR_RNDZ);
 	int exitCode;
-	Runfile_c runfile;
 	if(args.size() == 1){
-		runfile = args[0];
-	} else {
-		runfile = args;
-	}
-	runfile.SetMaxThreads(maxThreads);
-	runfile.SetPrecision(precision);
-	runfile.SetTolerance(tolerance);
-	runfile.SetProgressBar(showProgressBar);
-	runfile.ReadRunfile();
-#ifdef HAVE_WSTP_
-	if(wolfram){
-		WSPutFunction(stdlink, "Map", 2);
-		WSPutSymbol(stdlink, "ToExpression");
-		WSPutFunction(stdlink, "List", 2*runfile.NumberOfRuns());
-	}
+		Runfile_c runfile(args[0]);
+		runfile.ReadRunfile();
+#ifdef HAVE_WSTP
+		if(wolfram){
+			WSPutFunction(stdlink, "Map", 2);
+			WSPutSymbol(stdlink, "ToExpression");
+			WSPutFunction(stdlink, "List", 2*runfile.NumberOfRuns());
+		}
 #endif
-	exitCode = runfile.Execute(options);
+		exitCode = DoRuns(runfile, options);
+	} else {
+		Runfile_c runfile(args);
+		runfile.ReadRunfile();
+#ifdef HAVE_WSTP
+		if(wolfram){
+			WSPutFunction(stdlink, "Map", 2);
+			WSPutSymbol(stdlink, "ToExpression");
+			WSPutFunction(stdlink, "List", 2*runfile.NumberOfRuns());
+		}
+#endif
+		exitCode = DoRuns(runfile, options);
+	}
 	return exitCode;
 }
 
@@ -143,6 +149,123 @@ std::string ParseOptions(std::vector<std::string> &args){
 	return options;
 }
 
+std::string NameOutputFile(const Runfile_c& runfile){
+	std::string outputname = runfile.filename;
+	if(runfile.lines.size() == 1){
+		outputname = "virasoro_" + to_string(runfile.runs[0][0], 3) + "_" + to_string(runfile.runs[0][1], 3) + "_" + to_string(runfile.runs[0][2], 3) + "_" + to_string(runfile.runs[0][3], 1) + "_" + std::to_string(runfile.maxOrders[0]) + ".txt";
+	} else {
+		std::size_t delPos = outputname.find(".txt");
+		if(delPos != std::string::npos) outputname.erase(delPos, 4);
+		outputname.append("_results.txt");
+	}
+	return outputname;
+}
+
+bool ParamsReal(const std::vector<std::complex<mpfr::mpreal>>& runVec){
+	for(unsigned int i = 0; i < runVec.size(); ++i){
+		if(runVec[i].imag() > tolerance) return false;
+	}
+	return true;
+}
+
+void CheckRealityAndRun(const std::vector<std::complex<mpfr::mpreal>>& runVec, const int maxOrder, const std::string outputName, const int bGiven){
+	if(ParamsReal(runVec) && 
+			(bGiven != 0 || (runVec[0].real() < 25 && runVec[0].real() > 1))){
+		std::vector<mpfr::mpreal> realRunVector;
+		for(unsigned int i = 0; i < runVec.size(); ++i){
+			realRunVector.push_back(runVec[i].real());
+		}
+		FindCoefficients<mpfr::mpreal>(realRunVector, maxOrder, outputName, bGiven);
+	} else {
+		FindCoefficients<std::complex<mpfr::mpreal>>(runVec, maxOrder, outputName, bGiven);
+	}
+}
+
+int DoRuns(const Runfile_c& runfile, const std::string options){
+	auto programStart = Clock::now();
+	const bool wolframOutput = options.find("m", 0) != std::string::npos;
+	const bool consoleOutput = options.find("c", 0) != std::string::npos;	
+	const bool wstp = options.find("w", 0) != std::string::npos;
+	int bGiven = 0;
+	if(options.find("b", 0) != std::string::npos) bGiven = 1;
+	if(options.find("bb", 0) != std::string::npos) bGiven = 2;
+	if(!wstp && !wolframOutput){
+		for(unsigned int i = 1; i <= runfile.runs.size(); ++i){
+			std::cout << "Run " << i << ": ";
+			for(int j = 1; j <= 3; ++j){
+				std::cout << to_string(runfile.runs[i-1][j-1], 4) << " ";
+			}
+			if(runfile.runs[i-1].size() > 4) std::cout << "{";
+			for(unsigned int j = 4; j <= runfile.runs[i-1].size(); ++j){
+				std::cout << to_string(runfile.runs[i-1][j-1], 4) << ",";
+			}
+			if(runfile.runs[i-1].size() > 4){
+				std::cout << "\b} ";
+			} else {
+				std::cout << "\b ";
+			}
+			std::cout << runfile.maxOrders[i-1];
+			std::cout << std::endl;
+		}
+		if(!consoleOutput) std::cout << "Output will be saved to " << NameOutputFile(runfile) << ". If it exists, it will be overwritten." << std::endl;
+	}
+	int highestMax = 0;
+	for(unsigned int i = 0; i < runfile.maxOrders.size(); ++i){
+		if(runfile.maxOrders[i] > highestMax) highestMax = runfile.maxOrders[i];
+	}
+	auto runStart = Clock::now();
+	std::string outputName;
+	if(wstp || wolframOutput){
+		showProgressBar = false;
+		if(wolframOutput){
+			outputName = "__MATHEMATICA";
+			std::cout << "{";
+		} else {
+			outputName = "__WSTP";
+		}
+		for(unsigned int run = 0; run < runfile.runs.size(); ++run){
+			CheckRealityAndRun(runfile.runs[run], runfile.maxOrders[run], outputName, bGiven);
+			if(run < runfile.runs.size()) std::cout << ",";
+		}
+		if(wolframOutput) std::cout << "}";
+	} else {
+		if(consoleOutput){
+			outputName = "__CONSOLE";
+		} else {
+			outputName = NameOutputFile(runfile);
+			std::remove(outputName.c_str());
+		}
+		for(unsigned int run = 0; run < runfile.runs.size(); ++run){
+			runStart = Clock::now();
+			std::cout << "Beginning run " << run << " of " << runfile.runs.size() << "." << std::endl;
+			CheckRealityAndRun(runfile.runs[run], runfile.maxOrders[run], outputName, bGiven);
+
+			if(runfile.runs.size() > 1) ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
+		}
+	}
+	if(!wstp && !wolframOutput) ShowTime("Entire computation", programStart);
+	return 0;
+}
+
+void ShowTime(const std::string computationName, const std::chrono::time_point<std::chrono::high_resolution_clock> timeStart){
+	auto timeEnd = Clock::now();
+	int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count();
+	std::string unit = "ms";
+	if(elapsed > 5000){
+		elapsed = std::chrono::duration_cast<std::chrono::seconds>(timeEnd - timeStart).count();
+		unit = "s";
+		if(elapsed > 300){
+			elapsed = std::chrono::duration_cast<std::chrono::minutes>(timeEnd - timeStart).count();
+			unit = "m";
+			if(elapsed > 300){
+				elapsed = std::chrono::duration_cast<std::chrono::hours>(timeEnd - timeStart).count();
+				unit = "hr";
+			}
+		}
+	}
+	std::cout << computationName << " took " << elapsed << unit << "." << std::endl;	
+}
+
 std::string to_string(const mpfr::mpreal N, int digits){
 	if(digits <= 0) return N.toString(-1, 10, MPFR_RNDN);
 	std::string output = N.toString(digits, 10, MPFR_RNDN);
@@ -229,4 +352,4 @@ std::string to_string(const std::complex<mpfr::mpreal> N, int digits, int base){
 		}
 	}
 }
-// } // namespace virasoro
+} // namespace virasoro

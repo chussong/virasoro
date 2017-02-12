@@ -38,7 +38,7 @@ void RunFromComponents(const char* c, const char* hl, const char* hh, const char
 	argv[3] = const_cast<char*>(hh);
 	argv[4] = const_cast<char*>(hp);
 	argv[5] = const_cast<char*>(maxOrder);*/
-	core(6, argv, true);
+	virasoro::core(6, argv, true);
 	//for(int i = 0; i < 6; ++i) delete[] argv[i];
 	return;
 }
@@ -49,7 +49,7 @@ void RunFromFile(const char* filename){
 	strcpy(argv[0], "vwstp_file");
 	argv[1] = new char[strlen(filename)];
 	strcpy(argv[1], filename);
-	core(2, argv, true);
+	virasoro::core(2, argv, true);
 	delete[] argv[0];
 	return;
 }

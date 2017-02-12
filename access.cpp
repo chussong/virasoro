@@ -1,6 +1,6 @@
 #include "access.h"
 
-//namespace virasoro {
+namespace virasoro {
 int Access::maxOrder = 0;
 int Access::numberOfMN = 0;
 std::vector<int> Access::mTable; // mTable[loc] = m at loc
@@ -55,4 +55,4 @@ void Access::Populate(const int maxOrder){
 	}
 	Access::maxOrder = maxOrder;
 }
-//} // namespace virasoro
+} // namespace virasoro

@@ -1,12 +1,8 @@
 #include "runfile.h"
+#include "virasoro.h"
 
-#define STATICTOLERANCE 10e-100
+namespace virasoro {
 
-// namespace virasoro {
-
-Runfile_c::Runfile_c(){}
-Runfile_c::Runfile_c(const Runfile_c& other): filename(other.filename), lines(other.lines), maxThreads(other.maxThreads), precision(other.precision), tolerance(other.tolerance), showProgressBar(other.showProgressBar){} // ~~this will be correct once we have std::vectors
-Runfile_c::Runfile_c(Runfile_c&& other): Runfile_c(){	swap(*this, other);	}
 Runfile_c::Runfile_c(const char* filename): filename(filename)
 {
 	std::ifstream inStream;
@@ -38,59 +34,7 @@ Runfile_c::Runfile_c(const std::vector<std::string> line): filename("command_lin
 	combinedLine.erase(combinedLine.length()-1);
 	lines.push_back(combinedLine);
 }
-Runfile_c::~Runfile_c(){
-}
-void Runfile_c::swap(Runfile_c& first, Runfile_c& second){
-	std::swap(first.filename, second.filename);
-	std::swap(first.lines, second.lines);
-	std::swap(first.maxThreads, second.maxThreads);
-	std::swap(first.precision, second.precision);
-	std::swap(first.tolerance, second.tolerance);
-	std::swap(first.showProgressBar, second.showProgressBar);
-	return;
-}
 
-Runfile_c& Runfile_c::operator=(Runfile_c&& v){
-	swap(*this, v);
-	return *this;
-}
-Runfile_c& Runfile_c::operator=(Runfile_c v){ //~~holy shit this should be copying
-	Runfile_c newFile(v);
-	swap(*this, newFile);
-	return *this;
-}
-Runfile_c& Runfile_c::operator=(const char* &filename){
-	Runfile_c newFile(filename);
-	swap(*this, newFile);
-	return *this;
-}
-Runfile_c& Runfile_c::operator=(const std::string& filename){
-	Runfile_c newFile(filename);
-	swap(*this, newFile);
-	return *this;
-}
-Runfile_c& Runfile_c::operator=(const std::vector<std::string> line){
-	Runfile_c newFile(line);
-	swap(*this, newFile);
-	return *this;
-}
-
-void Runfile_c::SetMaxThreads(int newMax){
-	maxThreads = newMax;
-	return;
-}
-void Runfile_c::SetPrecision(int newPrec){
-	precision = newPrec;
-	return;
-}
-void Runfile_c::SetTolerance(mpfr::mpreal newTolerance){
-	tolerance = newTolerance;
-	return;
-}
-void Runfile_c::SetProgressBar(bool newProgressBar){
-	showProgressBar = newProgressBar;
-	return;
-}
 int Runfile_c::NumberOfRuns(){
 	int count = 0;
 	for(unsigned int i = 1; i <= runs.size(); ++i){
@@ -113,8 +57,6 @@ int Runfile_c::ReadRunfile(){
 	std::vector<std::complex<mpfr::mpreal>> currentRun;
 	int currentMO;
 	for(unsigned int i = 1; i <= lines.size(); ++i){
-//		std::cout << "About to parse the following line:" << std::endl;
-//		std::cout << lines[i-1] << std::endl;
 		leftPos = 0;
 		rightPos = 0;
 		for(int j = 1; j <= 4; ++j){
@@ -124,7 +66,6 @@ int Runfile_c::ReadRunfile(){
 			} else {
 				rightPos = lines[i-1].find_first_not_of("0123456789.-", leftPos);
 			}
-//			std::cout << "Going to emplace with this:" << lines[i-1].substr(leftPos, rightPos-leftPos) << std::endl;
 			currentRun.emplace_back(lines[i-1].substr(leftPos, rightPos-leftPos));
 /*			if(emplacing doesn't work){
 				perror("Error: expected a number in the runfile but failed to read one.\n");
@@ -171,8 +112,6 @@ int Runfile_c::ReadRunfile(){
 }
 
 int Runfile_c::Expand(){
-//	std::cout << "Expanding the following lines:" << std::endl;
-//	std::for_each(lines.begin(), lines.end(), [](const std::string& line){std::cout << line << std::endl;});
 	for(int param = 1; param <= 4; ++param){
 		ExpandRelativeEqns(param-1);
 		ExpandBraces(param-1);
@@ -194,25 +133,18 @@ int Runfile_c::ExpandBraces(const int param){
 		paramLeftPos = std::get<0>(paramLocation);
 		paramRightPos = std::get<1>(paramLocation);
 		currentParam = lines[i-1].substr(paramLeftPos, paramRightPos-paramLeftPos+1);
-//		std::cout << "Checking " << currentParam << " for braces." << std::endl;
 		if((leftPos = currentParam.find("{")) != std::string::npos){
 			firstHalf = lines[i-1].substr(0, paramLeftPos+leftPos);
 			if((rightPos = currentParam.find("}", leftPos+1)) == std::string::npos){
-//				std::cout << "Found unpaired braces in " << currentParam << "." << std::endl;
 				return -2;
 			} else if(currentParam.find_first_not_of("0123456789-+()e. ,;", leftPos+1) == rightPos) {
-//				std::cout << "Found paired braces in " << currentParam << ", parsing." << std::endl;
 				secondHalf = lines[i-1].substr(paramLeftPos+rightPos+1);
 				insideBraces = currentParam.substr(leftPos+1, rightPos-leftPos-1);
 				parsedBraces = ParseBraces(insideBraces);
-//				if(std::get<0>(parsedBraces).realPart() => std::get<1>(parsedBraces).realPart() || std::get<2>(parsedBraces).realPart() <= 0) return -2;
-//				std::cout << "Parsed " << currentParam << " into the following lines:" << std::endl;
 				for(currentValue = std::get<0>(parsedBraces); currentValue.real() <= std::get<1>(parsedBraces).real(); currentValue += std::get<2>(parsedBraces)){
 					newLines.push_back(firstHalf + to_string(currentValue, -1) + secondHalf);
-//					std::cout << firstHalf + to_string(currentValue, -1) + secondHalf << std::endl;
 				}
 			} else {
-//				std::cout << "Got confused by " << currentParam << ", skipping." << std::endl;
 				newLines.push_back(lines[i-1]);
 			}
 		} else {
@@ -234,7 +166,6 @@ std::tuple<std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>, std::complex<
 		numEnd = insideBraces.find_first_of(" ,;", numStart+1)-1;
 	}
 	std::complex<mpfr::mpreal> lowerBound(insideBraces.substr(numStart, numEnd-numStart+1));
-//	std::cout << "Lower bound is " << to_string(lowerBound, 4) << " parsed from " << insideBraces.substr(numStart, numEnd-numStart+1) << std::endl;
 
 	numStart = insideBraces.find_first_of("(0123456789-+.ch", numEnd+2);
 	if(insideBraces[numStart] == '('){
@@ -243,7 +174,6 @@ std::tuple<std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>, std::complex<
 		numEnd = insideBraces.find_first_of(" ,;", numStart+1)-1;
 	}
 	std::complex<mpfr::mpreal> upperBound(insideBraces.substr(numStart, numEnd-numStart+1));
-//	std::cout << "Upper bound is " << to_string(upperBound, 4) << " parsed from " << insideBraces.substr(numStart, numEnd-numStart+1) << std::endl;
 
 	numStart = insideBraces.find_first_of("(0123456789-+.ch", numEnd+2);
 	if(insideBraces[numStart] == '('){
@@ -252,13 +182,11 @@ std::tuple<std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>, std::complex<
 		numEnd = insideBraces.find_first_of(" ,;", numStart+1)-1;
 	}
 	std::complex<mpfr::mpreal> increment(insideBraces.substr(numStart, numEnd-numStart+1));
-//	std::cout << "Increment is " << to_string(increment, 4) << " parsed from " << insideBraces.substr(numStart, numEnd-numStart+1).c_str() << std::endl;
 
 	return std::make_tuple(lowerBound, upperBound, increment);
 }
 
 std::tuple<size_t, size_t> Runfile_c::FindNthParameter(const std::string line, const int param){
-//	std::cout << "Finding parameter #" << param << " from the following line: " << line << std::endl;
 	size_t splitPos;
 	size_t leftPos;
 	size_t rightPos = -1;
@@ -277,7 +205,6 @@ std::tuple<size_t, size_t> Runfile_c::FindNthParameter(const std::string line, c
 			rightPos = splitPos-1;
 		}
 	}while(paramsFound <= param);
-//	std::cout << "It's " << line.substr(paramLocations[param], paramLocations[param+1]-2-paramLocations[param]+1) << " between positions " << paramLocations[param] << " and " << paramLocations[param+1] << std::endl;
 	return std::make_tuple(paramLocations[param], paramLocations[param+1]-2);
 }
 
@@ -299,7 +226,6 @@ int Runfile_c::ExpandRelativeEqns(const int param){
 		paramLeftPos = std::get<0>(paramLocation);
 		paramRightPos = std::get<1>(paramLocation);
 		currentParam = lines[i-1].substr(paramLeftPos, paramRightPos-paramLeftPos+1);
-//		std::cout << "Checking " << currentParam << " for relative MPFs." << std::endl;
 		do{
 			madeChange = false;
 			if((splitPos = currentParam.find_first_of("ch")) != std::string::npos){
@@ -312,7 +238,6 @@ int Runfile_c::ExpandRelativeEqns(const int param){
 				madeChange = true;
 				++changesMade;
 				currentParam = firstHalf + to_string(value, -1) + secondHalf;
-//				std::cout << currentParam << "." << std::endl;
 			}
 		}while(madeChange);
 		newLines.push_back(lines[i-1].substr(0, paramLeftPos) + currentParam + lines[i-1].substr(paramRightPos+1));
@@ -374,7 +299,6 @@ std::tuple<std::complex<mpfr::mpreal>, int> Runfile_c::ParseRelativeEqn(std::str
 }
 
 std::complex<mpfr::mpreal> Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
-//	std::cout << "Running RelativeMPF(" << firstHalf << ", " << equation << ")." << std::endl;
 	std::complex<mpfr::mpreal> output(0);
 	std::complex<mpfr::mpreal> baseMPF;
 	std::tuple<std::complex<mpfr::mpreal>, int> parsedEqn;
@@ -405,9 +329,7 @@ std::complex<mpfr::mpreal> Runfile_c::RelativeMPF(std::string firstHalf, std::st
 					output = baseMPF*modifier;
 					break;
 		case 14:	// c/n
-//					std::cout << "Running FindBaseNumber(" << firstHalf << ", 0);" << std::endl;
 					baseMPF = FindBaseNumber(firstHalf, 0);
-//					std::cout << "Created MPF " << baseMPF << " out of " << FindBaseNumber(firstHalf, 0) << std::endl;
 					output = baseMPF/modifier;
 					break;
 		case 15:	// n/c
@@ -485,11 +407,6 @@ std::string Runfile_c::FindBaseNumber(std::string sourceString, const int paramN
 }
 
 int Runfile_c::RunCompare(std::vector<std::complex<mpfr::mpreal>> run1, std::vector<std::complex<mpfr::mpreal>> run2){
-/*	std::cout << "Comparing these two runs:" << std::endl;
-	for(unsigned int i = 1; i <= run1.size(); ++i) std::cout << run1[i-1] << " ";
-	std::cout << std::endl;
-	for(unsigned int i = 1; i <= run2.size(); ++i) std::cout << run2[i-1] << " ";
-	std::cout << std::endl;*/
 	if((run1[0] != run2[0]) || (run1[1] != run2[1]) || (run1[2] != run2[2])) return 0;	// runs are different
 	for(unsigned int i = 4; i <= run1.size(); ++i){
 		for(unsigned int j = 4; j <= run2.size(); ++j){
@@ -498,131 +415,4 @@ int Runfile_c::RunCompare(std::vector<std::complex<mpfr::mpreal>> run1, std::vec
 	}
 	return -1;							// runs are identical
 }
-
-std::string Runfile_c::NameOutputFile(){
-	std::string outputname = filename;
-	if(lines.size() == 1){
-		outputname = "virasoro_" + to_string(runs[0][0], 3) + "_" + to_string(runs[0][1], 3) + "_" + to_string(runs[0][2], 3) + "_" + to_string(runs[0][3], 1) + "_" + std::to_string(maxOrders[0]) + ".txt";
-	} else {
-		std::size_t delPos = outputname.find(".txt");
-		if(delPos != std::string::npos) outputname.erase(delPos, 4);
-		outputname.append("_results.txt");
-	}
-	return outputname;
-}
-
-int Runfile_c::Execute(std::string options){
-	auto programStart = Clock::now();
-	const bool wolframOutput = options.find("m", 0) != std::string::npos;
-	const bool consoleOutput = options.find("c", 0) != std::string::npos;	
-	const bool wstp = options.find("w", 0) != std::string::npos;
-	int bGiven = 0;
-	if(options.find("b", 0) != std::string::npos) bGiven = 1;
-	if(options.find("bb", 0) != std::string::npos) bGiven = 2;
-	if(!wstp && !wolframOutput){
-		for(unsigned int i = 1; i <= runs.size(); ++i){
-			std::cout << "Run " << i << ": ";
-			for(int j = 1; j <= 3; ++j){
-				std::cout << to_string(runs[i-1][j-1], 4) << " ";
-			}
-			if(runs[i-1].size() > 4) std::cout << "{";
-			for(unsigned int j = 4; j <= runs[i-1].size(); ++j){
-				std::cout << to_string(runs[i-1][j-1], 4) << ",";
-			}
-			if(runs[i-1].size() > 4){
-				std::cout << "\b} ";
-			} else {
-				std::cout << "\b ";
-			}
-			std::cout << maxOrders[i-1];
-			std::cout << std::endl;
-		}
-		if(!consoleOutput) std::cout << "Output will be saved to " << NameOutputFile() << ". If it exists, it will be overwritten." << std::endl;
-	}
-	int highestMax = 0;
-	for(unsigned int i = 1; i <= runs.size(); ++i){
-		if(maxOrders[i-1] > highestMax) highestMax = maxOrders[i-1];
-	}
-	auto runStart = Clock::now();
-	std::string outputName;
-	std::vector<mpfr::mpreal> realRunVector;
-	bool allReal;
-	if(wstp || wolframOutput){
-		showProgressBar = false;
-		if(wolframOutput){
-			outputName = "__MATHEMATICA";
-			std::cout << "{";
-		} else {
-			outputName = "__WSTP";
-		}
-		for(unsigned int run = 1; run <= runs.size(); ++run){
-			allReal = true;
-			for(unsigned int i = 1; i <= runs[run-1].size(); ++i){
-				if(runs[run-1][i-1].imag() > tolerance){
-					allReal = false;
-					break;
-				}
-			}
-			if(bGiven == 0 && runs[run-1][0].real() < 25 && runs[run-1][0].real() > 1) allReal = false;
-			if(allReal){
-				for(unsigned int i = 1; i <= runs[run-1].size(); ++i) realRunVector.push_back(runs[run-1][i-1].real());
-				FindCoefficients<mpfr::mpreal>(realRunVector, maxOrders[run-1], outputName, bGiven);
-				realRunVector.clear();
-			} else {
-				FindCoefficients<std::complex<mpfr::mpreal>>(runs[run-1], maxOrders[run-1], outputName, bGiven);
-			}
-			if(run < runs.size()) std::cout << ",";
-		}
-		if(wolframOutput) std::cout << "}";
-	} else {
-		if(consoleOutput){
-			outputName = "__CONSOLE";
-		} else {
-			outputName = NameOutputFile();
-			std::remove(outputName.c_str());
-		}
-		for(unsigned int run = 1; run <= runs.size(); ++run){
-			runStart = Clock::now();
-//			DebugPrintRunVector(runs[run-1], hp[run-1], maxOrders[run-1]);
-			std::cout << "Beginning run " << run << " of " << runs.size() << "." << std::endl;
-			allReal = true;
-			for(unsigned int i = 1; i <= runs[run-1].size(); ++i){
-				if(runs[run-1][i-1].imag() > tolerance){
-					allReal = false;
-					break;
-				}
-			}
-			if(bGiven == 0 && runs[run-1][0].real() < 25 && runs[run-1][0].real() > 1) allReal = false;
-			if(allReal){
-				for(unsigned int i = 1; i <= runs[run-1].size(); ++i) realRunVector.push_back(runs[run-1][i-1].real());
-				FindCoefficients<mpfr::mpreal>(realRunVector, maxOrders[run-1], outputName, bGiven);
-				realRunVector.clear();
-			} else {
-				FindCoefficients<std::complex<mpfr::mpreal>>(runs[run-1], maxOrders[run-1], outputName, bGiven);
-			}
-			if(runs.size() > 1) ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
-		}
-	}
-	if(!wstp && !wolframOutput) ShowTime("Entire computation", programStart);
-	return 0;
-}
-
-void Runfile_c::ShowTime(std::string computationName, std::chrono::time_point<std::chrono::high_resolution_clock> timeStart){
-	auto timeEnd = Clock::now();
-	int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count();
-	std::string unit = "ms";
-	if(elapsed > 5000){
-		elapsed = std::chrono::duration_cast<std::chrono::seconds>(timeEnd - timeStart).count();
-		unit = "s";
-		if(elapsed > 300){
-			elapsed = std::chrono::duration_cast<std::chrono::minutes>(timeEnd - timeStart).count();
-			unit = "m";
-			if(elapsed > 300){
-				elapsed = std::chrono::duration_cast<std::chrono::hours>(timeEnd - timeStart).count();
-				unit = "hr";
-			}
-		}
-	}
-	std::cout << computationName << " took " << elapsed << unit << "." << std::endl;	
-}
-// } // namespace virasoro
+} // namespace virasoro
