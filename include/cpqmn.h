@@ -39,6 +39,7 @@ class Cpqmn_c{
 template<class T>
 Cpqmn_c<T>::Cpqmn_c(const T& bsq, const T& invBsq, const int maxOrder): bsq(bsq), invBsq(invBsq), maxOrder(maxOrder)
 {
+	static_assert(std::is_same<T,mpfr::mpreal>::value || std::is_same<T,std::complex<mpfr::mpreal>>::value, "Cpqmn_c must be instantiated as Cpqmn_c<mpreal> or Cpqmn_c<complex<mpreal>>.");
 	hpmn.resize(Access::TotalMN());
 	Amn.resize(Access::TotalMN());
 	Rmn.resize(Access::TotalMN());
@@ -124,7 +125,6 @@ void Cpqmn_c<T>::FindAmn(T& prod, const int m, const int n, T& temp1, T& temp2){
 		}
 	}
 	if(prod == 0){
-//		std::cout << "A[" << m << "," << n << "] = 1/0. This would be multiplied by P[" << m << "," << n << "] = " << this->Rmn[mnLookup[(m-1)*maxOrder + n-1]-1] << std::endl;
 		return;
 	}
 	prod = 1/prod;
@@ -270,10 +270,12 @@ void Cpqmn_c<T>::FillRmn(const T* llsq, const T* lhsq){
 	
 	this->FillAmn();
 	for(unsigned int i = 0; i < Rmn.size(); ++i){
-//		std::cout << "Pmn[" << mTable[pos-1] << "," << nTable[pos-1] << "] = " << to_string(Rmn[pos-1], 10) << std::endl;
-//		std::cout << "Amn[" << mTable[pos-1] << "," << nTable[pos-1] << "] = " << to_string(Amn[pos-1], 10) << std::endl;
 		Rmn[i] *= Amn[i];
-//		std::cout << "Rmn[" << mTable[pos-1] << "," << nTable[pos-1] << "] = " << to_string(Rmn[pos-1], 10) << std::endl;
+#ifdef VERBOSE_DEBUG
+		std::cout << "Pmn[" << mTable[pos-1] << "," << nTable[pos-1] << "] = " << to_string(Rmn[pos-1], 10) << std::endl;
+		std::cout << "Amn[" << mTable[pos-1] << "," << nTable[pos-1] << "] = " << to_string(Amn[pos-1], 10) << std::endl;
+		std::cout << "Rmn[" << mTable[pos-1] << "," << nTable[pos-1] << "] = " << to_string(Rmn[pos-1], 10) << std::endl;
+#endif
 	}
 	
 	return;
@@ -332,7 +334,7 @@ void Cpqmn_c<T>::FillCpqmn(){
 template<class T>
 T Cpqmn_c<T>::CFromHp(const T& hp, const int pos) const {
 	T ret = hp - hpmn[pos-1];
-	ret = Rmn[pos-1]/ret; // Rmn includes the factor 16^mn
+	ret = Rmn[pos-1]/ret; // my Rmn includes the factor 16^mn
 	return ret;
 }
 //} // namespace virasoro

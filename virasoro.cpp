@@ -1,5 +1,7 @@
 #include "virasoro.h"
 
+// namespace virasoro {
+
 int maxThreads;
 int precision;
 mpfr::mpreal tolerance;
@@ -140,3 +142,91 @@ std::string ParseOptions(std::vector<std::string> &args){
 	}
 	return options;
 }
+
+std::string to_string(const mpfr::mpreal N, int digits){
+	if(digits <= 0) return N.toString(-1, 10, MPFR_RNDN);
+	std::string output = N.toString(digits, 10, MPFR_RNDN);
+	std::size_t ePos = output.find('e');
+	if(ePos < std::string::npos) output = output.replace(ePos, 1, "*10^");
+	return output;
+}
+
+std::string to_string(const std::complex<mpfr::mpreal> N, int digits, int base){
+	char* cstr = mpc_get_str(base, std::max(digits,0), N.mpc_srcptr(), MPC_RNDNN);
+	std::string output(cstr);
+	mpc_free_str(cstr);
+	if(digits < 0){
+		return output;
+	}
+	size_t splitLoc = output.find(" ");
+	std::string halves[2];
+	halves[0] = output.substr(1, splitLoc-1);
+	halves[1] = output.substr(splitLoc+1, output.size()-splitLoc-2);
+	mpfr::mpreal mpfHalf;
+	for(int i = 1; i <= 2; ++i){
+		if(halves[i-1] == "+0" || halves[i-1] == "-0"){
+			halves[i-1].clear();
+		} else {
+			if(halves[i-1][0] == '-'){
+				mpfHalf = halves[i-1].substr(1);
+			} else {
+				mpfHalf = halves[i-1];
+			}
+			if(mpfHalf < STATICTOLERANCE) halves[i-1].clear();
+		}
+	}
+	size_t eLoc, eEnd;
+	for(int i = 1; i <= 2; ++i){
+		if(halves[i-1].empty()) continue;
+		if((eLoc=halves[i-1].find("e")) < std::string::npos){
+			eEnd = halves[i-1].find_first_of(" )", eLoc+3);
+			int exp = std::stoi(halves[i-1].substr(eLoc+1, eEnd-eLoc-1));
+			if(digits == 0 || std::abs(exp) < digits){
+				halves[i-1].erase(eLoc, eEnd-eLoc);
+				if(exp > 0){
+					if(halves[i-1][0] == '-'){
+						halves[i-1].erase(2, 1);
+						halves[i-1].insert(exp+2, ".");
+					} else {
+						halves[i-1].erase(1, 1);
+						halves[i-1].insert(exp+1, ".");
+					}
+				} else {
+					if(halves[i-1][0] == '-'){
+						halves[i-1].erase(2, 1);
+						halves[i-1].insert(1, "0.");
+						halves[i-1].insert(3, -1-exp, '0');
+					} else {
+						halves[i-1].erase(1, 1);
+						halves[i-1].insert(0, "0.");
+						halves[i-1].insert(2, -1-exp, '0');
+					}
+				}
+			} else {
+				if(halves[i-1][eLoc+1] == '+'){
+					halves[i-1].replace(eLoc, 2, "*10^");
+				} else {
+					halves[i-1].replace(eLoc, 1, "*10^");
+				}
+			}
+		}
+		eEnd = halves[i-1].find_last_not_of("0");
+		if(halves[i-1][eEnd] == '.') halves[i-1].erase(eEnd);
+	}
+	if(halves[0].empty()){
+		if(halves[1].empty()){
+			return "0";
+		} else {
+			halves[1].append("*I");
+			return halves[1];
+		}
+	} else {
+		if(halves[1].empty()){
+			return halves[0];
+		} else {
+			if(halves[1][0] == '-') return halves[0] + "-" + halves[1].substr(1) + "*I";
+			return halves[0] + "+" + halves[1] + "*I";
+		}
+	}
+}
+// } // namespace virasoro

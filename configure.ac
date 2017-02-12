@@ -7,6 +7,9 @@ AC_ARG_ENABLE([dev],
 AC_ARG_ENABLE([wstp],
 			  AS_HELP_STRING([--disable-wstp], [Do not build support for calling from Mathematica.]))
 
+AC_ARG_ENABLE([verbose],
+			  AS_HELP_STRING([--enable-verbose], [Enable display of intermediate results.]))
+
 dnl Switch to a C++ compiler, and check if it works.
 AC_LANG(C++)
 dnl ${CFLAGS="-O3"}
@@ -92,6 +95,10 @@ AM_CONDITIONAL([MAKE_VWSTP], [test $wstp = 1])
 AS_IF([test "x$enable_dev" = "xyes"], [
 	cflags="$cflags $devflags"
 	cxxflags="$cxxflags $devflags"
+])
+
+AS_IF([test "x$enable_verbose" = "xyes"], [
+	cxxflags="$cxxflags -DVERBOSE_DEBUG"
 ])
 
 dnl MAKE SURE CFLAGS, LDFLAGS, STATICLIBS GET SENT TO THE MAKEFILE AND ARE USED IN CORRECT PROGS

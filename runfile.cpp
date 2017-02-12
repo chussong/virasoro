@@ -2,6 +2,8 @@
 
 #define STATICTOLERANCE 10e-100
 
+// namespace virasoro {
+
 Runfile_c::Runfile_c(){}
 Runfile_c::Runfile_c(const Runfile_c& other): filename(other.filename), lines(other.lines), maxThreads(other.maxThreads), precision(other.precision), tolerance(other.tolerance), showProgressBar(other.showProgressBar){} // ~~this will be correct once we have std::vectors
 Runfile_c::Runfile_c(Runfile_c&& other): Runfile_c(){	swap(*this, other);	}
@@ -605,65 +607,6 @@ int Runfile_c::Execute(std::string options){
 	return 0;
 }
 
-int Runfile_c::EnumerateMN (int* mnLocation, int* mnMultiplicity, const unsigned short int maxOrder){
-	int numberOfMN = 0;
-	for(int m=1; m <= maxOrder; m+=2){
-		for(int n=2; m*n <= maxOrder; n+=2){		// odd m, even n
-			++mnMultiplicity[m*n-1];
-			++numberOfMN;
-		}
-		for(int n=1; (m+1)*n <= maxOrder; ++n){		// even m
-			++mnMultiplicity[(m+1)*n-1];
-			++numberOfMN;
-		}
-	}
-	mnLocation[1] = 1;
-	for(int i = 4; i <= maxOrder; i+=2){
-		mnLocation[i-1] = mnLocation[i-3] + mnMultiplicity[i-3];
-	}
-	return numberOfMN;
-}
-
-void Runfile_c::FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int *nTable, const int *mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder){
-	int pos;
-	for(int m = 1; m <= maxOrder; m+=2){
-		for(int n = 2; m*n <= maxOrder; n+=2){		// odd m, even n
-			for(pos = mnLocation[m*n-1]; pos <= mnLocation[m*n-1]+mnMultiplicity[m*n-1]; ++pos){
-				if(mTable[pos-1]==0){
-					mTable[pos-1] = m;
-					nTable[pos-1] = n;
-					mnLookup[(m-1)*maxOrder + n-1] = pos;	
-					break;
-				}
-			}
-		}
-		for(int n = 1; (m+1)*n <= maxOrder; ++n){	// even m, all n
-			for(pos = mnLocation[(m+1)*n-1]; pos <= mnLocation[(m+1)*n-1]+mnMultiplicity[(m+1)*n-1]; ++pos){
-				if(mTable[pos-1]==0){
-					mTable[pos-1] = m+1;
-					nTable[pos-1] = n;
-					mnLookup[m*maxOrder + n-1] = pos;	
-					break;
-				}
-			}
-		}
-	}
-	// this is stupid and we should get rid of the local ones entirely
-//	if(maxOrder > static_mnLocation.size()){
-		static_mnLocation.resize(maxOrder);
-		for(unsigned int mn = 2; mn <= maxOrder; mn+=2) static_mnLocation[mn-1] = mnLocation[mn-1];
-		static_mTable.resize(mnLocation[maxOrder-1]+mnMultiplicity[maxOrder-1]);
-		static_nTable.resize(mnLocation[maxOrder-1]+mnMultiplicity[maxOrder-1]);
-		for(unsigned int pos = 1; pos <= static_mTable.size(); ++pos){
-			static_mTable[pos-1] = mTable[pos-1];
-			static_nTable[pos-1] = nTable[pos-1];
-		}
-		static_mnLookup.resize(maxOrder*maxOrder); // ~~ FILL THIS FUCKER IN
-		for(unsigned int i = 0; i < static_mnLookup.size(); ++i) static_mnLookup[i] = mnLookup[i];
-		static_maxOrder = maxOrder;
-//	}
-}
-
 void Runfile_c::ShowTime(std::string computationName, std::chrono::time_point<std::chrono::high_resolution_clock> timeStart){
 	auto timeEnd = Clock::now();
 	int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count();
@@ -682,90 +625,4 @@ void Runfile_c::ShowTime(std::string computationName, std::chrono::time_point<st
 	}
 	std::cout << computationName << " took " << elapsed << unit << "." << std::endl;	
 }
-
-std::string to_string(const mpfr::mpreal N, int digits){
-	if(digits <= 0) return N.toString(-1, 10, MPFR_RNDN);
-	std::string output = N.toString(digits, 10, MPFR_RNDN);
-	std::size_t ePos = output.find('e');
-	if(ePos < std::string::npos) output = output.replace(ePos, 1, "*10^");
-	return output;
-}
-
-std::string to_string(const std::complex<mpfr::mpreal> N, int digits, int base){
-	char* cstr = mpc_get_str(base, std::max(digits,0), N.mpc_srcptr(), MPC_RNDNN);
-	std::string output(cstr);
-	mpc_free_str(cstr);
-	if(digits < 0){
-		return output;
-	}
-	size_t splitLoc = output.find(" ");
-	std::string halves[2];
-	halves[0] = output.substr(1, splitLoc-1);
-	halves[1] = output.substr(splitLoc+1, output.size()-splitLoc-2);
-	mpfr::mpreal mpfHalf;
-	for(int i = 1; i <= 2; ++i){
-		if(halves[i-1] == "+0" || halves[i-1] == "-0"){
-			halves[i-1].clear();
-		} else {
-			if(halves[i-1][0] == '-'){
-				mpfHalf = halves[i-1].substr(1);
-			} else {
-				mpfHalf = halves[i-1];
-			}
-			if(mpfHalf < STATICTOLERANCE) halves[i-1].clear();
-		}
-	}
-	size_t eLoc, eEnd;
-	for(int i = 1; i <= 2; ++i){
-		if(halves[i-1].empty()) continue;
-		if((eLoc=halves[i-1].find("e")) < std::string::npos){
-			eEnd = halves[i-1].find_first_of(" )", eLoc+3);
-			int exp = std::stoi(halves[i-1].substr(eLoc+1, eEnd-eLoc-1));
-			if(digits == 0 || std::abs(exp) < digits){
-				halves[i-1].erase(eLoc, eEnd-eLoc);
-				if(exp > 0){
-					if(halves[i-1][0] == '-'){
-						halves[i-1].erase(2, 1);
-						halves[i-1].insert(exp+2, ".");
-					} else {
-						halves[i-1].erase(1, 1);
-						halves[i-1].insert(exp+1, ".");
-					}
-				} else {
-					if(halves[i-1][0] == '-'){
-						halves[i-1].erase(2, 1);
-						halves[i-1].insert(1, "0.");
-						halves[i-1].insert(3, -1-exp, '0');
-					} else {
-						halves[i-1].erase(1, 1);
-						halves[i-1].insert(0, "0.");
-						halves[i-1].insert(2, -1-exp, '0');
-					}
-				}
-			} else {
-				if(halves[i-1][eLoc+1] == '+'){
-					halves[i-1].replace(eLoc, 2, "*10^");
-				} else {
-					halves[i-1].replace(eLoc, 1, "*10^");
-				}
-			}
-		}
-		eEnd = halves[i-1].find_last_not_of("0");
-		if(halves[i-1][eEnd] == '.') halves[i-1].erase(eEnd);
-	}
-	if(halves[0].empty()){
-		if(halves[1].empty()){
-			return "0";
-		} else {
-			halves[1].append("*I");
-			return halves[1];
-		}
-	} else {
-		if(halves[1].empty()){
-			return halves[0];
-		} else {
-			if(halves[1][0] == '-') return halves[0] + "-" + halves[1].substr(1) + "*I";
-			return halves[0] + "+" + halves[1] + "*I";
-		}
-	}
-}
+// } // namespace virasoro

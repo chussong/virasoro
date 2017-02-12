@@ -19,19 +19,7 @@
 
 typedef std::chrono::high_resolution_clock Clock;
 
-static int 				static_maxOrder;
-static std::vector<int> static_mnLocation;
-static std::vector<int> static_mnLookup;
-static std::vector<int> static_mTable;
-static std::vector<int> static_nTable;
-
-//inline int mnpos(const int m, const int n) { std::cout << "Accessing element " << m*n-1 << " of mnpos, which is size " << static_mnLocation.size() << ".\n"; return static_mnLocation[m*n-1]; }
-inline int mnpos(const int m, const int n) { return static_mnLookup[(m-1)*static_maxOrder + n-1]; }
-inline int MAt(int loc)                    { return static_mTable[loc];       }
-inline int NAt(int loc)                    { return static_nTable[loc];       }
-
-std::string to_string(const mpfr::mpreal N, int digits);
-std::string to_string(const std::complex<mpfr::mpreal> N, int digits, int base = 10);
+//namespace virasoro {
 
 class Runfile_c{
 	std::string filename;
@@ -84,19 +72,19 @@ class Runfile_c{
 
 		std::string NameOutputFile();
 
-		int EnumerateMN (int* mnLocation, int* mnMultiplicity,  unsigned short int maxOrder);
-		void FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned short int *nTable, const int *mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder);
 		void ShowTime(std::string computationName, std::chrono::time_point<std::chrono::high_resolution_clock> timeStart);
 
 		template<class T>
 		void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, const std::string outputName, const int bGiven){
-		/*	std::cout << "Beginning run with";
+#ifdef VERBOSE_DEBUG
+			std::cout << "Beginning run with";
 			std::cout << " c=" << to_string(runVector[0], 4);
 			std::cout << " hl=" << to_string(runVector[1], 4);
 			std::cout << " hh=" << to_string(runVector[2], 4);
 			std::cout << " hp=";
 			for(unsigned int i = 4; i <= runVector.size(); ++i) std::cout << to_string(runVector[i-1], 4) << ",";
-			std::cout << "\b " << std::endl;*/
+			std::cout << "\b " << std::endl;
+#endif
 			// construct b^2 and 1/b^2 from c and lambda_l and lambda_h from h_l and h_h
 			if(showProgressBar){
 				std::cout << "Computing prefactors...";
@@ -117,13 +105,6 @@ class Runfile_c{
 			ConvertInputs(bsq, invBsq, llsq, lhsq, runVector[0], runVector[1], runVector[2], temp1, temp2);
 
 			maxOrder -= maxOrder%2;
-			int* mnLocation = new int[maxOrder]; /* "pos" (location+1) in mn vector at which i+1 = m*n starts */
-			int* mnMultiplicity = new int[maxOrder]();	/* number of mn combinations giving i+1 = m*n */
-			int numberOfMN = EnumerateMN(mnLocation, mnMultiplicity, maxOrder);
-			unsigned short int* mTable = new unsigned short int[numberOfMN]();
-			unsigned short int* nTable = new unsigned short int[numberOfMN]();
-			int* mnLookup = new int[maxOrder*maxOrder];
-			FillMNTable(mnLookup, mTable, nTable, mnLocation, mnMultiplicity, maxOrder);
 			Access::Populate(maxOrder);
 			
 			Cpqmn_c<T> Cpqmn(bsq, invBsq, maxOrder);
@@ -148,23 +129,14 @@ class Runfile_c{
 			Hmn_c<T>::Fill(Hmn);
 			time2 = Clock::now();
 			
-			// corral H by q order and display coefficients
-//			T* H = new T[maxOrder/2+1];
+			// record and display coefficients H by q order
 			for(unsigned int i = 4; i <= runVector.size(); ++i){
-/*				H[0] = 1;
-				FillH(H, &Hmn, &Cpqmn, runVector[i-1], maxOrder);*/
 				if(outputName.empty() || outputName == "__CONSOLE") DisplayH(Hmn.H[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
 				if(outputName != "__CONSOLE" && outputName != "__WSTP") WriteH(Hmn.H[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder, outputName);
 #ifdef HAVE_WSTP_
 				if(outputName == "__WSTP") WSTPOut(Hmn.H[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
 #endif
 			}
-			delete[] mnLocation;
-			delete[] mnMultiplicity;
-			delete[] mTable;
-			delete[] nTable;
-			delete[] mnLookup;
-//			delete[] H;
 			return;
 		}
 
@@ -188,7 +160,7 @@ class Runfile_c{
 			lhsq = hh - temp1;
 		}
 
-		// ~~ this should actually be a static Hmn_c function that fills one order of H
+		// !! this should actually be a static Hmn_c function that fills one order of H
 		template<class T>
 		void FillH(T* H, /*const*/ Hmn_c<T>* Hmn, const Cpqmn_c<T>* Cpqmn, const T hp, const unsigned short int maxOrder){
 			T temp1;
@@ -200,20 +172,6 @@ class Runfile_c{
 					H[order/2] += temp1;
 				}
 			}
-/*			for(int order = 2; order <= maxOrder; order+=2){
-				H[order/2] = 0;
-				for(int power = 2; power <= order; power+=2){
-					for(int scanPos = mnLocation[power-1]; scanPos <= mnLocation[power-1] + mnMultiplicity[power-1] - 1; ++scanPos){
-						temp1 = hp - Cpqmn->hpmn[scanPos-1];
-						temp1 = Cpqmn->Rmn[scanPos-1]/temp1;
-						temp1 <<= 4*power;		// fast multiplication by 2^(4*power)
-		//				std::cout << "H[" << order << "] += (" << to_string(temp1, 4) << ")*(";
-						temp1 *= Hmn->Hmn[(order-power)/2][scanPos-1];
-		//				std::cout << to_string(Hmn->Hmn[(order-power)/2][scanPos-1], 4) << ") = (" << to_string(temp1, 4) << ")" << std::endl;
-						H[order/2] += temp1;
-					}
-				}
-			}*/
 			return;
 		}
 
@@ -277,4 +235,5 @@ class Runfile_c{
 #endif
 };
 
+// } // namespace virasoro
 #endif

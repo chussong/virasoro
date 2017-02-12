@@ -1,6 +1,6 @@
-//namespace virasoro {
 #include "access.h"
 
+//namespace virasoro {
 int Access::maxOrder = 0;
 int Access::numberOfMN = 0;
 std::vector<int> Access::mTable; // mTable[loc] = m at loc

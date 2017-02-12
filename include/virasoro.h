@@ -1,6 +1,5 @@
 #ifndef VIRASORO_H_
 #define VIRASORO_H_
-//#define _CRT_DISABLE_PERFCRIT_LOCKS			requires removing iostream and possibly extra static linking
 
 #include <chrono>		// timers
 #include <iostream>		// cout
@@ -15,4 +14,7 @@ std::vector<std::string> CollectArgs(int argc, char** argv);
 void ReadDefaults(const std::string filename, const bool quiet);
 void CreateConfigFile(const std::string filename);
 std::string ParseOptions(std::vector<std::string> &args);
+
+std::string to_string(const mpfr::mpreal N, int digits);
+std::string to_string(const std::complex<mpfr::mpreal> N, int digits, int base = 10);
 #endif
