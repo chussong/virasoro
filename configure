@@ -4673,7 +4673,7 @@ done
 
 mpclib=/usr/local/lib/libmpc.a
 
-headers="mpreal.h mpcomplex.h cpqmn.h hmn.h runfile.h virasoro.h vwstp.h"
+headers="mpreal.h mpcomplex.h cpqmn.h hmn.h runfile.h virasoro.h vwstp.h access.h"
 object_files="virasoro.o runfile.o"
 cflags="-O3"
 cxxflags="-O3 -std=c++14"

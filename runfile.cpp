@@ -3,7 +3,7 @@
 #define STATICTOLERANCE 10e-100
 
 Runfile_c::Runfile_c(){}
-Runfile_c::Runfile_c(const Runfile_c& other): filename(other.filename), lines(other.lines), maxThreads(other.maxThreads), precision(other.precision), tolerance(other.tolerance), showProgressBar(other.showProgressBar){}
+Runfile_c::Runfile_c(const Runfile_c& other): filename(other.filename), lines(other.lines), maxThreads(other.maxThreads), precision(other.precision), tolerance(other.tolerance), showProgressBar(other.showProgressBar){} // ~~this will be correct once we have std::vectors
 Runfile_c::Runfile_c(Runfile_c&& other): Runfile_c(){	swap(*this, other);	}
 Runfile_c::Runfile_c(const char* filename): filename(filename)
 {
@@ -52,8 +52,9 @@ Runfile_c& Runfile_c::operator=(Runfile_c&& v){
 	swap(*this, v);
 	return *this;
 }
-Runfile_c& Runfile_c::operator=(Runfile_c v){
-	swap(*this, v);
+Runfile_c& Runfile_c::operator=(Runfile_c v){ //~~holy shit this should be copying
+	Runfile_c newFile(v);
+	swap(*this, newFile);
 	return *this;
 }
 Runfile_c& Runfile_c::operator=(const char* &filename){
@@ -647,6 +648,20 @@ void Runfile_c::FillMNTable (int *mnLookup, unsigned short int *mTable, unsigned
 			}
 		}
 	}
+	// this is stupid and we should get rid of the local ones entirely
+//	if(maxOrder > static_mnLocation.size()){
+		static_mnLocation.resize(maxOrder);
+		for(unsigned int mn = 2; mn <= maxOrder; mn+=2) static_mnLocation[mn-1] = mnLocation[mn-1];
+		static_mTable.resize(mnLocation[maxOrder-1]+mnMultiplicity[maxOrder-1]);
+		static_nTable.resize(mnLocation[maxOrder-1]+mnMultiplicity[maxOrder-1]);
+		for(unsigned int pos = 1; pos <= static_mTable.size(); ++pos){
+			static_mTable[pos-1] = mTable[pos-1];
+			static_nTable[pos-1] = nTable[pos-1];
+		}
+		static_mnLookup.resize(maxOrder*maxOrder); // ~~ FILL THIS FUCKER IN
+		for(unsigned int i = 0; i < static_mnLookup.size(); ++i) static_mnLookup[i] = mnLookup[i];
+		static_maxOrder = maxOrder;
+//	}
 }
 
 void Runfile_c::ShowTime(std::string computationName, std::chrono::time_point<std::chrono::high_resolution_clock> timeStart){

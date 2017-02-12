@@ -12,11 +12,23 @@
 #endif
 #include "mpreal.h"
 #include "mpcomplex.h"
+#include "access.h"
 #include "cpqmn.h"
 #include "hmn.h"
-//#include "config.h" will add this one autoconf is set up
+//#include "config.h" !! is this actually necessary?
 
 typedef std::chrono::high_resolution_clock Clock;
+
+static int 				static_maxOrder;
+static std::vector<int> static_mnLocation;
+static std::vector<int> static_mnLookup;
+static std::vector<int> static_mTable;
+static std::vector<int> static_nTable;
+
+//inline int mnpos(const int m, const int n) { std::cout << "Accessing element " << m*n-1 << " of mnpos, which is size " << static_mnLocation.size() << ".\n"; return static_mnLocation[m*n-1]; }
+inline int mnpos(const int m, const int n) { return static_mnLookup[(m-1)*static_maxOrder + n-1]; }
+inline int MAt(int loc)                    { return static_mTable[loc];       }
+inline int NAt(int loc)                    { return static_nTable[loc];       }
 
 std::string to_string(const mpfr::mpreal N, int digits);
 std::string to_string(const std::complex<mpfr::mpreal> N, int digits, int base = 10);
@@ -112,36 +124,39 @@ class Runfile_c{
 			unsigned short int* nTable = new unsigned short int[numberOfMN]();
 			int* mnLookup = new int[maxOrder*maxOrder];
 			FillMNTable(mnLookup, mTable, nTable, mnLocation, mnMultiplicity, maxOrder);
+			Access::Populate(maxOrder);
 			
-			Cpqmn_c<T> Cpqmn(&bsq, &invBsq, numberOfMN, maxOrder, mTable, nTable, mnLookup);
+			Cpqmn_c<T> Cpqmn(bsq, invBsq, maxOrder);
 			Cpqmn.FillHpmn();
 			
 			auto time1 = Clock::now();
 			Cpqmn.FillRmn(&llsq, &lhsq);
 			auto time2 = Clock::now();
 			if(outputName == "__WSTP" || outputName == "__MATHEMATICA"){
-				CheckForDivergences(&Cpqmn, maxOrder, mnLocation, mnMultiplicity, true);
+				maxOrder = Cpqmn_c<T>::CheckForDivergences(Cpqmn, showProgressBar, true);
 			} else {
-				CheckForDivergences(&Cpqmn, maxOrder, mnLocation, mnMultiplicity, false);
+				maxOrder = Cpqmn_c<T>::CheckForDivergences(Cpqmn, showProgressBar, false);
 			}
 			if(maxOrder <= 2) return;
 			Cpqmn.FillCpqmn();
 
 			// combine Rmn and hpmn into computation of H
-			Hmn_c<T> Hmn(&Cpqmn, numberOfMN, maxOrder, mnLocation, mnMultiplicity, mnLookup);
+			std::vector<T> hpvec;
+			for(unsigned int i = 4; i <= runVector.size(); ++i) hpvec.push_back(runVector[i-1]);
+			Hmn_c<T> Hmn(&Cpqmn, hpvec, maxOrder);
 			time1 = Clock::now();
-			Hmn.FillHmn();
+			Hmn_c<T>::Fill(Hmn);
 			time2 = Clock::now();
 			
 			// corral H by q order and display coefficients
-			T* H = new T[maxOrder/2+1];
+//			T* H = new T[maxOrder/2+1];
 			for(unsigned int i = 4; i <= runVector.size(); ++i){
-				H[0] = 1;
-				FillH(H, &Hmn, &Cpqmn, runVector[i-1], mnLocation, mnMultiplicity, maxOrder);
-				if(outputName.empty() || outputName == "__CONSOLE") DisplayH(H, runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
-				if(outputName != "__CONSOLE" && outputName != "__WSTP") WriteH(H, runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder, outputName);
+/*				H[0] = 1;
+				FillH(H, &Hmn, &Cpqmn, runVector[i-1], maxOrder);*/
+				if(outputName.empty() || outputName == "__CONSOLE") DisplayH(Hmn.H[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
+				if(outputName != "__CONSOLE" && outputName != "__WSTP") WriteH(Hmn.H[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder, outputName);
 #ifdef HAVE_WSTP_
-				if(outputName == "__WSTP") WSTPOut(H, runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
+				if(outputName == "__WSTP") WSTPOut(Hmn.H[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
 #endif
 			}
 			delete[] mnLocation;
@@ -149,40 +164,7 @@ class Runfile_c{
 			delete[] mTable;
 			delete[] nTable;
 			delete[] mnLookup;
-			delete[] H;
-			return;
-		}
-
-		// this needs to not print stuff in __WSTP and __MATHEMATICA modes
-		template<class T>
-		void CheckForDivergences(const Cpqmn_c<T>* Cpqmn, unsigned short int &maxOrder, const int* mnLocation, const int* mnMultiplicity, bool quiet){
-			int oldMax = maxOrder;
-			for(int pq = 2; pq <= maxOrder-2; pq+=2){
-				for(int pos = mnLocation[pq-1]; pos < mnLocation[pq-1] + mnMultiplicity[pq-1]; ++pos){
-					for(int mn = pq; mn <= maxOrder-2; mn+=2){
-						for(int scanPos = mnLocation[mn-1]; scanPos < mnLocation[mn-1] + mnMultiplicity[mn-1]; ++scanPos){
-							if(mpfr::abs(Cpqmn->hpmn[pos-1] + pq - Cpqmn->hpmn[scanPos-1]) < tolerance && maxOrder > std::max(mn-2,pq-2)) maxOrder = std::max(mn-2, pq-2);
-						}
-					}
-					if(Cpqmn->Amn[pos-1] == 0 && maxOrder > pq-2){
-						maxOrder = pq-2;
-						if(showProgressBar) printf("\r");
-						if(!quiet){
-							if(maxOrder > 2) printf("Stopping this run at order %i because Amn diverges above this.\n", maxOrder);
-							if(maxOrder <= 2) printf("Skipping this run because Amn diverges immediately.\n");
-						}
-						return;
-					}
-				}
-			}
-			maxOrder = maxOrder - (maxOrder%2);
-			if(maxOrder < oldMax){
-				if(showProgressBar) printf("\r");
-				if(!quiet){
-					if(maxOrder > 2) printf("Stopping this run at order %i because the coefficients diverge above this.\n",maxOrder);
-					if(maxOrder <= 2) printf("Skipping this run because the coefficients diverge immediately.\n");
-				}
-			}
+//			delete[] H;
 			return;
 		}
 
@@ -206,10 +188,19 @@ class Runfile_c{
 			lhsq = hh - temp1;
 		}
 
+		// ~~ this should actually be a static Hmn_c function that fills one order of H
 		template<class T>
-		void FillH(T* H, const Hmn_c<T>* Hmn, const Cpqmn_c<T>* Cpqmn, const T hp, const int* mnLocation, const int* mnMultiplicity, const unsigned short int maxOrder){
+		void FillH(T* H, /*const*/ Hmn_c<T>* Hmn, const Cpqmn_c<T>* Cpqmn, const T hp, const unsigned short int maxOrder){
 			T temp1;
 			for(int order = 2; order <= maxOrder; order+=2){
+				for(unsigned int scanPos = 1; scanPos <= Hmn->size(order-2); ++scanPos){
+					temp1 = hp - Cpqmn->hpmn[scanPos-1];
+					temp1 = Cpqmn->Rmn[scanPos-1]/temp1; // Rmn includes the factor 16^mn
+					temp1 *= Hmn->at(order-2, scanPos-1);
+					H[order/2] += temp1;
+				}
+			}
+/*			for(int order = 2; order <= maxOrder; order+=2){
 				H[order/2] = 0;
 				for(int power = 2; power <= order; power+=2){
 					for(int scanPos = mnLocation[power-1]; scanPos <= mnLocation[power-1] + mnMultiplicity[power-1] - 1; ++scanPos){
@@ -222,12 +213,12 @@ class Runfile_c{
 						H[order/2] += temp1;
 					}
 				}
-			}
+			}*/
 			return;
 		}
 
 		template<class T>
-		void DisplayH(const T* H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
+		void DisplayH(const std::vector<T> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
 			std::cout << "Given the parameters" << std::endl;
 			std::cout << "c = " << to_string(c, 10) << ", h_L = " << to_string(hl, 10) << ", h_H = " << to_string(hh, 10) << ", h_p = " << to_string(hp, 10) << std::endl;
 			std::cout << "the Virasoro block coefficients are as follows:" << std::endl;
@@ -238,7 +229,7 @@ class Runfile_c{
 
 		// An empty outputName means a single run; a filled one is a multirun, which prints fewer words.
 		template<class T>
-		void WriteH(const T* H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder, const std::string outputName){
+		void WriteH(const std::vector<T> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder, const std::string outputName){
 			std::ofstream outputFile;
 			std::string filename = outputName;
 			if(outputName == "__MATHEMATICA"){
@@ -269,7 +260,7 @@ class Runfile_c{
 		}
 #ifdef HAVE_WSTP_
 		template<class T>
-		void WSTPOut(const T* H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
+		void WSTPOut(const std::vector<T> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
 			WSPutFunction(stdlink, "List", 5);
 			WSPutString(stdlink, to_string(c,0).c_str());
 			WSPutString(stdlink, to_string(hl,0).c_str());

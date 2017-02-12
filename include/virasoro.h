@@ -15,5 +15,4 @@ std::vector<std::string> CollectArgs(int argc, char** argv);
 void ReadDefaults(const std::string filename, const bool quiet);
 void CreateConfigFile(const std::string filename);
 std::string ParseOptions(std::vector<std::string> &args);
-
 #endif

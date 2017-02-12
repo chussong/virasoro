@@ -24,7 +24,7 @@ AC_CHECK_HEADERS(mpc.h, [], [AC_ERROR(["MPC not detected. Either you have not in
 mpclib=/usr/local/lib/libmpc.a
 
 dnl headers should probably be split for the different targets
-headers="mpreal.h mpcomplex.h cpqmn.h hmn.h runfile.h virasoro.h vwstp.h"
+headers="mpreal.h mpcomplex.h cpqmn.h hmn.h runfile.h virasoro.h vwstp.h access.h"
 object_files="virasoro.o runfile.o"
 cflags="-O3"
 cxxflags="-O3 -std=c++14"
