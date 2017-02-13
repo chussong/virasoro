@@ -14,10 +14,13 @@ constexpr int DEFAULT_PREC = 768;
 constexpr double DEFAULT_TOLERANCE = 1e-100;
 
 int core(int argc, char** argv, const bool wolfram){
-	ReadDefaults(std::string(getenv("HOME"))+"/.config/virasoro_defaults.txt", wolfram);
+	bool quiet = wolfram;
 	std::vector<std::string> args = CollectArgs(argc, argv);
 	std::string options = ParseOptions(args);
 	if(wolfram) options.append("w");
+	if(options.find('m') != std::string::npos) quiet = true;
+	ReadDefaults(std::string(getenv("HOME"))+"/.config/virasoro_defaults.txt", quiet);
+	DoOptions(options, quiet);
 	mpfr::mpreal::set_default_prec(precision);
 	mpfr::mpreal::set_default_rnd(MPFR_RNDZ);
 	int exitCode;
@@ -132,10 +135,12 @@ std::string ParseOptions(std::vector<std::string> &args){
 			options.append("b");
 			realArg[i-1] = false;
 		} else if(args[i-1].substr(0,2).compare("-p") == 0){
-			precision = std::stoi(args[i-1].substr(2));
+//			precision = std::stoi(args[i-1].substr(2));
+			options.append(args[i-1]);
 			realArg[i-1] = false;
 		} else if(args[i-1].substr(0,2).compare("-t") == 0){
-			maxThreads = std::stoi(args[i-1].substr(2));
+//			maxThreads = std::stoi(args[i-1].substr(2));
+			options.append(args[i-1]);
 			realArg[i-1] = false;
 		} else {
 			realArg[i-1] = true;
@@ -147,6 +152,20 @@ std::string ParseOptions(std::vector<std::string> &args){
 		}
 	}
 	return options;
+}
+
+void DoOptions(std::string options, const bool quiet){
+	std::size_t optionLoc, optionEnd;
+	if((optionLoc = options.find('p')) != std::string::npos){
+		optionEnd = options.find_first_not_of("0123456789", optionLoc+1) - 1;
+		precision = std::stoi(options.substr(optionLoc+1, optionEnd - optionLoc));
+		if(!quiet) std::cout << "Precision set to " << precision << " bits." << std::endl;
+	}
+	if((optionLoc = options.find('t')) != std::string::npos){
+		optionEnd = options.find_first_not_of("0123456789", optionLoc+1) - 1;
+		maxThreads = std::stoi(options.substr(optionLoc+1, optionEnd - optionLoc));
+		if(!quiet) std::cout << "Number of threads set to " << maxThreads << "." << std::endl;
+	}
 }
 
 std::string NameOutputFile(const Runfile_c& runfile){

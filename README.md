@@ -52,7 +52,7 @@ There are six options available, which can be placed either before or after the 
 | ------ | ----------- |
 | -m | give output as a single \[M\]athematica vector suitable for return from RunThrough |
 | -c | print output to the \[c\]onsole but do not write a file |
-| -p# | set numerical \[p\]recision to # (any positive integer, default would be -p512) |
+| -p# | set numerical \[p\]recision to # (any positive integer, default would be -p768) |
 | -t# | set number of \[t\]hreads to # (any positive integer, default would be -t8) |
 | -b | first provided value is \[b\] instead of c |
 | -bb | first provided value is \[b^2\] instead of c |
@@ -62,13 +62,15 @@ There is also a configuration file, created at ~/.config/virasoro\_defaults.txt,
 | Option | Description |
 | ------ | ----------- |
 | maxThreads | Maximum number of threads to use in the slow part of the calculation. Default 8, appropriate for a 4-core system. |
-| precision | Number of bits of precision used to represent all numbers interally. Default is 768, which is good enough to get most parameter ranges to order 1000. |
+| precision | Number of bits of precision used to represent all numbers internally. Default is 768, which is good enough to get most parameter ranges to order 1000. |
 | tolerance | This is the level below which numbers will be treated as zero when writing output (full precision is always kept internally). Default is 10^-100. |
 | showProgressBar | Shows a progress bar for the slow part of the calculation. Automatically suppressed if -m is given in run commands. This defaults to true; set it to false if you don't like it or really need those precious milliseconds. |
 
 ## Mathematica
 
-To call this function from Mathematica, load the package Virasoro.m by calling Needs["Virasoro`"] and call VRun, like one of the following:  
+If Mathematica is detected, a Mathematica package will also be installed. On Linux this is saved to ~/.Mathematica/Applications/Virasoro.m; on Mac OS it's saved to ~/Library/Mathematica/Applications/Virasoro.m.  
+
+To run this program from Mathematica, load Virasoro.m by calling Needs["Virasoro`"] \(it should be located automatically\) and call VRun, like one of the following:  
 results = VRun[30, 1, 3, 0, 1000];  
 results = VRun[runfile.txt];  
 If VWSTP was built and installed correctly, this will fill "results" with a Mathematica vector of vectors containing parameters used (in odd entries) and coefficients (in even entries). This can then be plotted with VPlot[results]; for explanations of the many options for VPlot, call ?VPlot.  

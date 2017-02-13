@@ -7,12 +7,8 @@
 #include <string>
 #include <vector>
 #include <tuple>
-#ifdef HAVE_WSTP
-#include "wstp.h"
-#endif
 #include "mpreal.h"
 #include "mpcomplex.h"
-//#include "config.h" !! is this actually necessary?
 
 namespace virasoro {
 
