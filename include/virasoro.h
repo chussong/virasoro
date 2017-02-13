@@ -18,9 +18,9 @@
 #include "cpqmn.h"
 #include "hmn.h"
 
-typedef std::chrono::high_resolution_clock Clock;
-
 namespace virasoro {
+
+typedef std::chrono::high_resolution_clock Clock;
 
 int core(int argc, char** argv, const bool wolfram);
 std::vector<std::string> CollectArgs(int argc, char** argv);

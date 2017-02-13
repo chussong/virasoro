@@ -48,111 +48,80 @@ int Runfile_c::ReadRunfile(){
 		perror("Error: if you give one argument it must be the name of a runfile.\n");
 		return -1;
 	}
+	entries = ParseLines(lines);
 	int errorCode = Expand();
 	if(errorCode == -2){
 		perror("Error: a curly brace '{' was found indicating a batch run, but it was not followed by a valid macro.\n");
 		return -2;
 	}
-	size_t leftPos, rightPos;
-	std::vector<std::complex<mpfr::mpreal>> currentRun;
-	int currentMO;
-	for(unsigned int i = 1; i <= lines.size(); ++i){
-		leftPos = 0;
-		rightPos = 0;
-		for(int j = 1; j <= 4; ++j){
-			leftPos = lines[i-1].find_first_of("0123456789.-(", rightPos);
-			if(lines[i-1][leftPos] == '('){
-				rightPos = lines[i-1].find(")", leftPos) + 1;
-			} else {
-				rightPos = lines[i-1].find_first_not_of("0123456789.-", leftPos);
-			}
-			currentRun.emplace_back(lines[i-1].substr(leftPos, rightPos-leftPos));
-/*			if(emplacing doesn't work){
-				perror("Error: expected a number in the runfile but failed to read one.\n");
-				return -3;
-			}*/
-		}
-		runs.push_back(currentRun);
-		leftPos = lines[i-1].find_first_of("0123456789.-", rightPos);
-		rightPos = lines[i-1].find_first_not_of("0123456789.-", leftPos);
-		currentMO = std::stoi(lines[i-1].substr(leftPos, rightPos-leftPos));
-		maxOrders.push_back(currentMO);
-		currentRun.clear();
-	}
+	std::tuple<std::vector<std::vector<std::complex<mpfr::mpreal>>>,std::vector<int>> numericization = NumericizeRuns(entries);
+	runs = std::get<0>(numericization);
+	maxOrders = std::get<1>(numericization);
 	if(runs.empty()){
 		perror("Error: zero valid runs detected in given runfile.\n");
 		return 0;
 	}
-	// Check runs for duplicates, compress runs differing only by hp
-	bool* crunched = new bool[runs.size()]();
-	for(unsigned int i = 1; i <= runs.size(); ++i){
-		for(unsigned int j = i+1; j <= runs.size(); ++j){
-			if(crunched[j-1]) continue;
-			switch(RunCompare(runs[i-1], runs[j-1])){
-				case 0:		crunched[j-1] = false;	// runs different, do nothing
-							break;				
-				case -1:	if(maxOrders[j-1] > maxOrders[i-1]) maxOrders[i-1] = maxOrders[j-1];
-							crunched[j-1] = true;	// runs identical, crunch them together
-							break;
-				case -2:	for(unsigned int k = 4; k <= runs[j-1].size(); ++k) runs[i-1].push_back(runs[j-1][k-1]);
-							if(maxOrders[j-1] > maxOrders[i-1]) maxOrders[i-1] = maxOrders[j-1];
-							crunched[j-1] = true;	// runs differ by hp, make them fast
-							break;
+	CrunchDuplicateRuns(runs, maxOrders);
+	lines.clear();
+	entries.clear();
+	return runs.size();
+}
+
+std::vector<std::vector<std::string>> Runfile_c::ParseLines(const std::vector<std::string>& lines){
+	std::vector<std::vector<std::string>> entries;
+	size_t gapPos = -1;
+	size_t entryStart;
+	std::vector<std::string> entryVec;
+	for(unsigned int i = 0; i < lines.size(); ++i){
+		do{
+			entryStart = lines[i].find_first_not_of(' ', gapPos+1);
+			if(entryStart == std::string::npos) break;
+			gapPos = lines[i].find_first_of(' ', entryStart+1);
+			if(lines[i].find_first_of('(', entryStart) < gapPos){
+				gapPos = lines[i].find_first_of(' ', gapPos+1);
 			}
-		}
+			entryVec.push_back(lines[i].substr(entryStart, gapPos-entryStart));
+		}while(gapPos != std::string::npos);
+		entries.push_back(entryVec);
+		entryVec.clear();
 	}
-	for(unsigned int i = runs.size(); i >= 1; --i){
-		if(crunched[i-1]){
-			runs.erase(runs.begin()+i-1);
-			maxOrders.erase(maxOrders.begin()+i-1);
-		}
-	}
-	delete[] crunched;
-	return lines.size();
+	return entries;
 }
 
 int Runfile_c::Expand(){
-	for(int param = 1; param <= 4; ++param){
-		ExpandRelativeEqns(param-1);
-		ExpandBraces(param-1);
+	for(int param = 0; param < 4; ++param){
+		ExpandRelativeEqns(param);
+		ExpandBraces(param);
 	}
 	return 0; 
 }
 
 // param=0 is c/b/b^2; param=1 is hl; param=2 is hh; param=3 is hp
 int Runfile_c::ExpandBraces(const int param){
-	std::vector<std::string> newLines;
+	std::vector<std::vector<std::string>> newEntries;
 	std::tuple<std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>> parsedBraces;
 	std::complex<mpfr::mpreal> currentValue;
-	std::string currentParam, insideBraces, firstHalf, secondHalf;
-	size_t paramLeftPos, paramRightPos, leftPos, rightPos;
-	std::tuple<size_t, size_t> paramLocation;
-	std::complex<mpfr::mpreal> value;
-	for(unsigned int i = 1; i <= lines.size(); ++i){
-		paramLocation = FindNthParameter(lines[i-1], param);
-		paramLeftPos = std::get<0>(paramLocation);
-		paramRightPos = std::get<1>(paramLocation);
-		currentParam = lines[i-1].substr(paramLeftPos, paramRightPos-paramLeftPos+1);
-		if((leftPos = currentParam.find("{")) != std::string::npos){
-			firstHalf = lines[i-1].substr(0, paramLeftPos+leftPos);
-			if((rightPos = currentParam.find("}", leftPos+1)) == std::string::npos){
+	std::string insideBraces;
+	size_t leftPos, rightPos;
+	for(unsigned int i = 0; i < entries.size(); ++i){
+		if((leftPos = entries[i][param].find("{")) != std::string::npos){
+			if((rightPos = entries[i][param].find("}", leftPos+1)) == std::string::npos){
 				return -2;
-			} else if(currentParam.find_first_not_of("0123456789-+()e. ,;", leftPos+1) == rightPos) {
-				secondHalf = lines[i-1].substr(paramLeftPos+rightPos+1);
-				insideBraces = currentParam.substr(leftPos+1, rightPos-leftPos-1);
+			} else if(entries[i][param].find_first_not_of("0123456789-+()e. ,;", leftPos+1) == rightPos) {
+				insideBraces = entries[i][param].substr(leftPos+1, rightPos-leftPos-1);
 				parsedBraces = ParseBraces(insideBraces);
 				for(currentValue = std::get<0>(parsedBraces); currentValue.real() <= std::get<1>(parsedBraces).real(); currentValue += std::get<2>(parsedBraces)){
-					newLines.push_back(firstHalf + to_string(currentValue, -1) + secondHalf);
+					newEntries.push_back(entries[i]);
+					newEntries[newEntries.size()-1][param] = to_string(currentValue, -1);
 				}
 			} else {
-				newLines.push_back(lines[i-1]);
+				newEntries.push_back(entries[i]);
 			}
 		} else {
-			newLines.push_back(lines[i-1]);
+			newEntries.push_back(entries[i]);
 		}
 	}
-	lines = newLines;
-	newLines.clear();
+	entries = newEntries;
 	return 0;
 }
 
@@ -186,69 +155,29 @@ std::tuple<std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>, std::complex<
 	return std::make_tuple(lowerBound, upperBound, increment);
 }
 
-std::tuple<size_t, size_t> Runfile_c::FindNthParameter(const std::string line, const int param){
-	size_t splitPos;
-	size_t leftPos;
-	size_t rightPos = -1;
-	int paramsFound = 0;
-	std::vector<size_t> paramLocations;
-	paramLocations.push_back(0);
-	do{
-		splitPos = line.find_first_of(" ", rightPos+2);
-		leftPos = line.find_last_of("(", splitPos-1);
-		rightPos = line.find_last_of(")", splitPos-1);
-		if(leftPos == std::string::npos || (rightPos!=std::string::npos && leftPos < rightPos)){
-			rightPos = splitPos-1;
-			++paramsFound;
-			paramLocations.push_back(rightPos+2);
-		} else {
-			rightPos = splitPos-1;
-		}
-	}while(paramsFound <= param);
-	return std::make_tuple(paramLocations[param], paramLocations[param+1]-2);
-}
-
 // param=0 is c/b/b^2; param=1 is hl; param=2 is hh; param=3 is hp
-int Runfile_c::ExpandRelativeEqns(const int param){
-/*	std::cout << "Parsing parameter " << param << " from these lines:" << std::endl;
-	for(unsigned int i = 1; i <= lines.size(); ++i){
-		std::cout << lines[i-1] << std::endl;
-	}*/
-	int changesMade = 0;
-	std::vector<std::string> newLines;
-	std::string currentParam, newParam, firstHalf, secondHalf;
-	size_t paramLeftPos, paramRightPos, leftPos, rightPos, splitPos;
-	std::tuple<size_t,size_t> paramLocation;
+void Runfile_c::ExpandRelativeEqns(const int param){
+	std::vector<std::string> newEntries;
+	std::string firstHalf, secondHalf;
+	size_t leftPos, rightPos, splitPos;
 	std::complex<mpfr::mpreal> value;
 	bool madeChange = true;
-	for(unsigned int i = 1; i <= lines.size(); ++i){
-		paramLocation = FindNthParameter(lines[i-1], param);
-		paramLeftPos = std::get<0>(paramLocation);
-		paramRightPos = std::get<1>(paramLocation);
-		currentParam = lines[i-1].substr(paramLeftPos, paramRightPos-paramLeftPos+1);
+	for(unsigned int i = 0; i < entries.size(); ++i){
 		do{
 			madeChange = false;
-			if((splitPos = currentParam.find_first_of("ch")) != std::string::npos){
-				leftPos = currentParam.find_last_of(" ,;{", splitPos-1) + 1;
-				rightPos = currentParam.find_first_of(" ,;}", splitPos+1) - 1;
-				if(rightPos >= currentParam.length()) rightPos = currentParam.length()-1;
-				firstHalf = currentParam.substr(0, leftPos);
-				secondHalf = currentParam.substr(rightPos+1);
-				value = RelativeMPF(lines[i-1].substr(0, paramLeftPos), currentParam.substr(leftPos, rightPos-leftPos+1));
+			if((splitPos = entries[i][param].find_first_of("ch")) != std::string::npos){
+				leftPos = entries[i][param].find_last_of(" ,;{", splitPos-1) + 1;
+				rightPos = entries[i][param].find_first_of(" ,;}", splitPos+1) - 1;
+				if(rightPos >= entries[i][param].length()) rightPos = entries[i][param].length()-1;
+				firstHalf = entries[i][param].substr(0, leftPos);
+				secondHalf = entries[i][param].substr(rightPos+1);
+				value = RelativeMPF(i, entries[i][param].substr(leftPos, rightPos-leftPos+1));
 				madeChange = true;
-				++changesMade;
-				currentParam = firstHalf + to_string(value, -1) + secondHalf;
+				entries[i][param] = firstHalf + to_string(value, -1) + secondHalf;
 			}
 		}while(madeChange);
-		newLines.push_back(lines[i-1].substr(0, paramLeftPos) + currentParam + lines[i-1].substr(paramRightPos+1));
 	}
-	lines = newLines;
-	newLines.clear();
-/*	std::cout << "Ended up with these lines:" << std::endl;
-	for(unsigned int i = 1; i <= lines.size(); ++i){
-		std::cout << lines[i-1] << std::endl;
-	}*/
-	return changesMade;
+	return;
 }
 
 std::tuple<std::complex<mpfr::mpreal>, int> Runfile_c::ParseRelativeEqn(std::string equation, std::string relTo){
@@ -257,16 +186,16 @@ std::tuple<std::complex<mpfr::mpreal>, int> Runfile_c::ParseRelativeEqn(std::str
 	std::size_t hit;
 	if((hit = equation.find(relTo)) != std::string::npos){
 		if(hit == 0){
-			if(equation[relTo.length()] == '+'){
+			if(equation[relTo.length()] == '+'){			// X + M
 				type = 0;
 				modifier = equation.substr(relTo.size()+1);
-			} else if(equation[relTo.length()] == '-'){
+			} else if(equation[relTo.length()] == '-'){ 	// X - M
 				type = 1;
 				modifier = equation.substr(relTo.size()+1);
-			} else if(equation[relTo.length()] == '*'){
+			} else if(equation[relTo.length()] == '*'){		// X * M
 				type = 3;
 				modifier = equation.substr(relTo.size()+1);
-			} else if(equation[relTo.length()] == '/'){
+			} else if(equation[relTo.length()] == '/'){		// X / M
 				type = 4;
 				modifier = equation.substr(relTo.size()+1);
 			} else {				// assume it's just equality with no arithmetic
@@ -274,16 +203,16 @@ std::tuple<std::complex<mpfr::mpreal>, int> Runfile_c::ParseRelativeEqn(std::str
 				modifier = 0;
 			}
 		} else if(hit >= 2){
-			if(equation[hit-1] == '+'){
+			if(equation[hit-1] == '+'){						// M + X
 				type = 0;
 				modifier = equation.substr(0,hit-1);
-			} else if(equation[hit-1] == '-'){
+			} else if(equation[hit-1] == '-'){				// M - X
 				type = 2;
 				modifier = equation.substr(0,hit-1);
-			} else if(equation[hit-1] == '*'){
+			} else if(equation[hit-1] == '*'){				// M * X
 				type = 3;
 				modifier = equation.substr(0,hit-1);
-			} else if(equation[hit-1] == '/'){
+			} else if(equation[hit-1] == '/'){				// M / X
 				type = 5;
 				modifier = equation.substr(0,hit-1);
 			} else {				// assume it's just equality with no arithmetic
@@ -298,115 +227,46 @@ std::tuple<std::complex<mpfr::mpreal>, int> Runfile_c::ParseRelativeEqn(std::str
 	return std::make_tuple(modifier, type);
 }
 
-std::complex<mpfr::mpreal> Runfile_c::RelativeMPF(std::string firstHalf, std::string equation){
-	std::complex<mpfr::mpreal> output(0);
+std::complex<mpfr::mpreal> Runfile_c::RelativeMPF(int lineNum, std::string equation){
 	std::complex<mpfr::mpreal> baseMPF;
 	std::tuple<std::complex<mpfr::mpreal>, int> parsedEqn;
 	if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "c")) < 0){
 		if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "hl")) < 0){
 			if(std::get<1>(parsedEqn = ParseRelativeEqn(equation, "hh")) < 0){
-				return std::complex<mpfr::mpreal>(0);
+				return std::complex<mpfr::mpreal>("(+NaN +NaN)");
 			}
 		}
 	}
 	std::complex<mpfr::mpreal> modifier = std::get<0>(parsedEqn);
 	int type = std::get<1>(parsedEqn);
-	switch(type){
-		case 10:	// c + n
-					baseMPF = FindBaseNumber(firstHalf, 0);
-					output = baseMPF + modifier;
-					break;
-		case 11:	// c - n
-					baseMPF = FindBaseNumber(firstHalf, 0);
-					output = baseMPF - modifier;
-					break;
-		case 12:	// n - c
-					baseMPF = FindBaseNumber(firstHalf, 0);
-					output = modifier - baseMPF;
-					break;
-		case 13:	// n*c
-					baseMPF = FindBaseNumber(firstHalf, 0);
-					output = baseMPF*modifier;
-					break;
-		case 14:	// c/n
-					baseMPF = FindBaseNumber(firstHalf, 0);
-					output = baseMPF/modifier;
-					break;
-		case 15:	// n/c
-					baseMPF = FindBaseNumber(firstHalf, 0);
-					output = modifier/baseMPF;
-					break;
-		case 20:	// hl + n
-					baseMPF = FindBaseNumber(firstHalf, 1);
-					output = baseMPF + modifier;
-					break;
-		case 21:	// hl - n
-					baseMPF = FindBaseNumber(firstHalf, 1);
-					output = baseMPF - modifier;
-					break;
-		case 22:	// n - hl
-					baseMPF = FindBaseNumber(firstHalf, 1);
-					output = modifier - baseMPF;
-					break;
-		case 23:	// n*hl
-					baseMPF = FindBaseNumber(firstHalf, 1);
-					output = baseMPF * modifier;
-					break;
-		case 24:	// hl/n
-					baseMPF = FindBaseNumber(firstHalf, 1);
-					output = baseMPF / modifier;
-					break;
-		case 25:	// n/hl
-					baseMPF = FindBaseNumber(firstHalf, 1);
-					output = modifier / baseMPF;
-					break;
-		case 30:	// hh + n
-					baseMPF = FindBaseNumber(firstHalf, 2);
-					output = modifier + baseMPF;
-					break;
-		case 31:	// hh - n
-					baseMPF = FindBaseNumber(firstHalf, 2);
-					output = baseMPF - modifier;
-					break;
-		case 32:	// n - hh
-					baseMPF = FindBaseNumber(firstHalf, 2);
-					output = modifier - baseMPF;
-					break;
-		case 33:	// n*hh
-					baseMPF = FindBaseNumber(firstHalf, 2);
-					output = modifier * baseMPF;
-					break;
-		case 34:	// hh/n
-					baseMPF = FindBaseNumber(firstHalf, 2);
-					output = baseMPF/modifier;
-					break;
-		case 35:	// n/hh
-					baseMPF = FindBaseNumber(firstHalf, 2);
-					output = modifier/baseMPF;
-					break;
+	baseMPF = entries[lineNum][type/10-1];
+	switch(type % 10){
+		case 0:		return modifier	+ baseMPF;
+		case 1:		return baseMPF	- modifier;
+		case 2:		return modifier	- baseMPF;
+		case 3:		return modifier	* baseMPF;
+		case 4:		return baseMPF	/ modifier;
+		case 5:		return modifier	/ baseMPF;
 	}
-	return output;
+	return std::complex<mpfr::mpreal>("(+NaN +NaN)");
 }
 
-std::string Runfile_c::FindBaseNumber(std::string sourceString, const int paramNumber){
-	std::size_t baseStart, baseEnd;
-	baseStart = 0;
-	for(int i = 1; i <= paramNumber; ++i){
-		if(sourceString[baseStart] == '('){
-			sourceString.erase(0, sourceString.find(")")+2);
-		} else {
-			sourceString.erase(0, sourceString.find_first_of(" ,;")+1);
+std::tuple<std::vector<std::vector<std::complex<mpfr::mpreal>>>,std::vector<int>> Runfile_c::NumericizeRuns(const std::vector<std::vector<std::string>>& entries){
+	std::vector<std::vector<std::complex<mpfr::mpreal>>> runs;
+	std::vector<std::complex<mpfr::mpreal>> currentRun;
+	std::vector<int> maxOrders;
+	for(unsigned int i = 0; i < entries.size(); ++i){
+		for(int j = 0; j < 4; ++j){
+			currentRun.emplace_back(entries[i][j]);
 		}
+		runs.push_back(currentRun);
+		maxOrders.push_back(std::stoi(entries[i][4]));
+		currentRun.clear();
 	}
-	if(sourceString[baseStart] == '('){
-		baseEnd = sourceString.find(")")+1;
-	} else {
-		baseEnd = sourceString.find_first_of(" ,;");
-	}
-	return sourceString.substr(baseStart, baseEnd - baseStart);
+	return std::make_tuple(runs, maxOrders);
 }
 
-int Runfile_c::RunCompare(std::vector<std::complex<mpfr::mpreal>> run1, std::vector<std::complex<mpfr::mpreal>> run2){
+int Runfile_c::RunCompare(const std::vector<std::complex<mpfr::mpreal>>& run1, const std::vector<std::complex<mpfr::mpreal>>& run2){
 	if((run1[0] != run2[0]) || (run1[1] != run2[1]) || (run1[2] != run2[2])) return 0;	// runs are different
 	for(unsigned int i = 4; i <= run1.size(); ++i){
 		for(unsigned int j = 4; j <= run2.size(); ++j){
@@ -414,5 +274,34 @@ int Runfile_c::RunCompare(std::vector<std::complex<mpfr::mpreal>> run1, std::vec
 		}
 	}
 	return -1;							// runs are identical
+}
+
+// Check runs for duplicates, compress runs differing only by hp
+void Runfile_c::CrunchDuplicateRuns(std::vector<std::vector<std::complex<mpfr::mpreal>>>& runs, std::vector<int>& maxOrders){
+	std::vector<bool> crunched;
+	crunched.resize(runs.size());
+	for(unsigned int i = 0; i < runs.size(); ++i){
+		for(unsigned int j = i+1; j < runs.size(); ++j){
+			if(crunched[j]) continue;
+			switch(RunCompare(runs[i], runs[j])){
+				case 0:		crunched[j] = false;	// runs different, do nothing
+							break;				
+				case -1:	if(maxOrders[j] > maxOrders[i]) maxOrders[i] = maxOrders[j];
+							crunched[j] = true;	// runs identical, crunch them together
+							break;
+				case -2:	for(unsigned int k = 3; k < runs[j].size(); ++k) runs[i].push_back(runs[j][k]);
+							if(maxOrders[j] > maxOrders[i]) maxOrders[i] = maxOrders[j];
+							crunched[j] = true;	// runs differ by hp, make them fast
+							break;
+			}
+		}
+	}
+	for(int i = runs.size()-1; i >= 0; --i){
+		if(crunched[i]){
+			runs.erase(runs.begin()+i);
+			maxOrders.erase(maxOrders.begin()+i);
+		}
+	}
+	return;
 }
 } // namespace virasoro

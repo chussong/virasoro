@@ -20,6 +20,7 @@ class Runfile_c{
 	public:
 		std::string filename;
 		std::vector<std::string> lines;
+		std::vector<std::vector<std::string>> entries;
 
 		std::vector<std::vector<std::complex<mpfr::mpreal>>> runs;
 		std::vector<int> maxOrders;
@@ -34,15 +35,15 @@ class Runfile_c{
 
 		int Expand();
 		int ExpandBraces(const int param);
-		std::tuple<std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>> ParseBraces(std::string insideBraces);
-		std::tuple<size_t, size_t> FindNthParameter(const std::string line, const int param);
+		void ExpandRelativeEqns(const int param);
+		std::complex<mpfr::mpreal> RelativeMPF(int lineNum, std::string equation);
 
-		int ExpandRelativeEqns(const int param);
-		std::tuple<std::complex<mpfr::mpreal>, int> ParseRelativeEqn(std::string equation, std::string relTo);
-		std::complex<mpfr::mpreal> RelativeMPF(std::string firstHalf, std::string equation);
-		std::string FindBaseNumber(std::string sourceString, const int paramNumber);
-
-		int RunCompare(std::vector<std::complex<mpfr::mpreal>> run1, std::vector<std::complex<mpfr::mpreal>> run2);
+		static std::vector<std::vector<std::string>> ParseLines(const std::vector<std::string>& lines);
+		static std::tuple<std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>, std::complex<mpfr::mpreal>> ParseBraces(std::string insideBraces);
+		static std::tuple<std::complex<mpfr::mpreal>, int> ParseRelativeEqn(std::string equation, std::string relTo);
+		static std::tuple<std::vector<std::vector<std::complex<mpfr::mpreal>>>,std::vector<int>> NumericizeRuns(const std::vector<std::vector<std::string>>& entries);
+		static int RunCompare(const std::vector<std::complex<mpfr::mpreal>>& run1, const std::vector<std::complex<mpfr::mpreal>>& run2);
+		static void CrunchDuplicateRuns(std::vector<std::vector<std::complex<mpfr::mpreal>>>& runs, std::vector<int>& maxOrders);
 };
 
 } // namespace virasoro

@@ -11,3 +11,13 @@
 	* Virasoro.m now looks for vwstp in /usr/local/libexec/ if it's not in the local directory.
 
 	* Several new functions for Virasoro.m.
+
+2017-02-12	Charles Hussong	<chussong@jhu.edu>
+
+	* Reorganized functions between the various files to improve readability.
+	* Replaced the lookup tables that were being passed around with a new
+	Access class which keeps its own data.
+	* Changed all instances of c-style arrays into std vectors. This seems to
+	have come with a minor hit to performance but not going out of bounds is
+	nice.
+	* Refactored runfile class to get rid of all the damn parser functions.

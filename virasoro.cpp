@@ -170,7 +170,7 @@ bool ParamsReal(const std::vector<std::complex<mpfr::mpreal>>& runVec){
 
 void CheckRealityAndRun(const std::vector<std::complex<mpfr::mpreal>>& runVec, const int maxOrder, const std::string outputName, const int bGiven){
 	if(ParamsReal(runVec) && 
-			(bGiven != 0 || (runVec[0].real() < 25 && runVec[0].real() > 1))){
+			(bGiven != 0 || (runVec[0].real() > 25 || runVec[0].real() < 1))){
 		std::vector<mpfr::mpreal> realRunVector;
 		for(unsigned int i = 0; i < runVec.size(); ++i){
 			realRunVector.push_back(runVec[i].real());
@@ -237,10 +237,10 @@ int DoRuns(const Runfile_c& runfile, const std::string options){
 		}
 		for(unsigned int run = 0; run < runfile.runs.size(); ++run){
 			runStart = Clock::now();
-			std::cout << "Beginning run " << run << " of " << runfile.runs.size() << "." << std::endl;
+			std::cout << "Beginning run " << run+1 << " of " << runfile.runs.size() << "." << std::endl;
 			CheckRealityAndRun(runfile.runs[run], runfile.maxOrders[run], outputName, bGiven);
 
-			if(runfile.runs.size() > 1) ShowTime(std::string("Computing run ").append(std::to_string(run)), runStart);
+			if(runfile.runs.size() > 1) ShowTime(std::string("Computing run ").append(std::to_string(run+1)), runStart);
 		}
 	}
 	if(!wstp && !wolframOutput) ShowTime("Entire computation", programStart);
