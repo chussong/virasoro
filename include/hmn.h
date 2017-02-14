@@ -22,11 +22,11 @@ class Hmn_c{
 	
 	Hmn_c() = default; // default constructor is private so no one can use it
 
-	void ThreadFillHmn(const int startingPos, const int endingPos, const int order, T& temp1, T& temp2);
+	void ThreadFillHmn(const int startingPos, const int endingPos, const int order, T& temp1);
 	static void FillH(Hmn_c<T>& Hmn, const int order, T temp);
 
 	public:
-		std::vector<std::vector<T>> H;
+		std::vector<std::vector<mpfr::mpreal>> H;
 		Hmn_c(Cpqmn_c<T>* Cpqmn, std::vector<T> hp, const int maxOrder);
 		
 /*		inline static long GetAvailableMemory(){
@@ -43,8 +43,8 @@ class Hmn_c{
 		inline T& FindH(const int order, const int loc) { return FindH(order, Access::mAtLoc(loc), Access::nAtLoc(loc)); }
 		inline int LengthOfThisOrder(const int order) { return rowLengths[order/2]; }
 
-		inline static void StartThread(Hmn_c<T>* Hmn, const int startingPos, const int endingPos, const int order, T& temp1, T& temp2){
-			Hmn->ThreadFillHmn(startingPos, endingPos, order, temp1, temp2);
+		inline static void StartThread(Hmn_c<T>* Hmn, const int startingPos, const int endingPos, const int order, T& temp1){
+			Hmn->ThreadFillHmn(startingPos, endingPos, order, temp1);
 		}
 		
 		static void FillHmn(Hmn_c<T>& Hmn);
@@ -95,9 +95,8 @@ void Hmn_c<T>::FillHmn(Hmn_c<T>& Hmn){
 	const int maxOrder = Hmn.Diag.size()*2;
 	std::vector<std::thread> thread;
 	thread.resize(maxThreads);
-	std::vector<T> temp1, temp2;
+	std::vector<T> temp1;
 	temp1.resize(maxThreads);
-	temp2.resize(maxThreads);
 	int numThreads, posThisOrder, posPerThread, extraPos;
 	float progress, totalComputations=0.0f;
 	if(showProgressBar){
@@ -111,9 +110,9 @@ void Hmn_c<T>::FillHmn(Hmn_c<T>& Hmn){
 		numThreads = std::min(maxThreads, posThisOrder);
 		posPerThread = posThisOrder / numThreads;
 		extraPos = posThisOrder % numThreads;
-		thread[0] = std::thread(Hmn_c::StartThread, &Hmn, 1, posPerThread + extraPos, order, std::ref(temp1[0]), std::ref(temp2[0]));
+		thread[0] = std::thread(Hmn_c::StartThread, &Hmn, 1, posPerThread + extraPos, order, std::ref(temp1[0]));
 		for(int i=2; i<=numThreads; ++i){	
-			thread[i-1] = std::thread(Hmn_c::StartThread, &Hmn, (i-1)*posPerThread + extraPos + 1, i*posPerThread + extraPos, order, std::ref(temp1[i-1]), std::ref(temp2[i-1]));
+			thread[i-1] = std::thread(Hmn_c::StartThread, &Hmn, (i-1)*posPerThread + extraPos + 1, i*posPerThread + extraPos, order, std::ref(temp1[i-1]));
 		}
 		for(int i=1; i<= numThreads; ++i){
 			thread[i-1].join();
@@ -136,24 +135,33 @@ void Hmn_c<T>::FillHmn(Hmn_c<T>& Hmn){
 }
 
 template<class T>
-void Hmn_c<T>::ThreadFillHmn(const int startingPos, const int endingPos, const int order, T& temp1, T& temp2){
+void Hmn_c<T>::ThreadFillHmn(const int startingPos, const int endingPos, const int order, T& temp1){
 	for(int pos = startingPos; pos <= endingPos; ++pos){
-		temp2 = 0;
 		for(unsigned int scanPos = 1; scanPos <= Diag[order/2-1].size(); ++scanPos){
 			temp1 = (*Cpqmn)[pos-1][scanPos-1]*Diag[order/2-1][scanPos-1];
-			temp2 += temp1;
+			FindH(order, Access::mAtLoc(pos-1), Access::nAtLoc(pos-1)) += temp1;
 		}
-		FindH(order, Access::mAtLoc(pos-1), Access::nAtLoc(pos-1)) = temp2;
 	}
 	return;
 }
 
-template<class T>
-void Hmn_c<T>::FillH(Hmn_c<T>& Hmn, const int order, T temp){
+template<>
+inline void Hmn_c<mpfr::mpreal>::FillH(Hmn_c<mpfr::mpreal>& Hmn, const int order, mpfr::mpreal temp){
 	for(unsigned int i = 0; i < Hmn.H.size(); ++i){
 		for(unsigned int scanPos = 1; scanPos <= Hmn.size(order-2); ++scanPos){
 			temp = Hmn.Cpqmn->CFromHp(Hmn.hp[i], scanPos)*Hmn.at(order-2, scanPos-1);
 			Hmn.H[i][order/2] += temp;
+		}
+	}
+	return;
+}
+
+template<>
+inline void Hmn_c<std::complex<mpfr::mpreal>>::FillH(Hmn_c<std::complex<mpfr::mpreal>>& Hmn, const int order, std::complex<mpfr::mpreal> temp){
+	for(unsigned int i = 0; i < Hmn.H.size(); ++i){
+		for(unsigned int scanPos = 1; scanPos <= Hmn.size(order-2); ++scanPos){
+			temp = Hmn.Cpqmn->CFromHp(Hmn.hp[i], scanPos)*Hmn.at(order-2, scanPos-1);
+			Hmn.H[i][order/2] += temp.real();
 		}
 	}
 	return;

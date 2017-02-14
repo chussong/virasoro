@@ -58,9 +58,9 @@ void ConvertInputs(T& bsq, T& invBsq, T& llsq, T& lhsq, const T& c, const T& hl,
 	lhsq = hh - temp1;
 }
 
-// !! this should actually be a static Hmn_c function that fills one order of H
+/* !! this should actually be a static Hmn_c function that fills one order of H
 template<class T>
-void FillH(T* H, /*const*/ Hmn_c<T>* Hmn, const Cpqmn_c<T>* Cpqmn, const T hp, const unsigned short int maxOrder){
+void FillH(T* H, const Hmn_c<T>* Hmn, const Cpqmn_c<T>* Cpqmn, const T hp, const unsigned short int maxOrder){
 	T temp1;
 	for(int order = 2; order <= maxOrder; order+=2){
 		for(unsigned int scanPos = 1; scanPos <= Hmn->size(order-2); ++scanPos){
@@ -71,10 +71,10 @@ void FillH(T* H, /*const*/ Hmn_c<T>* Hmn, const Cpqmn_c<T>* Cpqmn, const T hp, c
 		}
 	}
 	return;
-}
+}*/
 
 template<class T>
-void DisplayH(const std::vector<T> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
+void DisplayH(const std::vector<mpfr:: mpreal> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
 	std::cout << "Given the parameters" << std::endl;
 	std::cout << "c = " << to_string(c, 10) << ", h_L = " << to_string(hl, 10) << ", h_H = " << to_string(hh, 10) << ", h_p = " << to_string(hp, 10) << std::endl;
 	std::cout << "the Virasoro block coefficients are as follows:" << std::endl;
@@ -85,7 +85,7 @@ void DisplayH(const std::vector<T> H, const T c, const T hl, const T hh, const T
 
 // An empty outputName means a single run; a filled one is a multirun, which prints fewer words.
 template<class T>
-void WriteH(const std::vector<T> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder, const std::string outputName){
+void WriteH(const std::vector<mpfr::mpreal> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder, const std::string outputName){
 	std::ofstream outputFile;
 	std::string filename = outputName;
 	if(outputName == "__MATHEMATICA"){
@@ -116,7 +116,7 @@ void WriteH(const std::vector<T> H, const T c, const T hl, const T hh, const T h
 }
 #ifdef HAVE_WSTP
 template<class T>
-void WSTPOut(const std::vector<T> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
+void WSTPOut(const std::vector<mpfr::mpreal> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
 	WSPutFunction(stdlink, "List", 5);
 	WSPutString(stdlink, to_string(c,0).c_str());
 	WSPutString(stdlink, to_string(hl,0).c_str());

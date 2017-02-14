@@ -283,6 +283,7 @@ void ShowTime(const std::string computationName, const std::chrono::time_point<s
 	std::cout << computationName << " took " << elapsed << unit << "." << std::endl;	
 }
 
+// digits <= 0 gives exact number
 std::string to_string(const mpfr::mpreal& N, int digits){
 	if(digits <= 0) return N.toString(-1, 10, MPFR_RNDN);
 	std::string output = N.toString(digits, 10, MPFR_RNDN);
@@ -291,6 +292,7 @@ std::string to_string(const mpfr::mpreal& N, int digits){
 	return output;
 }
 
+// digits = 0 gives exact number in Mathematica syntax, digits < 0 gives exact in MPC syntax
 std::string to_string(const std::complex<mpfr::mpreal>& N, int digits, int base){
 	char* cstr = mpc_get_str(base, std::max(digits,0), N.mpc_srcptr(), MPC_RNDNN);
 	std::string output(cstr);
@@ -312,7 +314,7 @@ std::string to_string(const std::complex<mpfr::mpreal>& N, int digits, int base)
 			} else {
 				mpfHalf = halves[i-1];
 			}
-			if(mpfHalf < STATICTOLERANCE) halves[i-1].clear();
+			if(mpfHalf < STATICTOLERANCE) halves[i-1].clear(); // change to regular tolerance
 		}
 	}
 	size_t eLoc, eEnd;
@@ -326,9 +328,11 @@ std::string to_string(const std::complex<mpfr::mpreal>& N, int digits, int base)
 				if(exp > 0){
 					if(halves[i-1][0] == '-'){
 						halves[i-1].erase(2, 1);
+						if(static_cast<unsigned long>(exp)+2 >= halves[i-1].size()) halves[i-1].append(exp+3-halves[i-1].size(), '0');
 						halves[i-1].insert(exp+2, ".");
 					} else {
 						halves[i-1].erase(1, 1);
+						if(static_cast<unsigned long>(exp)+1 >= halves[i-1].size()) halves[i-1].append(exp+2-halves[i-1].size(), '0');
 						halves[i-1].insert(exp+1, ".");
 					}
 				} else {
