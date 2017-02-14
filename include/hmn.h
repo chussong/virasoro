@@ -27,7 +27,7 @@ class Hmn_c{
 
 	public:
 		std::vector<std::vector<T>> H;
-		Hmn_c(Cpqmn_c<T>* Cpqmn, std::vector<T> hp, const unsigned short int maxOrder);
+		Hmn_c(Cpqmn_c<T>* Cpqmn, std::vector<T> hp, const int maxOrder);
 		
 /*		inline static long GetAvailableMemory(){
 			long pages = sysconf(_SC_AVPHYS_PAGES);
@@ -51,7 +51,7 @@ class Hmn_c{
 };
 
 template<class T>
-Hmn_c<T>::Hmn_c(Cpqmn_c<T>* Cpqmn, const std::vector<T> hp, const unsigned short int maxOrder): Cpqmn(Cpqmn), hp(hp)
+Hmn_c<T>::Hmn_c(Cpqmn_c<T>* Cpqmn, const std::vector<T> hp, const int maxOrder): Cpqmn(Cpqmn), hp(hp)
 {
 /*	if(GetAvailableMemory() < (long)maxOrder*numberOfMN*precision/16){
 		swapping = true;

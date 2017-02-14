@@ -135,11 +135,9 @@ std::string ParseOptions(std::vector<std::string> &args){
 			options.append("b");
 			realArg[i-1] = false;
 		} else if(args[i-1].substr(0,2).compare("-p") == 0){
-//			precision = std::stoi(args[i-1].substr(2));
 			options.append(args[i-1]);
 			realArg[i-1] = false;
 		} else if(args[i-1].substr(0,2).compare("-t") == 0){
-//			maxThreads = std::stoi(args[i-1].substr(2));
 			options.append(args[i-1]);
 			realArg[i-1] = false;
 		} else {
@@ -154,7 +152,7 @@ std::string ParseOptions(std::vector<std::string> &args){
 	return options;
 }
 
-void DoOptions(std::string options, const bool quiet){
+void DoOptions(const std::string& options, const bool quiet){
 	std::size_t optionLoc, optionEnd;
 	if((optionLoc = options.find('p')) != std::string::npos){
 		optionEnd = options.find_first_not_of("0123456789", optionLoc+1) - 1;
@@ -285,7 +283,7 @@ void ShowTime(const std::string computationName, const std::chrono::time_point<s
 	std::cout << computationName << " took " << elapsed << unit << "." << std::endl;	
 }
 
-std::string to_string(const mpfr::mpreal N, int digits){
+std::string to_string(const mpfr::mpreal& N, int digits){
 	if(digits <= 0) return N.toString(-1, 10, MPFR_RNDN);
 	std::string output = N.toString(digits, 10, MPFR_RNDN);
 	std::size_t ePos = output.find('e');
@@ -293,7 +291,7 @@ std::string to_string(const mpfr::mpreal N, int digits){
 	return output;
 }
 
-std::string to_string(const std::complex<mpfr::mpreal> N, int digits, int base){
+std::string to_string(const std::complex<mpfr::mpreal>& N, int digits, int base){
 	char* cstr = mpc_get_str(base, std::max(digits,0), N.mpc_srcptr(), MPC_RNDNN);
 	std::string output(cstr);
 	mpc_free_str(cstr);

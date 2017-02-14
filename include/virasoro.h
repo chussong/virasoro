@@ -26,8 +26,8 @@ int core(int argc, char** argv, const bool wolfram);
 std::vector<std::string> CollectArgs(int argc, char** argv);
 void ReadDefaults(const std::string filename, const bool quiet);
 void CreateConfigFile(const std::string filename);
-std::string ParseOptions(std::vector<std::string> &args);
-void DoOptions(std::string options, const bool quiet);
+std::string ParseOptions(std::vector<std::string>& args);
+void DoOptions(const std::string& options, const bool quiet);
 
 std::string NameOutputFile(const Runfile_c& runfile);
 bool ParamsReal(const std::vector<std::complex<mpfr::mpreal>>& runVec);
@@ -35,8 +35,8 @@ void CheckRealityAndRun(const std::vector<std::complex<mpfr::mpreal>>& runVec, c
 int DoRuns(const Runfile_c& runfile, const std::string options);
 void ShowTime(const std::string computationName, const std::chrono::time_point<std::chrono::high_resolution_clock> timeStart);
 
-std::string to_string(const mpfr::mpreal N, int digits);
-std::string to_string(const std::complex<mpfr::mpreal> N, int digits, int base = 10);
+std::string to_string(const mpfr::mpreal& N, int digits);
+std::string to_string(const std::complex<mpfr::mpreal>& N, int digits, int base = 10);
 
 template<class T>
 void ConvertInputs(T& bsq, T& invBsq, T& llsq, T& lhsq, const T& c, const T& hl, const T& hh, T& temp1, T& temp2){
@@ -79,7 +79,7 @@ void DisplayH(const std::vector<T> H, const T c, const T hl, const T hh, const T
 	std::cout << "c = " << to_string(c, 10) << ", h_L = " << to_string(hl, 10) << ", h_H = " << to_string(hh, 10) << ", h_p = " << to_string(hp, 10) << std::endl;
 	std::cout << "the Virasoro block coefficients are as follows:" << std::endl;
 	for(int orderBy2 = 0; 2*orderBy2 <= maxOrder; ++orderBy2){
-		std::cout << "q^" << 2*orderBy2 << ": " << to_string(H[orderBy2], 10) << std::endl;
+		std::cout << "q^" << 2*orderBy2 << ": " << to_string(H[orderBy2]/*.real()*/, 10) << std::endl;
 	}
 }
 
