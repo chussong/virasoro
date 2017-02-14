@@ -73,8 +73,8 @@ void FillH(T* H, const Hmn_c<T>* Hmn, const Cpqmn_c<T>* Cpqmn, const T hp, const
 	return;
 }*/
 
-template<class T>
-void DisplayH(const std::vector<mpfr:: mpreal> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
+template<class T, class U>
+void DisplayH(const std::vector<U> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
 	std::cout << "Given the parameters" << std::endl;
 	std::cout << "c = " << to_string(c, 10) << ", h_L = " << to_string(hl, 10) << ", h_H = " << to_string(hh, 10) << ", h_p = " << to_string(hp, 10) << std::endl;
 	std::cout << "the Virasoro block coefficients are as follows:" << std::endl;
@@ -84,8 +84,8 @@ void DisplayH(const std::vector<mpfr:: mpreal> H, const T c, const T hl, const T
 }
 
 // An empty outputName means a single run; a filled one is a multirun, which prints fewer words.
-template<class T>
-void WriteH(const std::vector<mpfr::mpreal> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder, const std::string outputName){
+template<class T, class U>
+void WriteH(const std::vector<U> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder, const std::string outputName){
 	std::ofstream outputFile;
 	std::string filename = outputName;
 	if(outputName == "__MATHEMATICA"){
@@ -115,8 +115,8 @@ void WriteH(const std::vector<mpfr::mpreal> H, const T c, const T hl, const T hh
 	outputFile.close();
 }
 #ifdef HAVE_WSTP
-template<class T>
-void WSTPOut(const std::vector<mpfr::mpreal> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
+template<class T, class U>
+void WSTPOut(const std::vector<U> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder){
 	WSPutFunction(stdlink, "List", 5);
 	WSPutString(stdlink, to_string(c,0).c_str());
 	WSPutString(stdlink, to_string(hl,0).c_str());
@@ -133,7 +133,7 @@ void WSTPOut(const std::vector<mpfr::mpreal> H, const T c, const T hl, const T h
 #endif
 
 template<class T>
-void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, const std::string outputName, const int bGiven){
+void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, const std::string outputName, const int bGiven, const bool complexH){
 #ifdef VERBOSE_DEBUG
 	std::cout << "Beginning run with";
 	std::cout << " c=" << to_string(runVector[0], 4);
@@ -180,16 +180,26 @@ void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, con
 	// combine Rmn and hpmn into computation of H
 	std::vector<T> hpvec;
 	for(unsigned int i = 4; i <= runVector.size(); ++i) hpvec.push_back(runVector[i-1]);
-	Hmn_c<T> Hmn(&Cpqmn, hpvec, maxOrder);
+	Hmn_c<T> Hmn(&Cpqmn, hpvec, maxOrder, complexH);
 	Hmn_c<T>::FillHmn(Hmn);
 	
 	// record and display coefficients H by q order
-	for(unsigned int i = 4; i <= runVector.size(); ++i){
-		if(outputName.empty() || outputName == "__CONSOLE") DisplayH(Hmn.H[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
-		if(outputName != "__CONSOLE" && outputName != "__WSTP") WriteH(Hmn.H[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder, outputName);
+	if(complexH){
+		for(unsigned int i = 4; i <= runVector.size(); ++i){
+			if(outputName.empty() || outputName == "__CONSOLE") DisplayH(Hmn.complexH[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
+			if(outputName != "__CONSOLE" && outputName != "__WSTP") WriteH(Hmn.complexH[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder, outputName);
 #ifdef HAVE_WSTP
-		if(outputName == "__WSTP") WSTPOut(Hmn.H[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
+			if(outputName == "__WSTP") WSTPOut(Hmn.complexH[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
 #endif
+		}
+	} else {
+		for(unsigned int i = 4; i <= runVector.size(); ++i){
+			if(outputName.empty() || outputName == "__CONSOLE") DisplayH(Hmn.realH[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
+			if(outputName != "__CONSOLE" && outputName != "__WSTP") WriteH(Hmn.realH[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder, outputName);
+#ifdef HAVE_WSTP
+			if(outputName == "__WSTP") WSTPOut(Hmn.realH[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
+#endif
+		}
 	}
 	return;
 }

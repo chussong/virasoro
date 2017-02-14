@@ -186,15 +186,18 @@ bool ParamsReal(const std::vector<std::complex<mpfr::mpreal>>& runVec){
 }
 
 void CheckRealityAndRun(const std::vector<std::complex<mpfr::mpreal>>& runVec, const int maxOrder, const std::string outputName, const int bGiven){
-	if(ParamsReal(runVec) && 
-			(bGiven != 0 || (runVec[0].real() > 25 || runVec[0].real() < 1))){
-		std::vector<mpfr::mpreal> realRunVector;
-		for(unsigned int i = 0; i < runVec.size(); ++i){
-			realRunVector.push_back(runVec[i].real());
+	if(ParamsReal(runVec)){
+		if(bGiven != 0 || (runVec[0].real() > 25 || runVec[0].real() < 1)){
+			std::vector<mpfr::mpreal> realRunVector;
+			for(unsigned int i = 0; i < runVec.size(); ++i){
+				realRunVector.push_back(runVec[i].real());
+			}
+			FindCoefficients<mpfr::mpreal>(realRunVector, maxOrder, outputName, bGiven, false);
+		} else {
+			FindCoefficients<std::complex<mpfr::mpreal>>(runVec, maxOrder, outputName, bGiven, false);
 		}
-		FindCoefficients<mpfr::mpreal>(realRunVector, maxOrder, outputName, bGiven);
 	} else {
-		FindCoefficients<std::complex<mpfr::mpreal>>(runVec, maxOrder, outputName, bGiven);
+		FindCoefficients<std::complex<mpfr::mpreal>>(runVec, maxOrder, outputName, bGiven, true);
 	}
 }
 

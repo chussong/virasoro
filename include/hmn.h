@@ -26,8 +26,10 @@ class Hmn_c{
 	static void FillH(Hmn_c<T>& Hmn, const int order, T temp);
 
 	public:
-		std::vector<std::vector<mpfr::mpreal>> H;
-		Hmn_c(Cpqmn_c<T>* Cpqmn, std::vector<T> hp, const int maxOrder);
+		const bool HIsComplex;
+		std::vector<std::vector<mpfr::mpreal>> realH;
+		std::vector<std::vector<std::complex<mpfr::mpreal>>> complexH;
+		Hmn_c(Cpqmn_c<T>* Cpqmn, std::vector<T> hp, const int maxOrder, const bool complexArgs);
 		
 /*		inline static long GetAvailableMemory(){
 			long pages = sysconf(_SC_AVPHYS_PAGES);
@@ -51,7 +53,7 @@ class Hmn_c{
 };
 
 template<class T>
-Hmn_c<T>::Hmn_c(Cpqmn_c<T>* Cpqmn, const std::vector<T> hp, const int maxOrder): Cpqmn(Cpqmn), hp(hp)
+Hmn_c<T>::Hmn_c(Cpqmn_c<T>* Cpqmn, const std::vector<T> hp, const int maxOrder, const bool complexArgs): Cpqmn(Cpqmn), hp(hp), HIsComplex(complexArgs)
 {
 /*	if(GetAvailableMemory() < (long)maxOrder*numberOfMN*precision/16){
 		swapping = true;
@@ -70,10 +72,18 @@ Hmn_c<T>::Hmn_c(Cpqmn_c<T>* Cpqmn, const std::vector<T> hp, const int maxOrder):
 		rowLengths[(maxOrder-order)/2-1] = diagSize;
 	}
 	for(int pos = 1; pos <= diagSize; ++pos) FindH(0, pos-1) = 1;
-	H.resize(hp.size());
-	for(unsigned int i = 0; i < H.size(); ++i){
-		H[i].resize(maxOrder/2+1);
-		H[i][0] = 1;
+	if(HIsComplex){
+		complexH.resize(hp.size());
+		for(unsigned int i = 0; i < complexH.size(); ++i){
+			complexH[i].resize(maxOrder/2+1);
+			complexH[i][0] = 1;
+		}
+	} else {
+		realH.resize(hp.size());
+		for(unsigned int i = 0; i < realH.size(); ++i){
+			realH[i].resize(maxOrder/2+1);
+			realH[i][0] = 1;
+		}
 	}
 //	std::cout << "After allocating, there is now " << GetAvailableMemory() << " available." << std::endl;
 }
@@ -117,14 +127,14 @@ void Hmn_c<T>::FillHmn(Hmn_c<T>& Hmn){
 		for(int i=1; i<= numThreads; ++i){
 			thread[i-1].join();
 		}
-		for(unsigned int i = 0; i < Hmn.H.size(); ++i) FillH(Hmn, order, temp1[0]);
+		for(unsigned int i = 0; i < Hmn.hp.size(); ++i) FillH(Hmn, order, temp1[0]);
 		if(showProgressBar){
 			progress += posThisOrder*Hmn.Diag[order/2-1].size()/totalComputations;
 			DrawProgressBar(progress);
 		}
 		Hmn.Diag[order/2-1].clear();
 	}
-	for(unsigned int i = 0; i < Hmn.H.size(); ++i) FillH(Hmn, maxOrder, temp1[0]);
+	for(unsigned int i = 0; i < Hmn.hp.size(); ++i) FillH(Hmn, maxOrder, temp1[0]);
 	Hmn.Diag[maxOrder/2-1].clear();
 	if(showProgressBar){
 		progress = 1.0f;
@@ -147,10 +157,10 @@ void Hmn_c<T>::ThreadFillHmn(const int startingPos, const int endingPos, const i
 
 template<>
 inline void Hmn_c<mpfr::mpreal>::FillH(Hmn_c<mpfr::mpreal>& Hmn, const int order, mpfr::mpreal temp){
-	for(unsigned int i = 0; i < Hmn.H.size(); ++i){
+	for(unsigned int i = 0; i < Hmn.realH.size(); ++i){
 		for(unsigned int scanPos = 1; scanPos <= Hmn.size(order-2); ++scanPos){
 			temp = Hmn.Cpqmn->CFromHp(Hmn.hp[i], scanPos)*Hmn.at(order-2, scanPos-1);
-			Hmn.H[i][order/2] += temp;
+			Hmn.realH[i][order/2] += temp;
 		}
 	}
 	return;
@@ -158,10 +168,19 @@ inline void Hmn_c<mpfr::mpreal>::FillH(Hmn_c<mpfr::mpreal>& Hmn, const int order
 
 template<>
 inline void Hmn_c<std::complex<mpfr::mpreal>>::FillH(Hmn_c<std::complex<mpfr::mpreal>>& Hmn, const int order, std::complex<mpfr::mpreal> temp){
-	for(unsigned int i = 0; i < Hmn.H.size(); ++i){
-		for(unsigned int scanPos = 1; scanPos <= Hmn.size(order-2); ++scanPos){
-			temp = Hmn.Cpqmn->CFromHp(Hmn.hp[i], scanPos)*Hmn.at(order-2, scanPos-1);
-			Hmn.H[i][order/2] += temp.real();
+	if(Hmn.HIsComplex){
+		for(unsigned int i = 0; i < Hmn.complexH.size(); ++i){
+			for(unsigned int scanPos = 1; scanPos <= Hmn.size(order-2); ++scanPos){
+				temp = Hmn.Cpqmn->CFromHp(Hmn.hp[i], scanPos)*Hmn.at(order-2, scanPos-1);
+				Hmn.complexH[i][order/2] += temp;
+			}
+		}
+	} else {
+		for(unsigned int i = 0; i < Hmn.realH.size(); ++i){
+			for(unsigned int scanPos = 1; scanPos <= Hmn.size(order-2); ++scanPos){
+				temp = Hmn.Cpqmn->CFromHp(Hmn.hp[i], scanPos)*Hmn.at(order-2, scanPos-1);
+				Hmn.realH[i][order/2] += temp.real();
+			}
 		}
 	}
 	return;
