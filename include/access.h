@@ -21,6 +21,7 @@ class Access {
 		inline static int TotalMN	()							{ return numberOfMN;  }
 
 		static void Populate(const int maxOrder);
+		static int MNAtLevel(const int level);
 };
 
 } // namespace virasoro

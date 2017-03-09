@@ -34,17 +34,31 @@ class Cpqmn_c{
 
 		const std::vector<T>& operator[](const int pos) const { return Cpqmn[pos]; }
 		T CFromHp(const T& hp, const int pos) const;
+
+		void DoneWithOrder(const int order);
 };
 
 template<class T>
-Cpqmn_c<T>::Cpqmn_c(const T& bsq, const T& invBsq, const int maxOrder): bsq(bsq), invBsq(invBsq), maxOrder(maxOrder)
+Cpqmn_c<T>::Cpqmn_c(const T& bsq, const T& invBsq, const int maxOrder): 
+	bsq(bsq), invBsq(invBsq), maxOrder(maxOrder)
 {
-	static_assert(std::is_same<T,mpfr::mpreal>::value || std::is_same<T,std::complex<mpfr::mpreal>>::value, "Cpqmn_c must be instantiated as Cpqmn_c<mpreal> or Cpqmn_c<complex<mpreal>>.");
+	static_assert(std::is_same<T,mpfr::mpreal>::value || 
+		std::is_same<T,std::complex<mpfr::mpreal>>::value, 
+		"Cpqmn_c must be instantiated as Cpqmn_c<mpreal> or Cpqmn_c<complex<mpreal>>.");
 	hpmn.resize(Access::TotalMN());
 	Amn.resize(Access::TotalMN());
 	Rmn.resize(Access::TotalMN());
-	Cpqmn.resize(Access::TotalMN());
-	for(int i = 0; i < Access::TotalMN(); ++i) Cpqmn[i].resize(Access::TotalMN());
+	Cpqmn.resize(Access::TotalMN() - Access::MultOfMN(maxOrder));
+	int rowLength = Cpqmn.size();
+	int i = 0;
+	for(int mn = 2; mn < maxOrder; mn += 2){
+		for(int j = 0; j < Access::MultOfMN(mn); ++j){
+//			std::cout << "About to resize Cpqmn[" << i << "] to " << rowLength << ".\n";
+			Cpqmn[i].resize(rowLength);
+			++i;
+		}
+		rowLength -= Access::MultOfMN(maxOrder - mn);
+	}
 }
 
 template<class T>
@@ -78,6 +92,7 @@ inline void Cpqmn_c<T>::FillAmn(){
 	}
 }
 
+// why the fuck am I not doing this recursively
 template<class T>
 void Cpqmn_c<T>::FindAmn(T& prod, const int m, const int n, T& temp1, T& temp2){
 	prod = 1;
@@ -304,7 +319,8 @@ int Cpqmn_c<T>::CheckForDivergences(const Cpqmn_c<T>& Cpqmn, const bool showProg
 	if(maxOrder < oldMax){
 		if(showProgressBar) std::cout << "\r";
 		if(!quiet){
-			if(maxOrder > 2) std::cout << "Stopping this run at order " << maxOrder << " because ";
+			if(maxOrder > 2) std::cout << "Stopping this run at order " 
+				<< maxOrder << " because ";
 			if(maxOrder <= 2) std::cout << "Skipping this run because ";
 
 			if(!problemIsAmn) std::cout << "the coefficients diverge ";
@@ -321,7 +337,8 @@ template<class T>
 void Cpqmn_c<T>::FillCpqmn(Cpqmn_c<T>& C){
 	T temp;
 	for(unsigned int i = 0; i < C.Cpqmn.size(); ++i){
-		for(unsigned int j = 0; j < C.Cpqmn.size(); ++j){
+		for(unsigned int j = 0; j < C.Cpqmn[i].size(); ++j){
+//			std::cout << "Filling Cpqmn[" << i << "," << j << "]." << std::endl;
 			temp = C.hpmn[i] + Access::mAtLoc(i)*Access::nAtLoc(i);
 			C.Cpqmn[i][j] = C.Rmn[j];
 			temp -= C.hpmn[j];
@@ -336,6 +353,12 @@ T Cpqmn_c<T>::CFromHp(const T& hp, const int pos) const {
 	T ret = hp - hpmn[pos-1];
 	ret = Rmn[pos-1]/ret; // my Rmn includes the factor 16^mn
 	return ret;
+}
+
+template<class T>
+void Cpqmn_c<T>::DoneWithOrder(const int order){
+	Cpqmn.resize(Cpqmn.size() - Access::MultOfMN(maxOrder - order));
+	Cpqmn.shrink_to_fit();
 }
 } // namespace virasoro
 #endif

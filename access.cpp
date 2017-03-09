@@ -55,4 +55,13 @@ void Access::Populate(const int maxOrder){
 	}
 	Access::maxOrder = maxOrder;
 }
+
+int Access::MNAtLevel(const int level){
+	if(level % 2 == 1 || level < 0 || level > maxOrder) return 0;
+	int ret = 0;
+	for(int mn = 2; mn < maxOrder; mn+=2){
+		ret += MultOfMN(mn);
+	}
+	return ret;
+}
 } // namespace virasoro

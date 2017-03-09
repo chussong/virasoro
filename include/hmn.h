@@ -133,6 +133,7 @@ void Hmn_c<T>::FillHmn(Hmn_c<T>& Hmn){
 			DrawProgressBar(progress);
 		}
 		Hmn.Diag[order/2-1].clear();
+		Hmn.Cpqmn->DoneWithOrder(order);
 	}
 	for(unsigned int i = 0; i < Hmn.hp.size(); ++i) FillH(Hmn, maxOrder, temp1[0]);
 	Hmn.Diag[maxOrder/2-1].clear();
@@ -145,7 +146,8 @@ void Hmn_c<T>::FillHmn(Hmn_c<T>& Hmn){
 }
 
 template<class T>
-void Hmn_c<T>::ThreadFillHmn(const int startingPos, const int endingPos, const int order, T& temp1){
+void Hmn_c<T>::ThreadFillHmn(const int startingPos, const int endingPos,
+		const int order, T& temp1){
 	for(int pos = startingPos; pos <= endingPos; ++pos){
 		for(unsigned int scanPos = 1; scanPos <= Diag[order/2-1].size(); ++scanPos){
 			temp1 = (*Cpqmn)[pos-1][scanPos-1]*Diag[order/2-1][scanPos-1];
@@ -156,7 +158,9 @@ void Hmn_c<T>::ThreadFillHmn(const int startingPos, const int endingPos, const i
 }
 
 template<>
-inline void Hmn_c<mpfr::mpreal>::FillH(Hmn_c<mpfr::mpreal>& Hmn, const int order, mpfr::mpreal temp){
+inline void Hmn_c<mpfr::mpreal>::FillH(
+		Hmn_c<mpfr::mpreal>& Hmn, const int order, 
+		mpfr::mpreal temp){
 	for(unsigned int i = 0; i < Hmn.realH.size(); ++i){
 		for(unsigned int scanPos = 1; scanPos <= Hmn.size(order-2); ++scanPos){
 			temp = Hmn.Cpqmn->CFromHp(Hmn.hp[i], scanPos)*Hmn.at(order-2, scanPos-1);
@@ -167,7 +171,9 @@ inline void Hmn_c<mpfr::mpreal>::FillH(Hmn_c<mpfr::mpreal>& Hmn, const int order
 }
 
 template<>
-inline void Hmn_c<std::complex<mpfr::mpreal>>::FillH(Hmn_c<std::complex<mpfr::mpreal>>& Hmn, const int order, std::complex<mpfr::mpreal> temp){
+inline void Hmn_c<std::complex<mpfr::mpreal>>::FillH(
+		Hmn_c<std::complex<mpfr::mpreal>>& Hmn, const int order, 
+		std::complex<mpfr::mpreal> temp){
 	if(Hmn.HIsComplex){
 		for(unsigned int i = 0; i < Hmn.complexH.size(); ++i){
 			for(unsigned int scanPos = 1; scanPos <= Hmn.size(order-2); ++scanPos){
