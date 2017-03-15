@@ -127,7 +127,7 @@ void Hmn_c<T>::FillHmn(Hmn_c<T>& Hmn){
 		for(int i=1; i<= numThreads; ++i){
 			thread[i-1].join();
 		}
-		for(unsigned int i = 0; i < Hmn.hp.size(); ++i) FillH(Hmn, order, temp1[0]);
+		FillH(Hmn, order, temp1[0]);
 		if(showProgressBar){
 			progress += posThisOrder*Hmn.Diag[order/2-1].size()/totalComputations;
 			DrawProgressBar(progress);
@@ -135,7 +135,7 @@ void Hmn_c<T>::FillHmn(Hmn_c<T>& Hmn){
 		Hmn.Diag[order/2-1].clear();
 		Hmn.Cpqmn->DoneWithOrder(order);
 	}
-	for(unsigned int i = 0; i < Hmn.hp.size(); ++i) FillH(Hmn, maxOrder, temp1[0]);
+	FillH(Hmn, maxOrder, temp1[0]);
 	Hmn.Diag[maxOrder/2-1].clear();
 	if(showProgressBar){
 		progress = 1.0f;

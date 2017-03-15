@@ -166,7 +166,7 @@ Print[ListLogLogPlot[{results[[2*i]],-results[[2*i]]},PlotLabel->VMakePlotLabel[
 ,{i,OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,OptionValue[EndingRun],Length@results/2],OptionValue[RunStep]}];
 ];
 
-Options[VPlot]={StartingRun->1, EndingRun->0, RunStep->1, r->0.3, PlotScale->"LogLog", StartTime->0.1, EndTime->30, Compare->{}, PointsPerTL->1};
+Options[VPlot]={StartingRun->1, EndingRun->0, RunStep->1, r->0.3, PlotScale->"SemiLog", StartTime->0.1, EndTime->30, Compare->{}, PointsPerTL->1};
 VPlot[results_,OptionsPattern[]]:=Module[{c,hl,hh,hp,startTime,endTime, compareVec, plotVector, plotLegends,plotType},
 startTime=OptionValue[StartTime];
 endTime=OptionValue[EndTime];
