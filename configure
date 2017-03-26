@@ -4700,12 +4700,60 @@ $as_echo "$as_me: Building for Linux." >&6;}
 		if test "${MATHEMATICA_HOME+set}" = set; then
 			{ $as_echo "$as_me:${as_lineno-$LINENO}: Mathematica found via environment variable." >&5
 $as_echo "$as_me: Mathematica found via environment variable." >&6;}
-			wstp=1
-			wstpdir=$MATHEMATICA_HOME/SystemFiles/Links/WSTP/DeveloperKit/Linux/CompilerAdditions
-			wstplib=$wstpdir/libWSTP64i4.a
-			wstpextralibs="$wstplib -lm -lrt -lstdc++ -ldl -luuid"
-			pkgdatadir=$HOME/.Mathematica/Applications
+			wstpdir=$MATHEMATICA_HOME/SystemFiles/Links/WSTP/DeveloperKit/Linux-x86-64/CompilerAdditions
+			as_ac_File=`$as_echo "ac_cv_file_$wstpdir/libWSTP64i4.a" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $wstpdir/libWSTP64i4.a" >&5
+$as_echo_n "checking for $wstpdir/libWSTP64i4.a... " >&6; }
+if eval \${$as_ac_File+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r "$wstpdir/libWSTP64i4.a"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+eval ac_res=\$$as_ac_File
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
+  wstp=1
+else
+  wstpdir=$MATHEMATICA_HOME/SystemFiles/Links/WSTP/DeveloperKit/Linux/CompilerAdditions
+						   as_ac_File=`$as_echo "ac_cv_file_$wstpdir/libWSTP64i4.a" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $wstpdir/libWSTP64i4.a" >&5
+$as_echo_n "checking for $wstpdir/libWSTP64i4.a... " >&6; }
+if eval \${$as_ac_File+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r "$wstpdir/libWSTP64i4.a"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+eval ac_res=\$$as_ac_File
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
+  wstp=1
+else
+  wstp=0
+fi
 
+fi
+
+			if test $wstp == 1
+			then
+				wstplib=$wstpdir/libWSTP64i4.a
+				wstpextralibs="$wstplib -lm -lrt -lstdc++ -ldl -luuid"
+				pkgdatadir=$HOME/.Mathematica/Applications
+
+			fi
 		else
 			wstp=0
 		fi

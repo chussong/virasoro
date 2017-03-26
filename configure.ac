@@ -45,11 +45,19 @@ case "${host_os}" in
 		build_linux=yes
 		if test "${MATHEMATICA_HOME+set}" = set; then
 			AC_MSG_NOTICE([Mathematica found via environment variable.])
-			wstp=1
-			wstpdir=$MATHEMATICA_HOME/SystemFiles/Links/WSTP/DeveloperKit/Linux/CompilerAdditions
-			wstplib=$wstpdir/libWSTP64i4.a
-			wstpextralibs="$wstplib -lm -lrt -lstdc++ -ldl -luuid"
-			AC_SUBST([pkgdatadir], [$HOME/.Mathematica/Applications])
+			wstpdir=$MATHEMATICA_HOME/SystemFiles/Links/WSTP/DeveloperKit/Linux-x86-64/CompilerAdditions
+			AC_CHECK_FILE($wstpdir/libWSTP64i4.a,
+						  [wstp=1],
+						  [wstpdir=$MATHEMATICA_HOME/SystemFiles/Links/WSTP/DeveloperKit/Linux/CompilerAdditions
+						   AC_CHECK_FILE($wstpdir/libWSTP64i4.a,
+										 [wstp=1],
+										 [wstp=0])])
+			if test $wstp == 1
+			then
+				wstplib=$wstpdir/libWSTP64i4.a
+				wstpextralibs="$wstplib -lm -lrt -lstdc++ -ldl -luuid"
+				AC_SUBST([pkgdatadir], [$HOME/.Mathematica/Applications])
+			fi
 		else
 			wstp=0
 		fi

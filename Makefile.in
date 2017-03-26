@@ -96,7 +96,8 @@ am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
-	$(am__configure_deps) $(am__DIST_COMMON)
+	$(am__configure_deps) $(am__dist_pkgdata_DATA_DIST) \
+	$(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
@@ -171,6 +172,7 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+am__dist_pkgdata_DATA_DIST = Virasoro.m
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -198,7 +200,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-DATA = $(pkgdata_DATA)
+DATA = $(dist_pkgdata_DATA)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
@@ -354,18 +356,19 @@ wstpextralibs = @wstpextralibs@
 wstpflags = @wstpflags@
 AUTOMAKE_OPTIONS = 
 libexec_PROGRAMS = $(VWSTP)
+EXTRA_DIST = README.md LICENSE.txt
 LDADD = $(AM_LDADD) @staticlibs@
 IDIR = include/
 virasoro_SOURCES = main.cpp virasoro.cpp runfile.cpp access.cpp $(IDIR)virasoro.h $(IDIR)runfile.h $(IDIR)hmn.h $(IDIR)cpqmn.h $(IDIR)access.h $(IDIR)mpreal.h $(IDIR)mpcomplex.h
 virasoro_LDADD = $(LDADD)
-vwstp_SOURCES = vwstp.cpp virasoro.cpp runfile.cpp access.cpp $(IDIR)virasoro.h $(IDIR)runfile.h $(IDIR)hmn.h $(IDIR)cpqmn.h $(IDIR)access.h $(IDIR)mpreal.h $(IDIR)mpcomplex.h
+vwstp_SOURCES = vwstp.cpp virasoro.cpp runfile.cpp access.cpp vwstp.tm $(IDIR)virasoro.h $(IDIR)runfile.h $(IDIR)hmn.h $(IDIR)cpqmn.h $(IDIR)access.h $(IDIR)mpreal.h $(IDIR)mpcomplex.h
 nodist_vwstp_SOURCES = vwstptm.c
 vwstp_CFLAGS = $(AM_CFLAGS) @wstpflags@
 vwstp_CXXFLAGS = $(AM_CXXFLAGS) @wstpflags@
 vwstp_CPPFLAGS = -DHAVE_WSTP
 vwstp_LDADD = $(LDADD) @wstpextralibs@
 PKGDIR = @pkgdatadir@
-@MAKE_VWSTP_TRUE@pkgdata_DATA = Virasoro.m
+@MAKE_VWSTP_TRUE@dist_pkgdata_DATA = Virasoro.m
 @MAKE_VWSTP_TRUE@BUILT_SOURCES = vwstptm.c
 @MAKE_VWSTP_TRUE@CLEANFILES = vwstptm.c
 all: $(BUILT_SOURCES)
@@ -627,9 +630,9 @@ vwstp-access.obj: access.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='access.cpp' object='vwstp-access.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(vwstp_CPPFLAGS) $(CPPFLAGS) $(vwstp_CXXFLAGS) $(CXXFLAGS) -c -o vwstp-access.obj `if test -f 'access.cpp'; then $(CYGPATH_W) 'access.cpp'; else $(CYGPATH_W) '$(srcdir)/access.cpp'; fi`
-install-pkgdataDATA: $(pkgdata_DATA)
+install-dist_pkgdataDATA: $(dist_pkgdata_DATA)
 	@$(NORMAL_INSTALL)
-	@list='$(pkgdata_DATA)'; test -n "$(pkgdatadir)" || list=; \
+	@list='$(dist_pkgdata_DATA)'; test -n "$(pkgdatadir)" || list=; \
 	if test -n "$$list"; then \
 	  echo " $(MKDIR_P) '$(DESTDIR)$(pkgdatadir)'"; \
 	  $(MKDIR_P) "$(DESTDIR)$(pkgdatadir)" || exit 1; \
@@ -643,9 +646,9 @@ install-pkgdataDATA: $(pkgdata_DATA)
 	  $(INSTALL_DATA) $$files "$(DESTDIR)$(pkgdatadir)" || exit $$?; \
 	done
 
-uninstall-pkgdataDATA:
+uninstall-dist_pkgdataDATA:
 	@$(NORMAL_UNINSTALL)
-	@list='$(pkgdata_DATA)'; test -n "$(pkgdatadir)" || list=; \
+	@list='$(dist_pkgdata_DATA)'; test -n "$(pkgdatadir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(pkgdatadir)'; $(am__uninstall_files_from_dir)
 
@@ -937,7 +940,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-pkgdataDATA
+install-data-am: install-dist_pkgdataDATA
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
 install-dvi: install-dvi-am
@@ -985,8 +988,8 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-libexecPROGRAMS \
-	uninstall-pkgdataDATA
+uninstall-am: uninstall-binPROGRAMS uninstall-dist_pkgdataDATA \
+	uninstall-libexecPROGRAMS
 
 .MAKE: all check install install-am install-data-am install-strip
 
@@ -998,16 +1001,16 @@ uninstall-am: uninstall-binPROGRAMS uninstall-libexecPROGRAMS \
 	distclean-generic distclean-hdr distclean-tags distcleancheck \
 	distdir distuninstallcheck dvi dvi-am html html-am info \
 	info-am install install-am install-binPROGRAMS install-data \
-	install-data-am install-data-hook install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-libexecPROGRAMS \
-	install-man install-pdf install-pdf-am install-pkgdataDATA \
+	install-data-am install-data-hook install-dist_pkgdataDATA \
+	install-dvi install-dvi-am install-exec install-exec-am \
+	install-html install-html-am install-info install-info-am \
+	install-libexecPROGRAMS install-man install-pdf install-pdf-am \
 	install-ps install-ps-am install-strip installcheck \
 	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-binPROGRAMS uninstall-libexecPROGRAMS \
-	uninstall-pkgdataDATA
+	uninstall-am uninstall-binPROGRAMS uninstall-dist_pkgdataDATA \
+	uninstall-libexecPROGRAMS
 
 .PRECIOUS: Makefile
 

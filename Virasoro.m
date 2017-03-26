@@ -36,6 +36,9 @@ Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. StartingR
 VConvByTL::usage = "VConvByTL[results_(,Option\[Rule]Value)] gives plots showing how the convergence of the last few orders of each run in results_ varies with tL at a given r_.
 
 Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. StartingRun\[Rule]10. Options are StartingRun, RunStep, EndingRun, StartTime, and EndTime.";
+VFindEndTimes::usage = "VFindEndTimes[results_(,OptionV\[Rule]Value)] gives the latest time after before which the full block and the block with 10 fewer terms differ by at most 5%.
+
+Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. StartingRun\[Rule]10. Options are StartingRun, RunStep, EndingRun, StartTime, EndTime, r, and Bins.";
 VConvByQ::usage = "VConvByQ[results_(,Option\[Rule]Value)] gives plots showing how the convergence of the last few orders of each run in results_ varies with q.
 
 Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. StartingRun\[Rule]10. Options are StartingRun, RunStep, EndingRun.";
@@ -145,12 +148,12 @@ Close[resultFile];
 Return[];
 ];
 
-VMakePlotLabel[results_,runNumber_]:=Module[{c,hl,hh,hp,label},
+VMakePlotLabel[results_,runNumber_]:=Module[{c,hl,hh,h,label},
 c=results[[2runNumber-1]][[1]];
 hl=results[[2runNumber-1]][[2]];
 hh=results[[2runNumber-1]][[3]];
-hp=results[[2runNumber-1]][[4]];
-label="c="<>StringTake[ToString@c,Min[5,StringLength[ToString@c]]]<>"    \!\(\*SubscriptBox[\(h\), \(l\)]\)="<>StringTake[ToString@hl,Min[5,StringLength[ToString@hl]]]<>"    \!\(\*SubscriptBox[\(h\), \(h\)]\)="<>StringTake[ToString@hh,Min[5,StringLength[ToString@hh]]]<>"    \!\(\*SubscriptBox[\(h\), \(p\)]\)="<>StringTake[ToString@hp,Min[5,StringLength[ToString@hp]]];
+h=results[[2runNumber-1]][[4]];
+label="c="<>StringTake[ToString@c,Min[5,StringLength[ToString@c]]]<>",    \!\(\*SubscriptBox[\(h\), \(L\)]\)="<>StringTake[ToString@hl,Min[5,StringLength[ToString@hl]]]<>"    \!\(\*SubscriptBox[\(h\), \(H\)]\)="<>StringTake[ToString@hh,Min[5,StringLength[ToString@hh]]]<>"    h="<>StringTake[ToString@h,Min[5,StringLength[ToString@h]]];
 Return[label];
 ];
 
@@ -211,6 +214,22 @@ VConvByTL[results_,OptionsPattern[]]:=Module[{plotLabel,q},
 Do[
 Print[Plot[(Table[q^k,{k,0,2*Length@results[[entry]]-2,2}].results[[entry]])/(Table[q^k,{k,0,2*Max[Length@results[[entry]]-10,1]-2,2}].Take[results[[entry]],Max[Length@results[[entry]]-10,1]])/.q->VqVal[OptionValue[r],tL]//Abs,{tL,OptionValue[StartTime],OptionValue[EndTime]},PlotRange->Full,AxesLabel->{"tL","H(r="<>ToString@OptionValue[r]<>")"},PlotLabel->VMakePlotLabel[results,entry/2]]];
 ,{entry,2*OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,2*OptionValue[EndingRun],Length@results],2*OptionValue[RunStep]}];
+];
+
+Options[VFindEndTimes]={StartingRun->1, RunStep->1, EndingRun->0,StartTime->0.1,EndTime->50,r->0.3,Bins->1000};
+VFindEndTimes[results_,OptionsPattern[]]:=Module[{tL,q,ends},
+ends={};
+Do[
+	Do[
+		tL=i*(OptionValue[EndTime]-OptionValue[StartTime])/OptionValue[Bins];
+		If[Abs[(Table[q^k,{k,0,2*Length@results[[entry]]-2,2}].results[[entry]])/(Table[q^k,{k,0,2*Max[Length@results[[entry]]-10,1]-2,2}].Take[results[[entry]],Max[Length@results[[entry]]-10,1]])/.q->VqVal[OptionValue[r],tL]]>=1.05,
+			AppendTo[ends,tL];
+			Break[];
+		];
+		If[i==OptionValue[Bins],AppendTo[ends,OptionValue[EndTime]]];
+	,{i,0,OptionValue[Bins]}];
+,{entry,2*OptionValue[StartingRun],If[OptionValue[EndingRun]!=0,2*OptionValue[EndingRun],Length@results],2*OptionValue[RunStep]}];
+Return[ends];
 ];
 
 Options[VConvByQ]={StartingRun->1, RunStep->1, EndingRun->0,r->0.3};
