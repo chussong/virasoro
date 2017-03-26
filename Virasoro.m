@@ -153,7 +153,7 @@ c=results[[2runNumber-1]][[1]];
 hl=results[[2runNumber-1]][[2]];
 hh=results[[2runNumber-1]][[3]];
 h=results[[2runNumber-1]][[4]];
-label="c="<>StringTake[ToString@c,Min[5,StringLength[ToString@c]]]<>",    \!\(\*SubscriptBox[\(h\), \(L\)]\)="<>StringTake[ToString@hl,Min[5,StringLength[ToString@hl]]]<>"    \!\(\*SubscriptBox[\(h\), \(H\)]\)="<>StringTake[ToString@hh,Min[5,StringLength[ToString@hh]]]<>"    h="<>StringTake[ToString@h,Min[5,StringLength[ToString@h]]];
+label="c="<>StringTake[ToString@c,Min[5,StringLength[ToString@c]]]<>",    \!\(\*SubscriptBox[\(h\), \(L\)]\)="<>StringTake[ToString@hl,Min[5,StringLength[ToString@hl]]]<>",    \!\(\*SubscriptBox[\(h\), \(H\)]\)="<>StringTake[ToString@hh,Min[5,StringLength[ToString@hh]]]<>",    h="<>StringTake[ToString@h,Min[5,StringLength[ToString@h]]];
 Return[label];
 ];
 
