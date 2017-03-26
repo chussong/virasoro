@@ -17,6 +17,10 @@ int core(int argc, char** argv, const bool wolfram){
 	bool quiet = wolfram;
 	std::vector<std::string> args = CollectArgs(argc, argv);
 	std::string options = ParseOptions(args);
+	if(options.find('v') != std::string::npos){
+		VersionCheck();
+		return EXIT_SUCCESS;
+	}
 	if(wolfram) options.append("w");
 	if(options.find('m') != std::string::npos) quiet = true;
 	ReadDefaults(std::string(getenv("HOME"))+"/.config/virasoro_defaults.txt", quiet);
@@ -122,6 +126,9 @@ std::string ParseOptions(std::vector<std::string> &args){
 		if(args[i-1][0] != '-'){
 			realArg[i-1] = true;
 			continue;
+		} else if(args[i-1].substr(0,2).compare("-v") == 0){
+			options.append("v");
+			realArg[i-1] = false;
 		} else if(args[i-1].substr(0,2).compare("-m") == 0){
 			options.append("m");
 			realArg[i-1] = false;
@@ -245,9 +252,9 @@ int DoRuns(const Runfile_c& runfile, const std::string options){
 		}
 		for(unsigned int run = 0; run < runfile.runs.size(); ++run){
 			CheckRealityAndRun(runfile.runs[run], runfile.maxOrders[run], outputName, bGiven);
-			if(run < runfile.runs.size()) std::cout << ",";
+			if(wolframOutput && run < runfile.runs.size()-1) std::cout << ",";
 		}
-		if(wolframOutput) std::cout << "}";
+		if(wolframOutput) std::cout << "\b}";
 	} else {
 		if(consoleOutput){
 			outputName = "__CONSOLE";
@@ -376,4 +383,10 @@ std::string to_string(const std::complex<mpfr::mpreal>& N, int digits, int base)
 		}
 	}
 }
+
+void VersionCheck(){
+	std::cout << "This is virasoro v" << versionNumber
+		<< ", published on " << versionDate << "." << std::endl;
+}
+
 } // namespace virasoro

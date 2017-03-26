@@ -2,6 +2,9 @@
 
 BeginPackage["Virasoro`"]
 
+(*Return version of package being accessed*)
+VVersionCheck::usage = "VVersionCheck[] returns the number and date of the loaded version of Virasoro.m.";
+
 (*For simple computations*)
 VGethmn::usage = "VGethmn[m_,n_,b_] gives degenerate Virasoro operator dimension h_mn at the given b.";
 VGet\[Lambda]sq::usage = "VGet\[Lambda]sq[p_,q_,b_] gives square of internal \[Lambda]_pq at the given b.";
@@ -48,6 +51,13 @@ VDepTime::usage = "VDepTime[results_] finds the time when the exact block in res
 The require ratio can be changed with Ratio->#.";
 
 Begin["VirasoroInternal`"]
+VVersionCheck[]:=Module[{versionNumber,versionDate},
+versionNumber="1.0.0";
+versionDate="2017-03-26";
+Print["The currently loaded version of Virasoro.m is "<>
+versionNumber<>", published "<>versionDate<>"."];
+];
+
 VGethmn[m_,n_,b_]:=b^2*(1-n^2)/4+(1-m^2)/(4*b^2)+(1-m*n)/2;
 VGet\[Lambda]sq[p_,q_,b_]:=4*VGethmn[p,q]-(b+1/b)^2;
 VGet\[Lambda][p_,q_,b_]:=Sqrt[VGet\[Lambda]sq[p,q,b]];
@@ -83,7 +93,7 @@ VRun[c_,hl_,hh_,hp_,maxOrder_] := Module[{link,params,results},
 link = Install["/usr/local/libexec/vwstp"];
 If[link==$Failed,link = Install[NotebookDirectory[]<>"vwstp"]];
 If[link==$Failed,Failure["C++NotFound",<|"MessageTemplate":>VRun::noVWSTP|>]];
-params = ToString/@N[{c,hl,hh,hp,maxOrder},768];
+params = ToString/@N[Rationalize[{c,hl,hh,hp,maxOrder}],768];
 Do[If[StringContainsQ["I"]@params[[i]],
 params[[i]] = StringInsert[params[[i]],"(",1];
 params[[i]] = StringInsert[params[[i]],")",-1];

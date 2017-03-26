@@ -20,6 +20,9 @@
 
 namespace virasoro {
 
+constexpr char versionNumber[] = "1.0.0";
+constexpr char versionDate[] = "2017-03-26";
+
 typedef std::chrono::high_resolution_clock Clock;
 
 int core(int argc, char** argv, const bool wolfram);
@@ -37,6 +40,7 @@ void ShowTime(const std::string computationName, const std::chrono::time_point<s
 
 std::string to_string(const mpfr::mpreal& N, int digits);
 std::string to_string(const std::complex<mpfr::mpreal>& N, int digits, int base = 10);
+void VersionCheck();
 
 template<class T>
 void ConvertInputs(T& bsq, T& invBsq, T& llsq, T& lhsq, const T& c, const T& hl, const T& hh, T& temp1, T& temp2){
@@ -83,13 +87,17 @@ void DisplayH(const std::vector<U> H, const T c, const T hl, const T hh, const T
 	}
 }
 
-// An empty outputName means a single run; a filled one is a multirun, which prints fewer words.
+// An empty outputName means a single run; a filled one is a multirun, which
+// prints fewer words.
 template<class T, class U>
-void WriteH(const std::vector<U> H, const T c, const T hl, const T hh, const T hp, const unsigned short int maxOrder, const std::string outputName){
+void WriteH(const std::vector<U> H, const T c, const T hl, const T hh, const T h,
+		const unsigned short int maxOrder, const std::string outputName){
 	std::ofstream outputFile;
 	std::string filename = outputName;
 	if(outputName == "__MATHEMATICA"){
-		std::cout << "{" << to_string(c, 0) << "," << to_string(hl, 0) << "," << to_string(hh, 0) << "," << to_string(hp, 0) << "," << maxOrder << "},{1";
+		std::cout << "{" << to_string(c, 0) << "," << to_string(hl, 0) << "," 
+			<< to_string(hh, 0) << "," << to_string(h, 0) << "," << maxOrder
+			<< "},{1";
 		for(int orderBy2 = 1; 2*orderBy2 <= maxOrder; orderBy2++){
 			std::cout << "," << to_string(H[orderBy2], 0);
 		}
@@ -99,13 +107,18 @@ void WriteH(const std::vector<U> H, const T c, const T hl, const T hh, const T h
 	outputFile.open (filename, std::ios_base::app | std::ios_base::out);
 	if(outputName.empty()){
 		outputFile << "Given the parameters" << std::endl;
-		outputFile << "c = " << to_string(c, 0) << ", h_L = " << to_string(hl, 0) << ", h_H = " << to_string(hh, 0) << ", h_p = " << to_string(hp, 0) << std::endl;
+		outputFile << "c = " << to_string(c, 0) << ", h_L = " << to_string(hl, 0)
+			<< ", h_H = " << to_string(hh, 0) << ", h = " << to_string(h, 0)
+			<< std::endl;
 		outputFile << "the Virasoro block coefficients are as follows:" << std::endl;
 		for(int orderBy2 = 0; 2*orderBy2 <= maxOrder; ++orderBy2){
-			outputFile << "q^" << 2*orderBy2 << ": " << to_string(H[orderBy2], 10) << std::endl;
+			outputFile << "q^" << 2*orderBy2 << ": " << to_string(H[orderBy2], 10)
+				<< std::endl;
 		}
 	} else {
-		outputFile << "{" << to_string(c, 0) << "," << to_string(hl, 0) << "," << to_string(hh, 0) << "," << to_string(hp, 0) << "," << maxOrder << "}" << std::endl;
+		outputFile << "{" << to_string(c, 0) << "," << to_string(hl, 0) << ","
+			<< to_string(hh, 0) << "," << to_string(h, 0) << "," << maxOrder
+			<< "}" << std::endl;
 	}
 	outputFile << "{1";
 	for(int orderBy2 = 1; 2*orderBy2 <= maxOrder; orderBy2++){
@@ -186,18 +199,30 @@ void FindCoefficients(std::vector<T> runVector, unsigned short int maxOrder, con
 	// record and display coefficients H by q order
 	if(complexH){
 		for(unsigned int i = 4; i <= runVector.size(); ++i){
-			if(outputName.empty() || outputName == "__CONSOLE") DisplayH(Hmn.complexH[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
-			if(outputName != "__CONSOLE" && outputName != "__WSTP") WriteH(Hmn.complexH[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder, outputName);
+			if(outputName.empty() || outputName == "__CONSOLE")
+				DisplayH(Hmn.complexH[i-4], runVector[0], runVector[1],
+						runVector[2], runVector[i-1], maxOrder);
+			if(outputName != "__CONSOLE" && outputName != "__WSTP")
+				WriteH(Hmn.complexH[i-4], runVector[0], runVector[1],
+						runVector[2], runVector[i-1], maxOrder, outputName);
+			if(outputName == "__MATHEMATICA") std::cout << ",";
 #ifdef HAVE_WSTP
-			if(outputName == "__WSTP") WSTPOut(Hmn.complexH[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
+			if(outputName == "__WSTP") WSTPOut(Hmn.complexH[i-4], runVector[0],
+					runVector[1], runVector[2], runVector[i-1], maxOrder);
 #endif
 		}
 	} else {
 		for(unsigned int i = 4; i <= runVector.size(); ++i){
-			if(outputName.empty() || outputName == "__CONSOLE") DisplayH(Hmn.realH[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
-			if(outputName != "__CONSOLE" && outputName != "__WSTP") WriteH(Hmn.realH[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder, outputName);
+			if(outputName.empty() || outputName == "__CONSOLE")
+				DisplayH(Hmn.realH[i-4], runVector[0], runVector[1],
+						runVector[2], runVector[i-1], maxOrder);
+			if(outputName != "__CONSOLE" && outputName != "__WSTP")
+				WriteH(Hmn.realH[i-4], runVector[0], runVector[1],
+						runVector[2], runVector[i-1], maxOrder, outputName);
+			if(outputName == "__MATHEMATICA") std::cout << ",";
 #ifdef HAVE_WSTP
-			if(outputName == "__WSTP") WSTPOut(Hmn.realH[i-4], runVector[0], runVector[1], runVector[2], runVector[i-1], maxOrder);
+			if(outputName == "__WSTP") WSTPOut(Hmn.realH[i-4], runVector[0],
+					runVector[1], runVector[2], runVector[i-1], maxOrder);
 #endif
 		}
 	}
