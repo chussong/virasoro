@@ -287,9 +287,9 @@ void Cpqmn_c<T>::FillRmn(Cpqmn_c<T>& C, const T* llsq, const T* lhsq){
 	for(unsigned int i = 0; i < C.Rmn.size(); ++i){
 		C.Rmn[i] *= C.Amn[i];
 #ifdef VERBOSE_DEBUG
-		std::cout << "Pmn[" << mAtLoc[i] << "," << nAtLoc[i] << "] = " << to_string(C.Rmn[i], 10) << std::endl;
-		std::cout << "Amn[" << mAtLoc[i] << "," << nAtLoc[i] << "] = " << to_string(C.Amn[i], 10) << std::endl;
-		std::cout << "Rmn[" << mAtLoc[i] << "," << nAtLoc[i] << "] = " << to_string(C.Rmn[i], 10) << std::endl;
+		std::cout << "Pmn[" << Access::mAtLoc(i) << "," << Access::nAtLoc(i) << "] = " << to_string(C.Rmn[i], 10) << std::endl;
+		std::cout << "Amn[" << Access::mAtLoc(i) << "," << Access::nAtLoc(i) << "] = " << to_string(C.Amn[i], 10) << std::endl;
+		std::cout << "Rmn[" << Access::mAtLoc(i) << "," << Access::nAtLoc(i) << "] = " << to_string(C.Rmn[i], 10) << std::endl;
 #endif
 	}
 	

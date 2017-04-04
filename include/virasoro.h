@@ -20,8 +20,8 @@
 
 namespace virasoro {
 
-constexpr char versionNumber[] = "1.0.0";
-constexpr char versionDate[] = "2017-03-26";
+constexpr char versionNumber[] = "1.0.2";
+constexpr char versionDate[] = "2017-04-04";
 
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -38,8 +38,6 @@ void CheckRealityAndRun(const std::vector<std::complex<mpfr::mpreal>>& runVec, c
 int DoRuns(const Runfile_c& runfile, const std::string options);
 void ShowTime(const std::string computationName, const std::chrono::time_point<std::chrono::high_resolution_clock> timeStart);
 
-std::string to_string(const mpfr::mpreal& N, int digits);
-std::string to_string(const std::complex<mpfr::mpreal>& N, int digits, int base = 10);
 void VersionCheck();
 
 template<class T>

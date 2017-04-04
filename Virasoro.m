@@ -52,8 +52,8 @@ The require ratio can be changed with Ratio->#.";
 
 Begin["VirasoroInternal`"]
 VVersionCheck[]:=Module[{versionNumber,versionDate},
-versionNumber="1.0.0";
-versionDate="2017-03-26";
+versionNumber="1.0.2";
+versionDate="2017-04-04";
 Print["The currently loaded version of Virasoro.m is "<>
 versionNumber<>", published "<>versionDate<>"."];
 ];

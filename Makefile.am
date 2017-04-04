@@ -1,9 +1,12 @@
+## Process this file with automake to produce Makefile.in
+
 AUTOMAKE_OPTIONS =
 bin_PROGRAMS = virasoro
 libexec_PROGRAMS = $(VWSTP)
 EXTRA_DIST = README.md LICENSE.txt
 EXTRA_PROGRAMS = vwstp
-LDADD = $(AM_LDADD) @staticlibs@
+## LDADD = $(AM_LDADD) @staticlibs@
+LDADD = $(AM_LDADD)
 IDIR = include/
 virasoro_SOURCES = main.cpp virasoro.cpp runfile.cpp access.cpp $(IDIR)virasoro.h $(IDIR)runfile.h $(IDIR)hmn.h $(IDIR)cpqmn.h $(IDIR)access.h $(IDIR)mpreal.h $(IDIR)mpcomplex.h
 virasoro_LDADD = $(LDADD)

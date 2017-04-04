@@ -1,4 +1,4 @@
-AC_INIT(virasoro, 1.0)
+AC_INIT(virasoro, 1.0.2)
 AM_INIT_AUTOMAKE([foreign])
 
 AC_ARG_ENABLE([dev],
@@ -20,11 +20,11 @@ AC_CANONICAL_HOST
 
 dnl Check for GMP and derivatives.
 AC_CHECK_HEADERS(gmp.h, [], [AC_ERROR(["GMP not detected. Either you have not installed it or the directory where it's installed is not set up to be searched."])])
-gmplib=/usr/local/lib/libgmp.a
+dnl gmplib=/usr/local/lib/libgmp.a
 AC_CHECK_HEADERS(mpfr.h, [], [AC_ERROR(["MPFR not detected. Either you have not installed it or the directory where it's installed is not set up to be searched."])])
-mpfrlib=/usr/local/lib/libmpfr.a
+dnl mpfrlib=/usr/local/lib/libmpfr.a
 AC_CHECK_HEADERS(mpc.h, [], [AC_ERROR(["MPC not detected. Either you have not installed it or the directory where it's installed is not set up to be searched."])])
-mpclib=/usr/local/lib/libmpc.a
+dnl mpclib=/usr/local/lib/libmpc.a
 
 dnl headers should probably be split for the different targets
 headers="mpreal.h mpcomplex.h cpqmn.h hmn.h runfile.h virasoro.h vwstp.h access.h"
@@ -32,8 +32,8 @@ object_files="virasoro.o runfile.o"
 cflags="-O3"
 cxxflags="-O3 -std=c++14"
 devflags="-Wall -Wextra -pedantic -Werror -g"
-ldadd="-lpthread"
-staticlibs="$mpclib $mpfrlib $gmplib"
+ldadd="-lmpc -lmpfr -lgmp -lpthread"
+dnl staticlibs="$mpclib $mpfrlib $gmplib"
 
 dnl Check for WSTP
 build_linux=no
@@ -118,7 +118,7 @@ AC_SUBST([WSPREP],[$wsprep])
 AC_SUBST([VWSTP])
 AC_SUBST([wstpflags])
 AC_SUBST([wstpextralibs])
-AC_SUBST([staticlibs])
+dnl AC_SUBST([staticlibs])
 AC_SUBST([object_files])
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_FILES([Makefile])

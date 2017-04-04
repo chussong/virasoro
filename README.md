@@ -19,7 +19,11 @@ To compile, get a terminal in this directory and type ./configure, then make, th
 1. GMP arbitrary-precision math library from [here](https://gmplib.org).  
 2. GNU MPFR from [here](http://www.mpfr.org).  
 3. GNU MPC from [here](http://www.multiprecision.org/index.php?prog=mpc).  
-Prebuilt versions of these are available for some systems (they're on the Ubuntu repositories, anyway), but in my brief testing the prebuilt ones were about half as fast. Linux users who want to build the Mathematica plugin will likely also need to install libuuid, available on apt as uuid-dev and yum as libuuid-devel.  
+4. Linux users who want to build the Mathematica plugin will need to install
+libuuid, available on apt as uuid-dev and yum as libuuid-devel. If you have 
+Mathematica, the installer will automatically try to build the plugin, but you
+can manually override this with ./configure --disable-wstp.  
+Prebuilt versions of GMP, MPFR, and MPF are available for some systems (they're on the Ubuntu repositories, anyway), but in my brief testing the prebuilt ones were about half as fast.  
 
 ## Usage
 

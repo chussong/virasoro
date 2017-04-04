@@ -1,6 +1,11 @@
 #ifndef ACCESS_H_
 #define ACCESS_H_
 #include <vector>
+#include <string>
+#include "mpreal.h"
+#include "mpcomplex.h"
+
+#define STATICTOLERANCE 10e-100
 
 namespace virasoro {
 class Access {
@@ -23,6 +28,9 @@ class Access {
 		static void Populate(const int maxOrder);
 		static int MNAtLevel(const int level);
 };
+
+std::string to_string(const mpfr::mpreal& N, int digits);
+std::string to_string(const std::complex<mpfr::mpreal>& N, int digits, int base = 10);
 
 } // namespace virasoro
 #endif

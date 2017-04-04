@@ -8,7 +8,8 @@
 	* Programs are now installable -- virasoro in /usr/local/bin, vwstp in
 	/usr/local/libexec, and Virasoro.m in ~/.Mathematica/Applications.
 	* Accordingly, Virasoro.m can now be loaded with Needs["Virasoro`"].
-	* Virasoro.m now looks for vwstp in /usr/local/libexec/ if it's not in the local directory.
+	* Virasoro.m now looks for vwstp in /usr/local/libexec/ if it's not in the
+	local directory.
 
 	* Several new functions for Virasoro.m.
 
@@ -21,3 +22,11 @@
 	have come with a minor hit to performance but not going out of bounds is
 	nice.
 	* Refactored runfile class to get rid of all the damn parser functions.
+
+2017-04-04 Charles Hussong <chussong@jhu.edu>
+
+	* Changed static linking to dynamic in order to avoid having to find paths
+	to numeric libraries. WSTP is still statically linked because it still
+	needs to be located so we might as well just bake it in.
+	* Added some exception handling to string parsing routines. Hopefully this
+	will make syntax errors more transparent.
