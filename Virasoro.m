@@ -1,5 +1,8 @@
 (* ::Package:: *)
 
+(*All functions in this package make free usage of the notation defined in 1703.09727, such as b, h, V, q, z, etc.*)
+(*Typical usage would be to invoke some runs, either using VRun or running from C++ and reading the resulting file with VRead. Then you will likely want to analyze the results with the plotting and analysis functions at the bottom.*)
+
 BeginPackage["Virasoro`"]
 
 (*Return version of package being accessed*)
@@ -13,24 +16,26 @@ VGetBsq::usage = "VGetBsq[c_] gives b^2 corresponding to the given c.";
 VGetC::usage = "VGetC[bsq_] gives c corresponding to the given b^2.";
 
 (*For plotting in Lorentzian time*)
-VEKMono::usage = "VEKMono[r_,tL_] gives the EllipticK[z] for these parameters accounting for the monodromy.";
+VEKMono::usage = "VEKMono[r_,tL_] gives the EllipticK[z] for these parameters with some modifications to account for the monodromy.";
 VqVal::usage = "VqVal[r_,tL] gives the q value corresponding to the given Lorentzian time tL using radius r.";
-VVofZ::usage = "VVofZ[z_,coeVec_,c_,hL_,hH_,maxOrder_] gives the block V at coordinate z.";
-VVofT::usage = "VVofT[coeVec_,c_,hL_,hH_,hp_,r_,tL_,maxOrder_] gives the Lorentzian Virasoro block approximated by coeVec at Lorentzian time tL.";
-VSemiClassical::usage = "VSemiClassical[c_,hL_,hH_,r_,tL_] gives the value of the semiclassical approximation of the vacuum block at Lorentzian time tL.";
+VVofZ::usage = "VVofZ[z_,coeVec_,c_,hL_,hH_,maxOrder_] gives the Virasoro block V at coordinate z, using the coefficients of q^{mn} contained in coeVec.";
+VVofT::usage = "VVofT[coeVec_,c_,hL_,hH_,hp_,r_,tL_,maxOrder_] gives the Lorentzian Virasoro block approximated by the coefficients of q^{mn} in coeVec at Lorentzian time tL.";
+VSemiClassical::usage = "VSemiClassical[c_,hL_,hH_,r_,tL_] gives the value of the semiclassical approximation of the vacuum block at Lorentzian time tL with radius r.";
 VSemiOfZ::usage = "VSemiOfZ[c_,hL_,hH_,z_] gives the value of the semiclassical vacuum block at z_.";
-VDegenBlock12::usage = "VDegenBlock12[c_,hL_,hh_,r_,tL_] gives the exact degenerate h_12 vacuum block at time tL.";
-VDegenBlock21::usage = "VDegenBlock21[c_,hL_,hh_,r_,tL_] gives the exact degenerate h_21 vacuum block at time tL.";
+VDegenBlock12::usage = "VDegenBlock12[c_,hL_,hh_,r_,tL_] gives the exact degenerate h_12 vacuum block at time tL and radius r.";
+VDegenBlock21::usage = "VDegenBlock21[c_,hL_,hh_,r_,tL_] gives the exact degenerate h_21 vacuum block at time tL and radius r.";
 
-(*For reading results from virasoro batch runs*)
+(*For generating, reading, and writing results from virasoro batch runs*)
 VRun::usage = "VRun[c_, hl_, hh_, hp_, maxOrder_] or VRun[{c, hl, hh, hp, maxOrder}] computes the coefficients for the given parameter set(s) and returns them as a list of lists using the same format as VRead."
 VRunFromFile::usage = "VRunFromFile[filename_] or simply VRun[filename_] invokes a C++ run from the named runfile and returns the results.";
-VLengthCheck::usage = "VLengthCheck[filename_] gives the length of the result vector filename.";
-VRead::usage = "VRead[filename_] gives the run results as a vector of vectors of numbers, ready to be used in Mathematica.";
-VWrite::usage = "VWrite[results_,filename_] writes a results to a file with the given filename.";
+VLengthCheck::usage = "VLengthCheck[filename_] gives the length of the result vector contained in filename.";
+VRead::usage = "VRead[filename_] gives the results of the C++ run stored in filename as a vector of vectors of numbers, ready to be used in Mathematica.";
+VWrite::usage = "VWrite[results_,filename_] writes results to a file with the given filename in such a way that they can be read back later with VRead.";
+
+(*For plotting and analysis*)
 VMakePlotLabel::usage = "VMakePlotLabel[results_,runNumber_] is an internal function that returns a list of parameters used in a run. This is put at the top of most plots.";
 VPlotCoeffs::usage = "VPlotCoeffs[results_,n_:0(,Options\[Rule]Value)] gives a log-log plot of the raw coefficients of run n in the given array; n=0 plots all runs. Options StartingRun, EndingRun, and RunStep specified as Option\[Rule]Value.";
-VPlot::usage = "VPlot[results_,n_:0(,Option\[Rule]Value)] plots Virasoro blocks from run n in the VRead output results as a function of Lorentzian time, using radius r. n=0 plots all runs in the array, with runStep>1 allows you to skip runs.
+VPlot::usage = "VPlot[results_,n_:0(,Option\[Rule]Value)] plots Virasoro blocks from the n_th run stored in results_ as a function of Lorentzian time, using radius r_. n=0 plots all runs in the array, with runStep>1 allowing you to skip runs.
 
 Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. EndTime\[Rule]40. Options are PlotScale (\"Linear\", \"SemiLog\", or \"LogLog\"), StartTime, EndTime, PointsPerTL, StartingRun, EndingRun, RunStep, and Compare. Setting Compare\[Rule]\"Semi\" compares to semiclassical vacuum block; other possibilities are \"12\" and \"21\" which compare to exact degenerate blocks.";
 VConvByOrder::usage = "VConvByOrder[results_,tL_(,Option\[Rule]Value)] gives plots showing how adding more terms to each run in results_ improves the convergence at particular radius r_ and Lorentzian time tL_.
@@ -48,12 +53,12 @@ Options are specified as in Wolfram's Plot[]: Option\[Rule]Value, e.g. StartingR
 VZMap::usage = "VZMap[results_] shows a contour plot of V in the complex z plane.";
 VDepTime::usage = "VDepTime[results_] finds the time when the exact block in results_ divided by the semiclassical block is always >= 1.1.
 
-The require ratio can be changed with Ratio->#.";
+The required ratio can be changed with Ratio->#.";
 
 Begin["VirasoroInternal`"]
 VVersionCheck[]:=Module[{versionNumber,versionDate},
-versionNumber="1.0.2";
-versionDate="2017-04-04";
+versionNumber="1.0.3";
+versionDate="2017-10-20";
 Print["The currently loaded version of Virasoro.m is "<>
 versionNumber<>", published "<>versionDate<>"."];
 ];
